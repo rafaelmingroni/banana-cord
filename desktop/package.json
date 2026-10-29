@@ -1,7 +1,7 @@
 {
   "name": "banana-cord",
-  "version": "1.0.0",
-  "description": "Banana Cord v1.0 - primeira versão pós-beta: chat, amigos, cargos, voz e compartilhamento de tela leve",
+  "version": "1.0.1",
+  "description": "Banana Cord v1.0.1 - correções de estabilidade, desempenho e usabilidade",
   "private": true,
   "main": "updater-prompt.js",
   "author": "Rafael Mingroni",
@@ -9,11 +9,12 @@
     "prepare:source": "node scripts/merge-source.js",
     "prestart": "npm run prepare:source",
     "start": "electron .",
-    "predist:win": "npm run prepare:source",
+    "predist:win": "npm run prepare:source && npm run smoke:ui",
     "dist:win": "electron-builder --win nsis",
-    "predist:portable": "npm run prepare:source",
+    "predist:portable": "npm run prepare:source && npm run smoke:ui",
     "dist:portable": "electron-builder --win portable",
-    "smoke:v1": "node scripts/smoke-v1.js"
+    "smoke:v1": "node scripts/smoke-v1.js",
+    "smoke:ui": "node scripts/smoke-ui.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
