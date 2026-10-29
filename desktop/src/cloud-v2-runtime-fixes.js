@@ -80,8 +80,6 @@
   if (typeof updateLocalVideo === 'function') {
     const baseUpdateLocalVideo = updateLocalVideo;
 
-    // Auto-focus should react to another person's share, not our own static
-    // self-share status card. This keeps friends visible while we are sharing.
     if (typeof applyFocusSharing === 'function') {
       applyFocusSharing = function applyFocusSharingCloudSafe() {
         const remoteShare = !![...state.voice.peers.values()].find(p => p.mediaState?.screen);
@@ -99,9 +97,7 @@
       if (!card) return baseUpdateLocalVideo();
 
       const placeholder = card.querySelector('.video-placeholder');
-      if (placeholder && !placeholder.dataset.originalHtml) {
-        placeholder.dataset.originalHtml = placeholder.innerHTML;
-      }
+      if (placeholder && !placeholder.dataset.originalHtml) placeholder.dataset.originalHtml = placeholder.innerHTML;
 
       if (!state?.voice?.screen) {
         card.classList.remove('self-share-safe');
@@ -112,13 +108,11 @@
       const video = card.querySelector('video');
       const expand = card.querySelector('.expand-btn');
       const label = card.querySelector('.video-label');
-
       if (video) {
         try { video.pause(); } catch {}
         video.srcObject = null;
         video.style.display = 'none';
       }
-
       if (placeholder) {
         placeholder.style.display = 'grid';
         placeholder.innerHTML = `
@@ -128,7 +122,6 @@
             <small>A prévia local foi pausada para evitar efeito espelho, zoom recursivo e uso desnecessário de GPU. Seus amigos continuam recebendo a transmissão normalmente.</small>
           </div>`;
       }
-
       expand?.classList.add('hidden');
       card.classList.add('is-sharing', 'self-share-safe');
       if (label) label.textContent = 'Você · compartilhando tela';
@@ -136,8 +129,6 @@
     };
   }
 
-  // Keep legacy peer join/leave handling, but route the sound through the new
-  // per-category notification preferences.
   try {
     state.ui.joinLeaveSounds = storageBool('soundPeople', state.ui.joinLeaveSounds !== false);
     localStorage.setItem('banana.joinLeaveSounds', String(state.ui.joinLeaveSounds));
@@ -154,9 +145,7 @@
     toggleMute = function toggleMuteWithSound(...args) {
       const before = !!state.voice?.muted;
       const result = baseToggleMute(...args);
-      if (state.voice?.channelId && before !== !!state.voice.muted && soundEnabled('soundMute')) {
-        playNotificationTone(state.voice.muted ? 'mute' : 'unmute');
-      }
+      if (state.voice?.channelId && before !== !!state.voice.muted && soundEnabled('soundMute')) playNotificationTone(state.voice.muted ? 'mute' : 'unmute');
       return result;
     };
   }
@@ -165,9 +154,7 @@
     toggleDeafen = function toggleDeafenWithSound(...args) {
       const before = !!state.voice?.deafened;
       const result = baseToggleDeafen(...args);
-      if (state.voice?.channelId && before !== !!state.voice.deafened && soundEnabled('soundDeafen')) {
-        playNotificationTone(state.voice.deafened ? 'deafen' : 'undeafen');
-      }
+      if (state.voice?.channelId && before !== !!state.voice.deafened && soundEnabled('soundDeafen')) playNotificationTone(state.voice.deafened ? 'deafen' : 'undeafen');
       return result;
     };
   }
@@ -189,8 +176,6 @@
       return result;
     };
   }
-  // hangupBtn registered the original function reference before this runtime patch.
-  // Capture the click and verify the final state after the original listener runs.
   els?.hangupBtn?.addEventListener('click', () => {
     const wasConnected = !!state.voice?.channelId;
     if (!wasConnected) return;
@@ -199,14 +184,10 @@
     }, 80);
   }, true);
 
-  // DM notifications already pass through toast(), so this adds sound without
-  // touching the mature message listener.
   if (typeof toast === 'function') {
     const baseToast = toast;
     toast = function toastWithNotificationSound(message, ...args) {
-      if (/^Nova mensagem de\b/i.test(String(message || '')) && soundEnabled('soundDm')) {
-        playNotificationTone('dm');
-      }
+      if (/^Nova mensagem de\b/i.test(String(message || '')) && soundEnabled('soundDm')) playNotificationTone('dm');
       return baseToast(message, ...args);
     };
   }
@@ -223,9 +204,7 @@
     const updates = document.getElementById('tabUpdates');
     if (updates) navList.insertBefore(button, updates); else navList.appendChild(button);
 
-    for (const existing of navList.querySelectorAll('.settings-nav-item:not(#tabNotifications)')) {
-      existing.addEventListener('click', () => button.classList.remove('active'), true);
-    }
+    for (const existing of navList.querySelectorAll('.settings-nav-item:not(#tabNotifications)')) existing.addEventListener('click', () => button.classList.remove('active'), true);
 
     const current = () => ({
       master: storageBool('soundMaster', true),
@@ -278,15 +257,30 @@
         toast('Configurações de notificações salvas.');
       });
     };
-
     button.addEventListener('click', showNotifications);
+  }
+
+  // The profile gear registered the original openSettings function before this
+  // Cloud runtime patch loaded. Observe the modal so the tab is injected for
+  // that direct handler as well as for any future settings entry point.
+  const modalBody = document.getElementById('modalBody');
+  if (modalBody) {
+    let settingsInjectionQueued = false;
+    new MutationObserver(() => {
+      if (settingsInjectionQueued) return;
+      settingsInjectionQueued = true;
+      queueMicrotask(() => {
+        settingsInjectionQueued = false;
+        if (modalBody.querySelector('.settings-shell')) installNotificationSettingsTab();
+      });
+    }).observe(modalBody, { childList: true, subtree: true });
   }
 
   if (typeof openSettings === 'function') {
     const baseOpenSettings = openSettings;
     openSettings = function openSettingsWithNotifications(...args) {
       const result = baseOpenSettings(...args);
-      installNotificationSettingsTab();
+      queueMicrotask(installNotificationSettingsTab);
       return result;
     };
   }
