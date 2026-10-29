@@ -41,11 +41,16 @@
     return true;
   }
 
-  const tryPatch = () => patchSocket(window.BananaCloudSocket);
-  tryPatch();
-  window.addEventListener('banana:cloud-ready', () => setTimeout(tryPatch, 0));
-  const timer = setInterval(() => {
-    if (tryPatch()) clearInterval(timer);
-  }, 100);
-  setTimeout(() => clearInterval(timer), 20000);
+  // Patch an already attached Cloud socket.
+  patchSocket(window.BananaCloudSocket);
+
+  // More importantly, patch every future socket before the legacy UI starts using it.
+  // This also covers users who stay on the login screen for a long time before signing in.
+  if (window.BananaLegacy?.attachSocket) {
+    const originalAttachSocket = window.BananaLegacy.attachSocket;
+    window.BananaLegacy.attachSocket = function attachSocketV205(socket, user) {
+      patchSocket(socket);
+      return originalAttachSocket(socket, user);
+    };
+  }
 })();
