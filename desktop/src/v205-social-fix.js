@@ -17,8 +17,7 @@
 
     // A direct getDoc() on an absent relationship is denied by the current rules
     // because the read rule inspects resource.data.participants. Querying the
-    // caller's own relationship set is both rule-compatible and does not expose
-    // other users' relationship documents.
+    // caller's own relationship set is rule-compatible and private to that user.
     socket.relation = async function relationV205(otherUid) {
       const rid = pairId(this.user.uid, otherUid);
       const q = fsQuery(
@@ -48,7 +47,6 @@
       await this.emitSocial().catch(() => {});
     };
 
-    // Keep a normalized searchable name on the caller's own public profile.
     async function refreshSearchName() {
       const name = String(socket.user?.displayName || '').trim();
       if (!name) return;
@@ -80,7 +78,6 @@
         where('searchName', '==', normalized),
         limit(20)
       ));
-      // Compatibility for accounts that have not yet reopened on 2.0.5.
       if (snap.empty) {
         snap = await getDocs(fsQuery(
           collection(this.db, 'publicProfiles'),
@@ -104,6 +101,11 @@
         ack?.({ ok: true, users });
         return;
       }
+      if (event === 'friend:request') {
+        await this.friendRequest(payload.userId);
+        ack?.({ ok: true });
+        return;
+      }
       return originalHandle(event, payload, ack);
     };
 
@@ -111,11 +113,14 @@
   }
 
   window.BananaV205PatchSocialSocket = patchSocket;
-  const tryPatch = () => patchSocket(window.BananaCloudSocket);
-  tryPatch();
-  window.addEventListener('banana:cloud-ready', () => setTimeout(tryPatch, 0));
-  const timer = setInterval(() => {
-    if (tryPatch()) clearInterval(timer);
-  }, 100);
-  setTimeout(() => clearInterval(timer), 20000);
+  patchSocket(window.BananaCloudSocket);
+
+  // Cover login/relogin even if the user sits on the auth screen for a long time.
+  if (window.BananaLegacy?.attachSocket) {
+    const originalAttachSocket = window.BananaLegacy.attachSocket;
+    window.BananaLegacy.attachSocket = function attachSocketSocialV205(socket, user) {
+      patchSocket(socket);
+      return originalAttachSocket(socket, user);
+    };
+  }
 })();
