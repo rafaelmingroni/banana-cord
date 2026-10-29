@@ -26,7 +26,8 @@ assert(index.includes('v110.js') && index.includes('v120.js'), 'v1.1 and v1.2 re
 assert(index.indexOf('v101-fix.js') < index.indexOf('v1.js'), 'stability guard must load before v1.js');
 assert(index.indexOf('v110.js') < index.indexOf('v120.js'), 'v1.2 renderer must load after v1.1');
 assert(hotfix.includes("this.matches('.version-label, .settings-nav-foot, .setup .brand p b')"), 'version recursion guard missing');
-assert(hotfix.includes('current === String(value)'), 'same-value textContent guard missing');
+assert(hotfix.includes('normalizedVersionText') && hotfix.includes('current === next'), 'cloud-aware same-value textContent guard missing');
+assert(hotfix.includes("return 'Banana Cord v2 Cloud Preview'") && hotfix.includes("return 'v2 Cloud Preview'"), 'cloud version normalization missing');
 assert(!hotfix.includes("VERSION = '1.1.1'"), 'stability guard must not pin an old version');
 assert(tray.includes('banana-tray.png'), 'dedicated tray icon missing');
 assert(index.includes('ABCD-EFGH'), 'short invite compatibility missing');
