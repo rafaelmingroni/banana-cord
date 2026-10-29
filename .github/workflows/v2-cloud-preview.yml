@@ -72,3 +72,11 @@ jobs:
           if (-not $exe) { Write-Error "V2 preview installer was not generated."; exit 1 }
           if ($exe.Length -lt 50000000) { Write-Error "V2 preview installer is unexpectedly small."; exit 1 }
           Write-Host "Banana Cord V2 preview installer OK: $($exe.Name)"
+
+      - name: Upload V2 preview installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Banana-Cord-V2-Cloud-Preview
+          path: desktop/dist/Banana-Cord-Setup-2.0.0-cloud.1-*.exe
+          if-no-files-found: error
+          retention-days: 7
