@@ -1,0 +1,30 @@
+  socket.on('voice:user-joined',async({socketId,user,mediaState})=>{if(state.voice.channelId&&!state.voice.peers.has(socketId))await createPeer(socketId,user,false,mediaState||{});updateVoiceUI();emitMediaState()});
+  socket.on('voice:user-left',({socketId})=>removePeer(socketId));
+  socket.on('voice:media-state',({socketId,mediaState})=>updatePeerMediaState(socketId,mediaState||{}));
+  socket.on('voice:speaking',({socketId,speaking})=>{const p=state.voice.peers.get(socketId);if(!p)return;p.speaking=!!speaking;setCardSpeaking(`video-${socketId}`,p.speaking&&!p.mediaState?.muted)});
+  socket.on('webrtc:signal',async({fromSocketId,fromUser,data})=>handleSignal(fromSocketId,fromUser,data));
+}
+
+function updatePresenceUser(u){for(const arr of state.voicePresence.values())for(const e of arr)if(e.user?.id===u.id)e.user={...e.user,...u};for(const p of state.voice.peers.values())if(p.user?.id===u.id){p.user={...p.user,...u};addRemoteCard(p)}}
+function upsertServer(s){const i=state.servers.findIndex(x=>x.id===s.id);if(i>=0)state.servers[i]=s;else state.servers.push(s)}
+function showEmpty(){state.selectedServer=null;state.selectedChannel=null;els.serverName.textContent='Banana Cord';els.channels.innerHTML='';els.memberList.innerHTML='';els.emptyView.classList.remove('hidden');els.textView.classList.add('hidden');els.voiceView.classList.add('hidden');els.inviteBtn.style.visibility='hidden';els.serverSettingsBtn.style.visibility='hidden'}
+function renderServers(){els.serverList.innerHTML='';for(const s of state.servers){const b=document.createElement('button');b.className='server-icon'+(state.selectedServer?.id===s.id?' active':'');b.title=s.name;b.textContent=s.name.trim().slice(0,2).toUpperCase();b.addEventListener('click',()=>selectServer(s.id));els.serverList.appendChild(b)}}
+function selectServer(id){if(state.voice.serverId&&state.voice.serverId!==id)leaveVoice();const s=state.servers.find(x=>x.id===id);if(!s)return;state.selectedServer=s;els.serverName.textContent=s.name;els.inviteBtn.style.visibility='visible';els.serverSettingsBtn.style.visibility='visible';state.voicePresence=new Map();renderServers();renderChannels();state.socket.emit('members:get',{serverId:s.id});const firstText=s.channels.find(c=>c.type==='text');if(firstText)selectChannel(firstText.id);else{els.emptyView.classList.remove('hidden');els.textView.classList.add('hidden');els.voiceView.classList.add('hidden')}}
+
+function renderChannels(){
+  const s=state.selectedServer;els.channels.innerHTML='';if(!s)return;const manage=can('moderator');
+  for(const type of ['text','voice']){
+    const wrap=document.createElement('div');wrap.className='channel-section';const title=document.createElement('div');title.className='channel-section-title';title.innerHTML=`<span>${type==='text'?'Canais de texto':'Canais de voz'}</span>`;
+    if(manage){const plus=document.createElement('button');plus.className='channel-add';plus.textContent='+';plus.title='Criar canal';plus.addEventListener('click',()=>channelModal(type));title.appendChild(plus)}wrap.appendChild(title);
+    for(const c of s.channels.filter(x=>x.type===type)){
+      const row=document.createElement('div');row.className='channel-row';row.dataset.channelId=c.id;row.draggable=manage;
+      const b=document.createElement('button');b.className='channel'+(state.selectedChannel?.id===c.id?' active':'');b.innerHTML=`<span class="symbol">${type==='text'?'#':'🔊'}</span><span>${escapeHtml(c.name)}</span>`;b.addEventListener('click',()=>selectChannel(c.id));row.appendChild(b);
+      if(manage){const actions=document.createElement('div');actions.className='channel-actions';const more=document.createElement('button');more.className='channel-more';more.title='Editar canal';more.textContent='⋯';more.addEventListener('click',e=>{e.stopPropagation();editChannelModal(c)});actions.appendChild(more);row.appendChild(actions);wireChannelDrag(row,c)}
+      wrap.appendChild(row);
+      if(type==='voice')renderVoiceUsers(wrap,c.id);
+    }
+    els.channels.appendChild(wrap);
+  }
+}
+function wireChannelDrag(row,c){row.addEventListener('dragstart',e=>{row.classList.add('dragging');e.dataTransfer.setData('text/plain',c.id);e.dataTransfer.effectAllowed='move'});row.addEventListener('dragend',()=>row.classList.remove('dragging'));row.addEventListener('dragover',e=>{e.preventDefault();row.classList.add('drag-over')});row.addEventListener('dragleave',()=>row.classList.remove('drag-over'));row.addEventListener('drop',e=>{e.preventDefault();row.classList.remove('drag-over');const from=e.dataTransfer.getData('text/plain');if(from&&from!==c.id)state.socket.emit('channel:reorder',{serverId:state.selectedServer.id,channelId:from,beforeId:c.id})})}
+function renderVoiceUsers(wrap,channelId){const entries=state.voicePresence.get(channelId)||[];if(!entries.length)return;const list=document.createElement('div');list.className='voice-user-list';for(const e of entries){const u=e.user||{name:'Amigo'};const row=document.createElement('div');row.className='voice-user-row'+(e.speaking&&!e.mediaState?.muted?' speaking':'')+(u.id===state.user?.id?' self':'');const av=document.createElement('div');av.className='avatar';avatarStyle(av,u);const nm=document.createElement('span');nm.className='voice-user-name';nm.textContent=u.name;const icons=document.createElement('span');icons.className='voice-user-icons';const peer=e.socketId?state.voice.peers.get(e.socketId):null;const latency=peer?.rtt!=null?`${peer.rtt}ms`:u.id===state.user?.id?(els.ping.textContent||''):'';icons.textContent=`${e.mediaState?.muted?'🔇':''}${e.mediaState?.camera?'📹':''}${e.mediaState?.screen?'🖥️':''}${latency?` · ${latency}`:''}`;row.append(av,nm,icons);row.title=`${u.name}${e.speaking?' está falando':''}`;row.addEventListener('click',()=>openMemberProfile(u.id));list.appendChild(row)}wrap.appendChild(list)}
