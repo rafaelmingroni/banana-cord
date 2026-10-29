@@ -7,7 +7,14 @@
 - Corrige a navegação entre servidores durante uma call: clicar em outro servidor não encerra mais a chamada ativa.
 - Permite continuar ouvindo/falando na call de um servidor enquanto o usuário consulta mensagens e canais de outro.
 - Sair da call continua acontecendo apenas ao desligar manualmente ou ao entrar em outro canal de voz.
-- Adiciona testes de regressão específicos para os dois comportamentos.
+- Corrige pedidos de amizade que podiam falhar com `missing or insufficient permissions` ao consultar uma relação que ainda não existia.
+- Corrige a primeira DM pelo mesmo problema de consulta de relação inexistente no Firestore.
+- Permite procurar usuários pelo nome e enviar solicitação de amizade sem precisar compartilhar um servidor.
+- Mantém DM disponível para amigos ou membros que compartilham servidor.
+- A tela “Nova mensagem” passa a incluir amigos aceitos mesmo quando eles não estão no servidor atualmente aberto.
+- Melhora o primeiro acesso: quando a conta ainda não tem servidores, mostra botões claros para “Criar ou entrar em um servidor” e “Adicionar amigo”.
+- Adiciona “Adicionar amigo” diretamente na área de mensagens privadas.
+- Adiciona testes de regressão para exclusão, navegação durante call, amizade, DM, busca de usuários e onboarding.
 
 ## 2.0.4
 - Corrige compartilhamento de tela que falhava em alguns notebooks Windows com “Não consegui compartilhar a tela”.
