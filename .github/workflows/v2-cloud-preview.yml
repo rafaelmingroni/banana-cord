@@ -24,6 +24,12 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Setup Java for Firebase emulators
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
       - name: Install dependencies
         working-directory: desktop
         run: npm install --no-audit --no-fund
@@ -48,12 +54,17 @@ jobs:
           node --check desktop/scripts/inject-firebase-config.js
           node --check desktop/scripts/smoke-cloud.js
           node --check desktop/scripts/smoke-cloud-parity.js
+          node --check desktop/scripts/smoke-firebase-rules.js
           node --check desktop/src/app.js
           node --check desktop/main-v120.js
 
       - name: Cloud foundation and parity tests
         working-directory: desktop
         run: npm run smoke:cloud
+
+      - name: Firebase security rules emulator tests
+        working-directory: desktop
+        run: npm run smoke:rules
 
       - name: Existing UI regression tests
         working-directory: desktop
