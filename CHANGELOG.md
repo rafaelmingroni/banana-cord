@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.1
+- Corrige a tela preta que podia ocorrer logo após criar uma conta nova em um PC limpo.
+- Evita a corrida de estado entre autenticação, atualização do perfil e envio do e-mail de verificação.
+- Mantém a tela de verificação de e-mail visível até o fluxo de cadastro terminar corretamente.
+- Adiciona fallback visual para erros de cadastro/verificação, impedindo que o gate de autenticação desapareça sem uma tela ativa.
+- Mantém as demais funções da V2.0.0 inalteradas.
+
 ## 2.0.0
 - Lançamento oficial do Banana Cord V2.
 - Substitui o modelo antigo de hospedagem por contas e servidores persistentes no Banana Cloud.
