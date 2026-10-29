@@ -2,7 +2,7 @@ name: Validate Banana Cord v2 Cloud Preview
 
 on:
   push:
-    branches: [v2-cloud-foundation, v2-cloud4-stabilization]
+    branches: [v2-cloud-foundation, v2-cloud4-stabilization, hotfix/v2.0.1-registration-black-screen]
     paths:
       - "desktop/**"
       - "firebase/**"
