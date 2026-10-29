@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob: https: http:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src * ws: wss:; media-src 'self' blob: data:;" />
+<title>Banana Cord</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="setup" class="setup">
+  <div class="setup-card">
+    <div class="brand"><div class="logo">🍌</div><div><h1>Banana Cord</h1><p>Seu Discord privado, só que mais leve. <b>v0.9</b></p></div></div>
+    <label>Seu nome</label>
+    <input id="setupName" maxlength="32" placeholder="Rafael" />
+    <div class="setup-actions">
+      <button id="hostBtn" class="primary">🍌 Hospedar meu Banana Cord</button>
+      <div class="divider"><span>ou</span></div>
+      <label>Convite ou endereço do Banana Cord</label>
+      <input id="setupInvite" placeholder="Cole aqui o convite que seu amigo enviou" />
+      <button id="connectBtn">Entrar no Banana Cord</button>
+    </div>
+    <div id="hostProgress" class="host-progress hidden"></div>
+    <details><summary>Conexão manual</summary><input id="setupUrl" value="http://localhost:3210" /><small>Útil apenas para testes ou rede local.</small></details>
+    <small class="hint">O host precisa manter o Banana Cord aberto para o grupo ficar online.</small>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <aside class="servers">
+    <button id="homeServer" class="server-icon active" title="Banana Cord">🍌</button>
+    <div id="serverList"></div>
+    <button id="addServerBtn" class="server-icon add" title="Criar ou entrar">+</button>
+  </aside>
+
+  <aside class="sidebar">
+    <div class="server-title">
+      <strong id="serverName">Banana Cord</strong>
+      <div class="server-actions"><button id="inviteBtn" class="icon-btn" title="Convidar">🔗</button><button id="serverSettingsBtn" class="icon-btn" title="Configurações do servidor">⚙</button></div>
+    </div>
+    <div id="channels" class="channels"></div>
+    <div class="voice-controls hidden" id="voiceControls">
+      <div class="voice-state"><span class="dot"></span><div><b>Voz conectada</b><small id="voiceChannelName">Geral</small></div></div>
+      <div class="control-row">
+        <button id="muteBtn" title="Microfone">🎤</button><button id="deafenBtn" title="Ensurdecer">🎧</button><button id="cameraBtn" title="Câmera">📹</button><button id="screenBtn" title="Compartilhar tela">🖥️</button><button id="hangupBtn" class="danger" title="Sair">📞</button>
+      </div>
+    </div>
+    <div class="profile-bar"><div id="myAvatar" class="avatar">?</div><div class="profile-text"><b id="myName">Usuário</b><small><span class="online-dot"></span> <span id="myStatusText">Online</span> · <span id="ping">-- ms</span></small></div><button id="profileBtn" class="icon-btn" title="Perfil e configurações">⚙️</button></div>
+  </aside>
+
+  <main class="main">
+    <header><span id="channelIcon">#</span><b id="channelName">geral</b><span id="channelDesc">Conversa do servidor</span><span id="connectionBadge" class="connection-badge">conectado</span><button id="updateBadge" class="update-badge hidden" title="Atualização do Banana Cord">⬇ Atualização</button></header>
+    <section id="emptyView" class="empty-view"><div class="big-banana">🍌</div><h2>Banana Cord</h2><p>Crie ou entre em um servidor pelo botão +.</p></section>
+    <section id="textView" class="text-view hidden"><div id="messages" class="messages"></div><form id="messageForm" class="composer"><input id="messageInput" autocomplete="off" maxlength="2000" placeholder="Mensagem" /><button>Enviar</button></form></section>
+    <section id="voiceView" class="voice-view hidden">
+      <div class="voice-top">
+        <div><h2 id="voiceTitle">Sala de voz</h2><p id="voiceSubtitle">Conecte-se para conversar.</p></div>
+        <div class="voice-top-actions"><button id="reconnectVoiceBtn" class="secondary-mini hidden" title="Reconectar chamada">↻ Reconectar</button><button id="hideCamsBtn" class="secondary-mini hidden" title="Ocultar webcams e focar compartilhamento">👁 Câmeras</button><button id="joinVoiceBtn">Entrar na voz</button></div>
+      </div>
+      <div id="videoGrid" class="video-grid"></div>
+    </section>
+  </main>
+
+  <aside class="members"><h3>Membros</h3><div id="memberList"></div></aside>
+</div>
+
+<div id="modal" class="modal hidden"><div class="modal-card"><button id="modalClose" class="modal-close">×</button><div id="modalBody"></div></div></div>
+<div id="toast" class="toast hidden"></div>
+<script src="app.js"></script>
+</body>
+</html>
