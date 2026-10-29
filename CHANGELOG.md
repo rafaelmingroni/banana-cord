@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.2
+- Corrige a tela preta após login/verificação quando o Firebase ainda usa um ID token antigo sem `email_verified=true`.
+- Força a renovação do token antes de iniciar o Banana Cloud e antes das leituras protegidas por regras do Firebase.
+- Impede que o app esconda a tela de autenticação antes de a interface principal realmente ficar pronta.
+- Adiciona recuperação visível com “Tentar novamente” e “Usar outra conta” caso o Cloud não conclua a inicialização.
+- Evita que erros `missing or insufficient permissions` deixem o usuário apenas com fundo preto.
+- Mantém as demais funções da V2.0.1 inalteradas.
+
 ## 2.0.1
 - Corrige a tela preta que podia ocorrer logo após criar uma conta nova em um PC limpo.
 - Evita a corrida de estado entre autenticação, atualização do perfil e envio do e-mail de verificação.
