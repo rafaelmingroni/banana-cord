@@ -6,7 +6,7 @@ app.commandLine.appendSwitch('disable-software-rasterizer');
 
 // The renderer asks these during startup in the real app. Stub them here so
 // the interaction test measures the UI flow, not missing test-harness IPC.
-ipcMain.handle('update:get-config', async () => ({ repoUrl: '', autoCheck: false, autoDownload: false, currentVersion: '2.0.0-cloud.4' }));
+ipcMain.handle('update:get-config', async () => ({ repoUrl: '', autoCheck: false, autoDownload: false, currentVersion: '2.0.0-cloud.6' }));
 ipcMain.handle('update:get-state', async () => ({ status: 'idle', progress: 0, message: '' }));
 ipcMain.handle('clipboard:write', async () => true);
 
@@ -142,8 +142,59 @@ app.whenReady().then(async () => {
           if (!tabLoopAlive) return { ok: false, reason: 'settings tab froze renderer: ' + tabId };
         }
 
+        // Regression: long settings pages (Audio / Video e tela) were visually
+        // clipped because the grid child could grow behind an overflow:hidden modal.
+        document.getElementById('tabVideo')?.click();
+        await sleep(80);
+        const settingsScroller = document.querySelector('.settings-content');
+        if (!settingsScroller) return { ok: false, reason: 'settings content scroller missing' };
+        const overflowY = getComputedStyle(settingsScroller).overflowY;
+        if (!['auto', 'scroll'].includes(overflowY)) {
+          return { ok: false, reason: 'settings content is not vertically scrollable' };
+        }
+        const scrollRange = settingsScroller.scrollHeight - settingsScroller.clientHeight;
+        if (scrollRange <= 0) return { ok: false, reason: 'video settings page has no usable scroll range' };
+        settingsScroller.scrollTop = scrollRange;
+        await sleep(30);
+        if (settingsScroller.scrollTop < Math.max(1, scrollRange - 2)) {
+          return { ok: false, reason: 'settings content cannot scroll to the bottom' };
+        }
+
         document.getElementById('modalClose')?.click();
         await sleep(30);
+
+        // Regression: rendering our own display capture inside the Banana Cord
+        // window creates a recursive hall-of-mirrors when that window is on the
+        // shared monitor. The local card must switch to a static safe preview.
+        if (typeof addLocalCard !== 'function' || typeof updateLocalVideo !== 'function') {
+          return { ok: false, reason: 'local video renderer unavailable' };
+        }
+        state.voice.screen = { getTracks: () => [], getAudioTracks: () => [], getVideoTracks: () => [] };
+        addLocalCard();
+        updateLocalVideo();
+        await sleep(20);
+        const localCard = document.getElementById('video-local');
+        const localVideo = localCard?.querySelector('video');
+        const localPlaceholder = localCard?.querySelector('.video-placeholder');
+        const localExpand = localCard?.querySelector('.expand-btn');
+        if (!localCard?.classList.contains('self-share-safe')) {
+          return { ok: false, reason: 'local screen share did not enter safe-preview mode' };
+        }
+        if (localVideo?.style.display !== 'none' || localVideo?.srcObject) {
+          return { ok: false, reason: 'local screen share is still being rendered recursively' };
+        }
+        if (!/compartilhando sua tela/i.test(localPlaceholder?.textContent || '')) {
+          return { ok: false, reason: 'safe self-share placeholder missing' };
+        }
+        if (localExpand && !localExpand.classList.contains('hidden')) {
+          return { ok: false, reason: 'local self-share fullscreen control must be disabled' };
+        }
+        state.voice.screen = null;
+        updateLocalVideo();
+        await sleep(20);
+        if (localCard.classList.contains('self-share-safe')) {
+          return { ok: false, reason: 'safe self-share mode did not reset after sharing stopped' };
+        }
 
         const plus = document.getElementById('addServerBtn');
         if (!plus) return { ok: false, reason: 'add server button missing' };
@@ -173,14 +224,22 @@ app.whenReady().then(async () => {
         if (!serverVisible) return { ok: false, reason: 'created server did not render in server rail' };
         if (!channelsText.includes('geral') || !channelsText.includes('Geral')) return { ok: false, reason: 'default text/voice channels did not render' };
 
-        return { ok: true, emitted: emitted.map(x => x.event), channelsText, settingsVersion: versionFoot, settingsTabs };
+        return {
+          ok: true,
+          emitted: emitted.map(x => x.event),
+          channelsText,
+          settingsVersion: versionFoot,
+          settingsTabs,
+          settingsScrollRange: scrollRange,
+          selfShareSafe: true
+        };
       })();
     `, true),
     new Promise(resolve => setTimeout(() => resolve({ ok: false, reason: 'renderer interaction timeout' }), 10000))
   ]);
 
   if (!result?.ok) return fail(result?.reason || 'unknown renderer failure');
-  console.log('Banana Cord V2 Electron server/settings interaction test: OK');
+  console.log('Banana Cord V2 Electron server/settings/self-share interaction test: OK');
   console.log(JSON.stringify(result));
   try { win.destroy(); } catch {}
   finish(0);
