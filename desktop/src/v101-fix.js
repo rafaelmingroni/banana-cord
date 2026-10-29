@@ -5,8 +5,8 @@
   function normalizedVersionText(node, value) {
     const raw = String(value);
     if (!window.BananaCloudMode || !node?.matches) return raw;
-    if (node.matches('.version-label')) return 'Banana Cord v2 Cloud Preview';
-    if (node.matches('.settings-nav-foot, .setup .brand p b')) return 'v2 Cloud Preview';
+    if (node.matches('.version-label')) return 'Banana Cord v2.0.0';
+    if (node.matches('.settings-nav-foot, .setup .brand p b')) return 'v2.0.0';
     return raw;
   }
 
