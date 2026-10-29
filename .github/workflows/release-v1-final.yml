@@ -1,0 +1,131 @@
+name: Release Banana Cord v1.0.0 post-beta
+
+on:
+  push:
+    branches: [v1-post-beta]
+    paths:
+      - ".github/workflows/release-v1-final.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: banana-cord-v1-final-release
+  cancel-in-progress: false
+
+jobs:
+  release-v1:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout v1 release candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Materialize exact v1 source blobs
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node desktop/scripts/materialize-v1.js
+
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Assemble source
+        working-directory: desktop
+        run: npm run prepare:source
+
+      - name: Validate JavaScript
+        shell: pwsh
+        run: |
+          node --check desktop/updater-prompt.js
+          node --check desktop/tray.js
+          node --check desktop/main.js
+          node --check desktop/server/server.js
+          node --check desktop/src/app.js
+          node --check desktop/src/v1.js
+          node --check desktop/scripts/smoke-v1.js
+
+      - name: Run v1 two-user smoke test
+        working-directory: desktop
+        run: npm run smoke:v1
+
+      - name: Validate post-beta package
+        shell: pwsh
+        run: |
+          $pkg = Get-Content desktop/package.json | ConvertFrom-Json
+          if ($pkg.version -ne "1.0.0") { throw "Expected Banana Cord 1.0.0" }
+          if ($pkg.main -ne "updater-prompt.js") { throw "Updater entrypoint missing" }
+          if (-not (Test-Path desktop/tray.js)) { throw "Tray module missing" }
+          if (-not ((Get-Content desktop/src/index.html -Raw).Contains("v1.js"))) { throw "index.html does not load v1.js" }
+          if (-not ((Get-Content desktop/src/index.html -Raw).Contains("v1.css"))) { throw "index.html does not load v1.css" }
+
+      - name: Build Windows v1 installer
+        working-directory: desktop
+        run: npm run dist:win
+
+      - name: Verify updater assets
+        shell: pwsh
+        run: |
+          $exe = "desktop/dist/Banana-Cord-Setup-1.0.0-x64.exe"
+          $blockmap = "$exe.blockmap"
+          $latest = "desktop/dist/latest.yml"
+          if (-not (Test-Path $exe)) { throw "Installer missing" }
+          if (-not (Test-Path $blockmap)) { throw "Blockmap missing" }
+          if (-not (Test-Path $latest)) { throw "latest.yml missing" }
+          if ((Get-Item $exe).Length -lt 50000000) { throw "Installer looks unexpectedly small" }
+          Write-Host "All Banana Cord v1 updater assets verified."
+
+      - name: Commit validated v1 source locally
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if (-not (git diff --cached --quiet)) {
+            git commit -m "Banana Cord v1.0.0 post-beta"
+          }
+
+      - name: Promote validated v1 to main
+        shell: pwsh
+        run: |
+          git fetch origin main --tags
+          git merge-base --is-ancestor origin/main HEAD
+          if ($LASTEXITCODE -ne 0) { throw "main is not an ancestor of the validated v1 candidate" }
+          git push origin HEAD:main
+
+      - name: Create v1 tag and publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git tag -f v1.0.0 HEAD
+          git push origin refs/tags/v1.0.0 --force
+          $exe = "desktop/dist/Banana-Cord-Setup-1.0.0-x64.exe"
+          $blockmap = "$exe.blockmap"
+          $latest = "desktop/dist/latest.yml"
+          gh release view v1.0.0 *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload v1.0.0 $exe $blockmap $latest --clobber
+          } else {
+            gh release create v1.0.0 $exe $blockmap $latest --title "Banana Cord v1.0.0 - Pós-beta" --notes "Primeiro grande lançamento pós-beta do Banana Cord. Inclui mensagens completas, amizades e bloqueios, servidor personalizável, categorias e canais privados, melhorias de DM, duplo clique em calls e comportamento de bandeja para manter o app/host ativo ao fechar a janela."
+          }
+
+      - name: Verify published v1 release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $release = gh api repos/$env:GITHUB_REPOSITORY/releases/tags/v1.0.0 | ConvertFrom-Json
+          $names = @($release.assets | ForEach-Object { $_.name })
+          if (-not ($names -contains "Banana-Cord-Setup-1.0.0-x64.exe")) { throw "Published exe missing" }
+          if (-not ($names -contains "Banana-Cord-Setup-1.0.0-x64.exe.blockmap")) { throw "Published blockmap missing" }
+          if (-not ($names -contains "latest.yml")) { throw "Published latest.yml missing" }
+          Write-Host "Banana Cord v1.0.0 post-beta release is complete."
