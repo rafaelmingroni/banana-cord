@@ -69,7 +69,7 @@ jobs:
 
       - name: Build Windows v1 installer
         working-directory: desktop
-        run: npm run dist:win
+        run: npm run dist:win -- --publish never
 
       - name: Verify updater assets
         shell: pwsh
