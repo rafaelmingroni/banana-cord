@@ -16,7 +16,7 @@
     "smoke:v1": "node scripts/smoke-v1.js",
     "smoke:ui": "node scripts/smoke-ui.js",
     "smoke:rendezvous": "node scripts/smoke-rendezvous.js",
-    "smoke:cloud": "node scripts/smoke-cloud.js"
+    "smoke:cloud": "node scripts/smoke-cloud.js && node scripts/smoke-cloud-ui.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
