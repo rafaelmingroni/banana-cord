@@ -4,7 +4,7 @@
 
 Banana Cord é um aplicativo leve e privado para um grupo pequeno de amigos, inspirado na simplicidade do Discord: servidores privados, canais de texto, canais de voz, webcam e compartilhamento de tela, sem recursos pesados que não fazem falta para um grupo pequeno.
 
-Versão atual: **0.9.0**.
+Versão atual: **0.10.0**.
 
 ## Recursos
 
@@ -23,6 +23,11 @@ Versão atual: **0.9.0**.
 - Reconexão de voz e diagnóstico WebRTC
 - Host local com Cloudflare Quick Tunnel automático
 - Atualização automática pelo GitHub Releases
+- Mensagens privadas entre membros que compartilham um servidor
+- Lista de conversas recentes e badge leve de não lidas
+- Configurações redesenhadas com layout mais limpo
+- Teste de microfone por gravação e reprodução da própria voz
+- Identidade visual da banana aplicada ao executável, instalador, atalho e janela
 
 ## Atualizações automáticas
 

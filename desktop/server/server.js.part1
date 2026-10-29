@@ -1,0 +1,213 @@
+const express = require('express');
+const http = require('http');
+const cors = require('cors');
+const { Server } = require('socket.io');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
+const VERSION = '0.10.0';
+const ROLE_RANK = { member: 0, moderator: 1, admin: 2, owner: 3 };
+const VALID_ROLES = new Set(Object.keys(ROLE_RANK));
+
+function uid(prefix = '') { return prefix + crypto.randomBytes(8).toString('hex'); }
+function inviteCode() { return crypto.randomBytes(4).toString('hex').toUpperCase(); }
+function now() { return Date.now(); }
+function safeRole(v) { return VALID_ROLES.has(v) ? v : 'member'; }
+
+async function startBananaServer({ port = 3210, dataFile }) {
+  const DATA_FILE = dataFile || path.join(__dirname, 'data.json');
+  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+
+  function normalizeServer(s) {
+    s.members = Array.isArray(s.members) ? [...new Set(s.members)] : [];
+    s.channels = Array.isArray(s.channels) ? s.channels : [];
+    s.memberRoles = s.memberRoles && typeof s.memberRoles === 'object' ? s.memberRoles : {};
+    for (const id of s.members) s.memberRoles[id] = safeRole(s.memberRoles[id]);
+    if (s.ownerId) {
+      if (!s.members.includes(s.ownerId)) s.members.unshift(s.ownerId);
+      s.memberRoles[s.ownerId] = 'owner';
+    }
+    return s;
+  }
+
+  function load() {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+      const next = { users: parsed.users || {}, servers: parsed.servers || {}, messages: parsed.messages || {}, dms: parsed.dms || {} };
+      for (const s of Object.values(next.servers)) normalizeServer(s);
+      return next;
+    } catch {
+      return { users: {}, servers: {}, messages: {}, dms: {} };
+    }
+  }
+
+  let db = load();
+  let saveTimer = null;
+  function saveSoon() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2)); }
+      catch (e) { console.error('Banana Cord save error', e); }
+    }, 120);
+  }
+
+  function publicUser(user) {
+    if (!user) return null;
+    return {
+      id: user.id,
+      name: user.name,
+      avatar: user.avatar || '',
+      status: user.status || 'offline',
+      lastSeen: user.lastSeen || null
+    };
+  }
+
+  function publicServer(s) {
+    normalizeServer(s);
+    return {
+      id: s.id,
+      name: s.name,
+      ownerId: s.ownerId,
+      inviteCode: s.inviteCode,
+      members: s.members,
+      memberRoles: s.memberRoles,
+      channels: s.channels
+    };
+  }
+
+  function getUserServers(userId) {
+    return Object.values(db.servers).filter(s => s.members.includes(userId)).map(publicServer);
+  }
+
+  function membership(socket, serverId) {
+    const s = db.servers[serverId];
+    return !!(s && socket.data.userId && s.members.includes(socket.data.userId));
+  }
+
+  function roleFor(s, userId) {
+    if (!s || !userId) return 'member';
+    if (s.ownerId === userId) return 'owner';
+    return safeRole(s.memberRoles?.[userId]);
+  }
+
+  function hasRole(socket, serverId, minimum) {
+    const s = db.servers[serverId];
+    if (!s || !membership(socket, serverId)) return false;
+    return ROLE_RANK[roleFor(s, socket.data.userId)] >= ROLE_RANK[minimum];
+  }
+
+  function owner(socket, serverId) { return hasRole(socket, serverId, 'owner'); }
+  function canManageChannels(socket, serverId) { return hasRole(socket, serverId, 'moderator'); }
+  function canManageServer(socket, serverId) { return hasRole(socket, serverId, 'admin'); }
+
+  function broadcastServer(serverId) {
+    const s = db.servers[serverId];
+    if (s) io.to(`server:${serverId}`).emit('server:updated', publicServer(s));
+  }
+
+  function broadcastMembers(serverId) {
+    const s = db.servers[serverId];
+    if (!s) return;
+    const members = s.members.map(id => ({
+      ...publicUser(db.users[id] || { id, name: 'Usuário', status: 'offline' }),
+      role: roleFor(s, id)
+    }));
+    io.to(`server:${serverId}`).emit('members:list', { serverId, members });
+  }
+
+  function voiceRoom(serverId, channelId) { return `voice:${serverId}:${channelId}`; }
+
+  function dmKey(a, b) {
+    return [String(a || ''), String(b || '')].sort().join('::');
+  }
+
+  function usersShareServer(a, b) {
+    if (!a || !b || a === b) return false;
+    return Object.values(db.servers).some(s => s.members.includes(a) && s.members.includes(b));
+  }
+
+  function dmConversations(userId) {
+    const rows = [];
+    for (const [key, messages] of Object.entries(db.dms || {})) {
+      const ids = key.split('::');
+      if (!ids.includes(userId) || !Array.isArray(messages) || !messages.length) continue;
+      const peerId = ids.find(id => id !== userId);
+      if (!peerId || !db.users[peerId] || !usersShareServer(userId, peerId)) continue;
+      const last = messages[messages.length - 1];
+      rows.push({ user: publicUser(db.users[peerId]), lastMessage: last });
+    }
+    rows.sort((a, b) => Number(b.lastMessage?.at || 0) - Number(a.lastMessage?.at || 0));
+    return rows.slice(0, 50);
+  }
+
+  function emitDmConversations(userId) {
+    io.to(`user:${userId}`).emit('dm:conversations', { conversations: dmConversations(userId) });
+  }
+
+  const app = express();
+  app.disable('x-powered-by');
+  app.use(cors());
+  app.use(express.json({ limit: '2mb' }));
+  app.get('/health', (_req, res) => res.json({ ok: true, name: 'Banana Cord', version: VERSION, at: now() }));
+
+  const server = http.createServer(app);
+  const io = new Server(server, {
+    cors: { origin: '*', methods: ['GET', 'POST'] },
+    maxHttpBufferSize: 2e6,
+    pingInterval: 10000,
+    pingTimeout: 15000
+  });
+
+  function emitVoiceSnapshot(serverId) {
+    const entries = [];
+    for (const sx of io.sockets.sockets.values()) {
+      if (sx.data.voiceServerId === serverId && sx.data.voiceChannelId && sx.data.userId) {
+        entries.push({
+          channelId: sx.data.voiceChannelId,
+          socketId: sx.id,
+          user: publicUser(db.users[sx.data.userId]),
+          mediaState: sx.data.mediaState || { muted: false, camera: false, screen: false },
+          speaking: !!sx.data.speaking
+        });
+      }
+    }
+    io.to(`server:${serverId}`).emit('voice:snapshot', { serverId, entries });
+  }
+
+  async function leaveVoice(socket) {
+    const room = socket.data.voiceRoom;
+    const serverId = socket.data.voiceServerId;
+    const channelId = socket.data.voiceChannelId;
+    if (!room) return;
+    socket.to(room).emit('voice:user-left', { socketId: socket.id, userId: socket.data.userId });
+    socket.leave(room);
+    socket.data.voiceRoom = null;
+    socket.data.voiceServerId = null;
+    socket.data.voiceChannelId = null;
+    socket.data.mediaState = { muted: false, camera: false, screen: false };
+    socket.data.speaking = false;
+    if (serverId) {
+      io.to(`server:${serverId}`).emit('voice:presence-event', { type: 'leave', userId: socket.data.userId, channelId });
+      emitVoiceSnapshot(serverId);
+    }
+  }
+
+  io.on('connection', socket => {
+    socket.on('auth:hello', payload => {
+      const id = String(payload?.deviceId || '').trim().slice(0, 128);
+      if (!id) return socket.emit('app:error', 'Identidade inválida.');
+      const name = String(payload?.name || 'Amigo').trim().slice(0, 32) || 'Amigo';
+      const avatar = String(payload?.avatar || '').slice(0, 1_500_000);
+      const requestedStatus = ['online', 'busy', 'away'].includes(payload?.status) ? payload.status : 'online';
+      db.users[id] = { ...(db.users[id] || {}), id, name, avatar, status: requestedStatus, lastSeen: now() };
+      socket.data.userId = id;
+      socket.join(`user:${id}`);
+      getUserServers(id).forEach(s => socket.join(`server:${s.id}`));
+      saveSoon();
+      socket.emit('auth:ready', { user: publicUser(db.users[id]), servers: getUserServers(id) });
+      socket.emit('dm:conversations', { conversations: dmConversations(id) });
+      for (const s of getUserServers(id)) emitVoiceSnapshot(s.id);
+      io.emit('presence:update', publicUser(db.users[id]));
+    });
+

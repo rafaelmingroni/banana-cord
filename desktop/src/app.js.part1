@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const $ = id => document.getElementById(id);
 const els = {
   setup:$('setup'),app:$('app'),setupName:$('setupName'),setupInvite:$('setupInvite'),setupUrl:$('setupUrl'),connectBtn:$('connectBtn'),hostBtn:$('hostBtn'),hostProgress:$('hostProgress'),
-  serverList:$('serverList'),addServerBtn:$('addServerBtn'),serverName:$('serverName'),inviteBtn:$('inviteBtn'),serverSettingsBtn:$('serverSettingsBtn'),channels:$('channels'),
+  homeServer:$('homeServer'),dmUnreadBadge:$('dmUnreadBadge'),serverList:$('serverList'),addServerBtn:$('addServerBtn'),serverName:$('serverName'),inviteBtn:$('inviteBtn'),serverSettingsBtn:$('serverSettingsBtn'),channels:$('channels'),
   myAvatar:$('myAvatar'),myName:$('myName'),myStatusText:$('myStatusText'),ping:$('ping'),profileBtn:$('profileBtn'),memberList:$('memberList'),
   channelIcon:$('channelIcon'),channelName:$('channelName'),channelDesc:$('channelDesc'),connectionBadge:$('connectionBadge'),updateBadge:$('updateBadge'),emptyView:$('emptyView'),textView:$('textView'),voiceView:$('voiceView'),
   messages:$('messages'),messageForm:$('messageForm'),messageInput:$('messageInput'),voiceTitle:$('voiceTitle'),voiceSubtitle:$('voiceSubtitle'),joinVoiceBtn:$('joinVoiceBtn'),videoGrid:$('videoGrid'),
@@ -24,7 +24,7 @@ let peerVolumes={};try{peerVolumes=JSON.parse(ls('peerVolumes','{}'))||{}}catch{
 const state={
   socket:null,readyOnce:false,
   deviceId:ls('deviceId')||crypto.randomUUID(),
-  user:null,servers:[],selectedServer:null,selectedChannel:null,members:new Map(),messagesByChannel:new Map(),voicePresence:new Map(),
+  user:null,servers:[],selectedServer:null,selectedChannel:null,members:new Map(),messagesByChannel:new Map(),voicePresence:new Map(),viewMode:'server',activeDmUserId:null,dmConversations:[],dmMessages:new Map(),dmUnread:new Set(),
   serverUrl:'',pendingInvite:'',isHost:false,publicHostUrl:'',
   media:{
     micId:ls('micId'),speakerId:ls('speakerId'),cameraId:ls('cameraId'),outputVolume:num('outputVolume',1),peerVolumes,
@@ -35,14 +35,14 @@ const state={
     status:ls('status','online'),joinLeaveSounds:bool('joinLeaveSounds',true),autoFocusShare:bool('autoFocusShare',true),showStats:bool('showStats',true),
     pttEnabled:bool('pttEnabled',false),pttKey:ls('pttKey','KeyV'),focusSharing:false,showAllOverride:false
   },
-  updates:{config:{repoUrl:'',autoCheck:true,autoDownload:true,currentVersion:'0.9.0'},state:{status:'idle',progress:0,message:''}},
+  updates:{config:{repoUrl:'',autoCheck:true,autoDownload:true,currentVersion:'0.10.0'},state:{status:'idle',progress:0,message:''}},
   voice:{channelId:null,serverId:null,localAudio:null,camera:null,screen:null,muted:false,deafened:false,speaking:false,pttHeld:false,peers:new Map(),statsTimer:null,vad:null,rejoinTimer:null}
 };
 localStorage.setItem('banana.deviceId',state.deviceId);
 els.setupName.value=ls('name');els.setupUrl.value=ls('serverUrl','http://localhost:3210');
 
 function toast(msg,ms=2800){els.toast.textContent=String(msg||'');els.toast.classList.remove('hidden');clearTimeout(toast.t);toast.t=setTimeout(()=>els.toast.classList.add('hidden'),ms)}
-function openModal(html){els.modalBody.innerHTML=html;els.modal.classList.remove('hidden')}
+function openModal(html){els.modal.querySelector('.modal-card')?.classList.remove('settings-modal');els.modalBody.innerHTML=html;els.modal.classList.remove('hidden')}
 function closeModal(){stopMicTest();stopCameraTest();els.modal.classList.add('hidden');els.modalBody.innerHTML=''}
 els.modalClose.addEventListener('click',closeModal);els.modal.addEventListener('click',e=>{if(e.target===els.modal)closeModal()});
 function escapeHtml(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -72,29 +72,3 @@ async function maybeAdoptUpdateRepo(repo){const incoming=String(repo||'').trim()
 
 async function hostBananaCord(){const name=els.setupName.value.trim();if(!name)return toast('Digite seu nome primeiro.');els.hostBtn.disabled=true;els.connectBtn.disabled=true;els.hostProgress.classList.remove('hidden');els.hostProgress.textContent='Iniciando o Banana Cord…';try{const info=await ipcRenderer.invoke('host:start');state.isHost=true;state.publicHostUrl=info.url||info.localUrl;els.setupUrl.value=info.localUrl||'http://127.0.0.1:3210';connectTo(info.localUrl||'http://127.0.0.1:3210',name,'')}catch(e){toast(e?.message||'Não consegui hospedar o Banana Cord.',5000);els.hostBtn.disabled=false;els.connectBtn.disabled=false}}
 async function connectFromSetup(){const name=els.setupName.value.trim();if(!name)return toast('Digite seu nome.');const parsed=parseInvite(els.setupInvite.value);let url,code='';if(parsed){url=parsed.url;code=parsed.code;if(parsed.updateRepo)await maybeAdoptUpdateRepo(parsed.updateRepo)}else url=els.setupUrl.value.trim().replace(/\/$/,'');if(!/^https?:\/\//i.test(url||''))return toast('Cole um convite válido ou informe o endereço do servidor.');connectTo(url,name,code)}
-function connectTo(url,name,pendingInvite=''){localStorage.setItem('banana.name',name);localStorage.setItem('banana.serverUrl',url);state.serverUrl=url;state.pendingInvite=pendingInvite;els.hostBtn.disabled=true;els.connectBtn.disabled=true;els.connectBtn.textContent='Conectando…';state.socket?.disconnect();const socket=io(url,{transports:['websocket','polling'],reconnection:true,reconnectionAttempts:Infinity,reconnectionDelay:700,reconnectionDelayMax:4000,timeout:10000});state.socket=socket;socket.on('connect',()=>{setConnection(true);socket.emit('auth:hello',{deviceId:state.deviceId,name,avatar:ls('avatar'),status:state.ui.status})});socket.on('disconnect',()=>setConnection(false));socket.on('connect_error',()=>{setConnection(false);els.hostBtn.disabled=false;els.connectBtn.disabled=false;els.connectBtn.textContent='Entrar no Banana Cord';toast('Não consegui conectar. Verifique se o host está com o Banana Cord aberto.',4000)});bindSocket(socket)}
-
-function bindSocket(socket){
-  socket.on('auth:ready',async data=>{
-    const wasReady=state.readyOnce;state.readyOnce=true;state.user=data.user;state.servers=data.servers||[];els.setup.classList.add('hidden');els.app.classList.remove('hidden');els.hostBtn.disabled=false;els.connectBtn.disabled=false;els.connectBtn.textContent='Entrar no Banana Cord';renderSelf();renderServers();startPing();
-    if(state.pendingInvite){const code=state.pendingInvite;state.pendingInvite='';socket.emit('server:join',{inviteCode:code})}
-    else if(!state.selectedServer&&state.servers[0])selectServer(state.servers[0].id);else if(state.selectedServer){state.selectedServer=state.servers.find(s=>s.id===state.selectedServer.id)||state.servers[0]||null;if(state.selectedServer){renderChannels();socket.emit('members:get',{serverId:state.selectedServer.id})}}
-    else if(!state.servers[0])showEmpty();
-    if(wasReady&&state.voice.channelId&&state.voice.localAudio)await rejoinVoiceTransport();
-  });
-  socket.on('app:error',m=>toast(m,4200));
-  socket.on('profile:updated',u=>{state.user=u;localStorage.setItem('banana.name',u.name);localStorage.setItem('banana.avatar',u.avatar||'');state.ui.status=u.status||state.ui.status;savePrefs();renderSelf();renderMembers();renderChannels()});
-  socket.on('server:created',s=>{upsertServer(s);renderServers();selectServer(s.id);closeModal();toast(`Servidor ${s.name} criado.`)});
-  socket.on('server:joined',s=>{upsertServer(s);renderServers();selectServer(s.id);closeModal();toast(`Você entrou em ${s.name}.`)});
-  socket.on('server:removed',({serverId})=>{state.servers=state.servers.filter(s=>s.id!==serverId);if(state.selectedServer?.id===serverId){state.selectedServer=null;showEmpty()}renderServers();toast('Você foi removido desse servidor.')});
-  socket.on('server:updated',s=>{upsertServer(s);if(state.selectedServer?.id===s.id){state.selectedServer=s;els.serverName.textContent=s.name;renderChannels();renderMembers()}renderServers()});
-  socket.on('members:list',({serverId,members})=>{if(state.selectedServer?.id!==serverId)return;state.members=new Map((members||[]).map(m=>[m.id,m]));renderMembers();renderMessages();renderChannels()});
-  socket.on('presence:update',u=>{if(state.members.has(u.id)){const old=state.members.get(u.id);state.members.set(u.id,{...old,...u});updatePresenceUser(u);renderMembers();renderMessages();renderChannels()}});
-  socket.on('voice:snapshot',({serverId,entries})=>{if(state.selectedServer?.id!==serverId)return;state.voicePresence=new Map();for(const e of entries||[]){const arr=state.voicePresence.get(e.channelId)||[];arr.push(e);state.voicePresence.set(e.channelId,arr)}renderChannels()});
-  socket.on('voice:speaking-global',({socketId,userId,channelId,speaking})=>{const arr=state.voicePresence.get(channelId)||[];const e=arr.find(x=>x.socketId===socketId||x.user?.id===userId);if(e)e.speaking=!!speaking;renderChannels()});
-  socket.on('voice:media-state-global',({socketId,userId,channelId,mediaState})=>{const arr=state.voicePresence.get(channelId)||[];const e=arr.find(x=>x.socketId===socketId||x.user?.id===userId);if(e)e.mediaState={...e.mediaState,...mediaState};renderChannels()});
-  socket.on('voice:presence-event',({type,userId,channelId})=>{if(userId===state.user?.id)return;if(state.voice.channelId===channelId&&state.ui.joinLeaveSounds)playEventTone(type)});
-  socket.on('messages:list',({channelId,messages})=>{state.messagesByChannel.set(channelId,messages||[]);if(state.selectedChannel?.id===channelId)renderMessages()});
-  socket.on('message:new',m=>{const arr=state.messagesByChannel.get(m.channelId)||[];arr.push(m);state.messagesByChannel.set(m.channelId,arr.slice(-150));if(state.selectedChannel?.id===m.channelId)renderMessages(true)});
-  socket.on('voice:full',()=>{cleanupVoice();toast('Essa sala já está com 5 pessoas.')});
-  socket.on('voice:peers',async({channelId,peers})=>{if(state.voice.channelId!==channelId)return;for(const p of peers)await createPeer(p.socketId,p.user,true,p.mediaState||{});updateVoiceUI();startPeerStats();emitMediaState()});

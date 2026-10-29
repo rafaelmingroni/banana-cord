@@ -1,7 +1,7 @@
 {
   "name": "banana-cord",
-  "version": "0.9.0",
-  "description": "Banana Cord v0.9 - chat privado leve com autoatualização, texto, voz, cargos, câmera e compartilhamento de tela",
+  "version": "0.10.0",
+  "description": "Banana Cord v0.10 - chat privado leve com DMs, áudio aprimorado, voz, cargos, câmera e compartilhamento de tela",
   "private": true,
   "main": "main.js",
   "author": "Rafael Mingroni",
@@ -42,7 +42,8 @@
     ],
     "asar": true,
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "assets/banana-cord.png"
     },
     "nsis": {
       "oneClick": false,

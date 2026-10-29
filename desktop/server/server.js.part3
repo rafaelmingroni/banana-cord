@@ -1,0 +1,163 @@
+      if (!s.channels.some(c => c.id === channelId && c.type === 'text')) return;
+      socket.emit('messages:list', { channelId, messages: (db.messages[channelId] || []).slice(-150) });
+    });
+
+    socket.on('message:send', payload => {
+      const { serverId, channelId } = payload || {};
+      if (!membership(socket, serverId)) return;
+      const text = String(payload?.text || '').trim().slice(0, 2000);
+      if (!text) return;
+      const s = db.servers[serverId];
+      if (!s.channels.some(c => c.id === channelId && c.type === 'text')) return;
+      const m = { id: uid('msg_'), channelId, authorId: socket.data.userId, text, at: now() };
+      db.messages[channelId] = db.messages[channelId] || [];
+      db.messages[channelId].push(m);
+      if (db.messages[channelId].length > 2000) db.messages[channelId] = db.messages[channelId].slice(-2000);
+      saveSoon();
+      io.to(`server:${serverId}`).emit('message:new', m);
+    });
+
+    socket.on('members:get', payload => {
+      const serverId = payload?.serverId;
+      if (!membership(socket, serverId)) return;
+      broadcastMembers(serverId);
+      emitVoiceSnapshot(serverId);
+    });
+
+
+    socket.on('dm:conversations:get', () => {
+      const userId = socket.data.userId;
+      if (!userId) return;
+      socket.emit('dm:conversations', { conversations: dmConversations(userId) });
+    });
+
+    socket.on('dm:load', payload => {
+      const userId = socket.data.userId;
+      const peerId = String(payload?.userId || '').trim();
+      if (!userId || !peerId || peerId === userId || !usersShareServer(userId, peerId)) {
+        return socket.emit('app:error', 'Só é possível conversar no privado com alguém de um servidor em comum.');
+      }
+      const messages = Array.isArray(db.dms[dmKey(userId, peerId)]) ? db.dms[dmKey(userId, peerId)] : [];
+      socket.emit('dm:list', { user: publicUser(db.users[peerId]), messages: messages.slice(-200) });
+    });
+
+    socket.on('dm:send', payload => {
+      const fromId = socket.data.userId;
+      const toId = String(payload?.userId || '').trim();
+      const text = String(payload?.text || '').trim().slice(0, 2000);
+      if (!fromId || !toId || toId === fromId || !text) return;
+      if (!usersShareServer(fromId, toId) || !db.users[toId]) {
+        return socket.emit('app:error', 'Só é possível conversar no privado com alguém de um servidor em comum.');
+      }
+      const key = dmKey(fromId, toId);
+      const message = { id: uid('dm_'), fromId, toId, text, at: now() };
+      db.dms[key] = Array.isArray(db.dms[key]) ? db.dms[key] : [];
+      db.dms[key].push(message);
+      if (db.dms[key].length > 1000) db.dms[key] = db.dms[key].slice(-1000);
+      saveSoon();
+      const payloadOut = { message, from: publicUser(db.users[fromId]), to: publicUser(db.users[toId]) };
+      io.to(`user:${fromId}`).emit('dm:new', payloadOut);
+      io.to(`user:${toId}`).emit('dm:new', payloadOut);
+      emitDmConversations(fromId);
+      emitDmConversations(toId);
+    });
+
+    socket.on('voice:join', async payload => {
+      const { serverId, channelId } = payload || {};
+      if (!membership(socket, serverId)) return;
+      const s = db.servers[serverId];
+      if (!s.channels.some(c => c.id === channelId && c.type === 'voice')) return;
+      if (socket.data.voiceRoom) await leaveVoice(socket);
+      const room = voiceRoom(serverId, channelId);
+      const sockets = await io.in(room).fetchSockets();
+      if (sockets.length >= 5) return socket.emit('voice:full', { channelId });
+      socket.data.voiceRoom = room;
+      socket.data.voiceServerId = serverId;
+      socket.data.voiceChannelId = channelId;
+      socket.data.speaking = false;
+      socket.join(room);
+      socket.data.mediaState = socket.data.mediaState || { muted: false, camera: false, screen: false };
+      const peers = sockets.map(sx => ({
+        socketId: sx.id,
+        user: publicUser(db.users[sx.data.userId]),
+        mediaState: sx.data.mediaState || { muted: false, camera: false, screen: false }
+      }));
+      socket.emit('voice:peers', { channelId, peers });
+      socket.to(room).emit('voice:user-joined', { socketId: socket.id, user: publicUser(db.users[socket.data.userId]), mediaState: socket.data.mediaState });
+      io.to(`server:${serverId}`).emit('voice:presence-event', { type: 'join', userId: socket.data.userId, channelId });
+      emitVoiceSnapshot(serverId);
+    });
+
+    socket.on('voice:leave', () => leaveVoice(socket));
+
+    socket.on('voice:media-state', payload => {
+      if (!socket.data.voiceRoom) return;
+      const mediaState = { muted: !!payload?.muted, camera: !!payload?.camera, screen: !!payload?.screen };
+      socket.data.mediaState = mediaState;
+      socket.to(socket.data.voiceRoom).emit('voice:media-state', { socketId: socket.id, mediaState });
+      if (socket.data.voiceServerId) {
+        io.to(`server:${socket.data.voiceServerId}`).emit('voice:media-state-global', {
+          socketId: socket.id,
+          userId: socket.data.userId,
+          channelId: socket.data.voiceChannelId,
+          mediaState
+        });
+      }
+    });
+
+    socket.on('voice:speaking', payload => {
+      if (!socket.data.voiceRoom) return;
+      socket.data.speaking = !!payload?.speaking;
+      socket.to(socket.data.voiceRoom).emit('voice:speaking', { socketId: socket.id, speaking: socket.data.speaking });
+      if (socket.data.voiceServerId) {
+        io.to(`server:${socket.data.voiceServerId}`).emit('voice:speaking-global', {
+          socketId: socket.id,
+          userId: socket.data.userId,
+          channelId: socket.data.voiceChannelId,
+          speaking: socket.data.speaking
+        });
+      }
+    });
+
+    socket.on('webrtc:signal', payload => {
+      const { targetSocketId, data } = payload || {};
+      if (!targetSocketId || !socket.data.voiceRoom) return;
+      const target = io.sockets.sockets.get(targetSocketId);
+      if (!target || target.data.voiceRoom !== socket.data.voiceRoom) return;
+      io.to(targetSocketId).emit('webrtc:signal', { fromSocketId: socket.id, fromUser: publicUser(db.users[socket.data.userId]), data });
+    });
+
+    socket.on('latency:ping', (stamp, cb) => cb?.(stamp));
+
+    socket.on('disconnect', async () => {
+      await leaveVoice(socket);
+      const id = socket.data.userId;
+      if (id && db.users[id]) {
+        const remaining = [...io.sockets.sockets.values()].some(s => s.data.userId === id && s.connected);
+        if (!remaining) {
+          db.users[id].status = 'offline';
+          db.users[id].lastSeen = now();
+          saveSoon();
+          io.emit('presence:update', publicUser(db.users[id]));
+          for (const s of getUserServers(id)) broadcastMembers(s.id);
+        }
+      }
+    });
+  });
+
+  return await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, '127.0.0.1', () => {
+      server.off('error', reject);
+      console.log(`Banana Cord ${VERSION} server listening on 127.0.0.1:${port}`);
+      resolve({ server, io, port, close: () => new Promise(r => io.close(() => server.close(() => r()))) });
+    });
+  });
+}
+
+module.exports = { startBananaServer };
+
+if (require.main === module) {
+  const dataFile = process.env.BANANA_DATA || path.join(__dirname, 'data.json');
+  startBananaServer({ port: Number(process.env.PORT || 3210), dataFile }).catch(err => { console.error(err); process.exit(1); });
+}
