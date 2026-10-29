@@ -132,6 +132,10 @@
 
   function patchSocket(socket) {
     if (!socket || socket.__bananaV207VoiceStreamPatched) return false;
+    // During Electron startup/tests BananaLegacy can briefly receive a transport-like
+    // socket before the complete Cloud voice socket is available. Never bind optional
+    // methods until the mature socket surface exists; attachSocket retries below.
+    if (typeof socket.receive !== 'function' || typeof socket.joinVoice !== 'function') return false;
     socket.__bananaV207VoiceStreamPatched = true;
     socket.__bananaV207VoiceDirectoryByServer ||= new Map();
 
@@ -283,8 +287,11 @@
   if (window.BananaLegacy?.attachSocket) {
     const previousAttachSocket = window.BananaLegacy.attachSocket;
     window.BananaLegacy.attachSocket = function attachSocketVoiceV207(socket, user) {
+      // Let the mature bridge bind its handlers/state first. A partial test/transport
+      // socket is allowed to pass through unmodified; the real Cloud socket patches here.
+      const result = previousAttachSocket(socket, user);
       patchSocket(socket);
-      return previousAttachSocket(socket, user);
+      return result;
     };
   }
 
