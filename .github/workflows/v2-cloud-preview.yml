@@ -43,12 +43,15 @@ jobs:
         run: |
           node --check desktop/src/cloud-v2.js
           node --check desktop/src/cloud-v2-auth-fix.js
+          node --check desktop/src/cloud-v2-socket.js
+          node --check desktop/src/cloud-v2-legacy-bridge.js
           node --check desktop/scripts/inject-firebase-config.js
           node --check desktop/scripts/smoke-cloud.js
+          node --check desktop/scripts/smoke-cloud-parity.js
           node --check desktop/src/app.js
           node --check desktop/main-v120.js
 
-      - name: Cloud foundation smoke test
+      - name: Cloud foundation and parity tests
         working-directory: desktop
         run: npm run smoke:cloud
 
@@ -77,6 +80,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Banana-Cord-V2-Cloud-Preview
-          path: desktop/dist/Banana-Cord-Setup-2.0.0-cloud.1-*.exe
+          path: desktop/dist/Banana-Cord-Setup-*.exe
           if-no-files-found: error
           retention-days: 7
