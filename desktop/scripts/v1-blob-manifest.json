@@ -1,6 +1,5 @@
 {
   "files": [
-    {"path":".github/workflows/release-windows.yml","sha":"9bddcc6d294486a7e5d9adbb9295a2b028de972b"},
     {"path":"desktop/package.json","sha":"549244a218f3b8e16fd81632f46e98bfe8db02b5"},
     {"path":"desktop/updater-prompt.js","sha":"a6b813a485616d9366e9fa33bd0061458e5a746c"},
     {"path":"desktop/tray.js","sha":"70c237e41ec180d1ae20de44b770d48516d9cc7c"},
