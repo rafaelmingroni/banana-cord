@@ -28,6 +28,13 @@ jobs:
         working-directory: desktop
         run: npm install --no-audit --no-fund
 
+      - name: Inject Firebase config when available
+        if: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON != '' }}
+        working-directory: desktop
+        env:
+          BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
+        run: node scripts/inject-firebase-config.js
+
       - name: Prepare source
         working-directory: desktop
         run: npm run prepare:source
@@ -36,6 +43,7 @@ jobs:
         shell: pwsh
         run: |
           node --check desktop/src/cloud-v2.js
+          node --check desktop/scripts/inject-firebase-config.js
           node --check desktop/scripts/smoke-cloud.js
           node --check desktop/src/app.js
           node --check desktop/main-v120.js
