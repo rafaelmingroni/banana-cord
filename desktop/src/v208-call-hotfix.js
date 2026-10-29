@@ -66,11 +66,11 @@
 
     socket.__bananaV208Patched = true;
 
-    // V2.0.6/2.0.7 used standalone require('firebase/database') wrappers around a
-    // Realtime Database instance created inside the Cloud browser bundle. Mixing those
-    // two SDK instances can produce `childPathObj.split is not a function` and prevent
-    // users from joining the same room. Mark those transport wrappers as already handled
-    // before their attach hooks run. V2.0.8 keeps the original bundled Cloud transport.
+    // V2.0.6/2.0.7 used standalone Firebase Database imports around a Realtime Database
+    // instance created inside the Cloud browser bundle. Mixing those SDK instances can
+    // produce `childPathObj.split is not a function` and prevent users from joining the
+    // same room. Mark those transport wrappers as already handled before their attach
+    // hooks run. V2.0.8 keeps the original bundled Cloud transport.
     socket.__bananaV206CallUpdatePatched = true;
     socket.__bananaV207VoiceStreamPatched = true;
 
