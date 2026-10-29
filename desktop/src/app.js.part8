@@ -1,0 +1,41 @@
+function updatePeerMediaState(socketId,mediaState){const p=state.voice.peers.get(socketId);if(!p)return;p.mediaState={...p.mediaState,...mediaState};addRemoteCard(p);applyFocusSharing()}
+async function playRemoteAudio(peer,audio,unlock){try{await audio.play();unlock?.classList.add('hidden')}catch{unlock?.classList.remove('hidden')}}
+function addRemoteCard(peer){let card=$(`video-${peer.socketId}`);if(!card){card=document.createElement('div');card.className='video-card';card.id=`video-${peer.socketId}`;card.innerHTML='<div class="video-placeholder"><div class="avatar-video"></div></div><video autoplay muted playsinline></video><audio class="remote-audio" autoplay></audio><button class="expand-btn hidden" title="Tela cheia">⛶</button><button class="pin-btn" title="Fixar">📌</button><button class="audio-unlock hidden">🔊 Ativar áudio</button><div class="video-label"></div><div class="peer-stats">conectando…</div><div class="connection-state"></div><div class="peer-volume"><span>🔊</span><input type="range" min="0" max="1" step="0.01"><small></small></div>';els.videoGrid.appendChild(card);wireExpand(card);avatarStyle(card.querySelector('.avatar-video'),peer.user);const slider=card.querySelector('.peer-volume input');slider.value=String(peerVolume(peer.user?.id||''));const out=card.querySelector('.peer-volume small');out.textContent=`${Math.round(Number(slider.value)*100)}%`;slider.addEventListener('input',async e=>{const v=Number(e.target.value);state.media.peerVolumes[peer.user?.id||peer.socketId]=v;savePrefs();out.textContent=`${Math.round(v*100)}%`;await applyOutputDevice(card.querySelector('audio.remote-audio'),peer.user?.id||peer.socketId)});card.querySelector('.audio-unlock').addEventListener('click',()=>playRemoteAudio(peer,card.querySelector('audio.remote-audio'),card.querySelector('.audio-unlock')))}avatarStyle(card.querySelector('.avatar-video'),peer.user);card.querySelector('.video-label').textContent=`${peer.user?.name||'Amigo'}${peer.mediaState?.screen?' · compartilhando tela':peer.mediaState?.muted?' · 🔇':''}`;card.querySelector('.connection-state').textContent=peer.pc.connectionState||'novo';card.classList.toggle('is-sharing',!!peer.mediaState?.screen);card.classList.toggle('speaking',!!peer.speaking&&!peer.mediaState?.muted);const video=card.querySelector('video'),ph=card.querySelector('.video-placeholder'),exp=card.querySelector('.expand-btn'),vTracks=peer.remoteStream.getVideoTracks().filter(t=>t.readyState==='live'),hv=vTracks.length>0;if(hv){const sig=vTracks.map(t=>t.id).join(',');if(video.dataset.sig!==sig){video.srcObject=new MediaStream(vTracks);video.dataset.sig=sig;video.play().catch(()=>{})}}else{video.srcObject=null;video.dataset.sig=''}video.style.display=hv?'block':'none';ph.style.display=hv?'none':'grid';exp.classList.toggle('hidden',!hv);const audio=card.querySelector('audio.remote-audio'),aTracks=peer.remoteStream.getAudioTracks().filter(t=>t.readyState==='live'),aSig=aTracks.map(t=>t.id).join(',');if(audio.dataset.sig!==aSig){audio.srcObject=aTracks.length?new MediaStream(aTracks):null;audio.dataset.sig=aSig}applyOutputDevice(audio,peer.user?.id||peer.socketId);if(aTracks.length)playRemoteAudio(peer,audio,card.querySelector('.audio-unlock'));refreshStatsVisibility();applyFocusSharing()}
+function removePeer(socketId){const p=state.voice.peers.get(socketId);if(!p)return;clearTimeout(p._disconnectTimer);try{p.pc.close()}catch{}state.voice.peers.delete(socketId);$(`video-${socketId}`)?.remove();updateVoiceUI()}
+function refreshStatsVisibility(){for(const el of document.querySelectorAll('.peer-stats,.connection-state'))el.classList.toggle('hidden',!state.ui.showStats)}
+function startPeerStats(){
+  clearInterval(state.voice.statsTimer);
+  state.voice.statsTimer=setInterval(async()=>{
+    let rerenderSidebar=false;
+    for(const p of state.voice.peers.values()){
+      try{
+        const reports=await p.pc.getStats();let rtt=null,lost=0,received=0,bytes=0,remoteVideoLoss=null,remoteVideoRtt=null;
+        reports.forEach(r=>{
+          if(r.type==='candidate-pair'&&r.state==='succeeded'&&r.currentRoundTripTime!=null)rtt=Math.round(r.currentRoundTripTime*1000);
+          if(r.type==='inbound-rtp'&&!r.isRemote){lost+=Math.max(0,r.packetsLost||0);received+=Math.max(0,r.packetsReceived||0);bytes+=Math.max(0,r.bytesReceived||0)}
+          if(r.type==='remote-inbound-rtp'&&(r.kind==='video'||r.mediaType==='video')){if(r.fractionLost!=null)remoteVideoLoss=r.fractionLost;if(r.roundTripTime!=null)remoteVideoRtt=r.roundTripTime}
+        });
+        const now=performance.now();let kbps=null;if(p._lastStatsAt&&bytes>=p._lastBytes)kbps=Math.round(((bytes-p._lastBytes)*8)/(now-p._lastStatsAt));p._lastBytes=bytes;p._lastStatsAt=now;const lossPct=(received+lost)>0?((lost/(received+lost))*100):0;
+        if(p.rtt!==rtt){p.rtt=rtt;rerenderSidebar=true}
+        const box=$(`video-${p.socketId}`)?.querySelector('.peer-stats');if(box)box.textContent=`${rtt!=null?rtt+' ms':'conectando'}${kbps!=null?` · ${kbps} kbps`:''}${lossPct>.4?` · ${lossPct.toFixed(1)}% perda`:''}`;
+        if(state.voice.screen&&state.media.streamPreset==='auto'){
+          let target=p._autoBitrate||5000000;
+          if((remoteVideoLoss!=null&&remoteVideoLoss>.05)||(remoteVideoRtt!=null&&remoteVideoRtt>.25))target=Math.max(2000000,Math.round(target*.78));
+          else if((remoteVideoLoss==null||remoteVideoLoss<.015)&&(remoteVideoRtt==null||remoteVideoRtt<.13))target=Math.min(6500000,Math.round(target*1.08));
+          if(Math.abs(target-(p._autoBitrate||0))>150000){p._autoBitrate=target;const sender=p.pc.getSenders().find(s=>s._bananaVideo);if(sender){try{const prm=sender.getParameters();prm.encodings=prm.encodings?.length?prm.encodings:[{}];prm.encodings[0].maxBitrate=target;prm.degradationPreference='balanced';await sender.setParameters(prm)}catch{}}}
+        }
+      }catch{}
+    }
+    if(rerenderSidebar)renderChannels();
+  },2500)
+}
+function playEventTone(type){try{const ctx=new AudioContext(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.frequency.value=type==='join'?620:390;gain.gain.setValueAtTime(.05,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.18);osc.connect(gain).connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.19);setTimeout(()=>ctx.close(),300)}catch{}}
+
+function isEditableTarget(t){return !!t?.closest?.('input,textarea,select,[contenteditable="true"]')}
+window.addEventListener('keydown',e=>{if(!state.voice.channelId)return;if(state.ui.pttEnabled&&e.code===state.ui.pttKey&&!isEditableTarget(e.target)){if(!state.voice.pttHeld){state.voice.pttHeld=true;applyMicTrackState();emitMediaState()}e.preventDefault()}});
+window.addEventListener('keyup',e=>{if(!state.voice.channelId)return;if(state.ui.pttEnabled&&e.code===state.ui.pttKey){state.voice.pttHeld=false;applyMicTrackState();emitMediaState();e.preventDefault()}});
+
+let pingTimer;function startPing(){clearInterval(pingTimer);pingTimer=setInterval(()=>{if(!state.socket?.connected){els.ping.textContent='offline';return}const sent=performance.now();state.socket.emit('latency:ping',Date.now(),()=>{els.ping.textContent=`${Math.round(performance.now()-sent)} ms`})},3000)}
+loadUpdateConfig();
+navigator.mediaDevices?.addEventListener?.('devicechange',()=>{if($('micSelect'))$('tabAudio')?.click?.()});
+window.addEventListener('beforeunload',()=>{try{if(state.voice.channelId)state.socket.emit('voice:leave')}catch{}});
