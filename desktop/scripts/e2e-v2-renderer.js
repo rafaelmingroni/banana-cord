@@ -6,7 +6,7 @@ app.commandLine.appendSwitch('disable-software-rasterizer');
 
 // The renderer asks these during startup in the real app. Stub them here so
 // the interaction test measures the UI flow, not missing test-harness IPC.
-ipcMain.handle('update:get-config', async () => ({ repoUrl: '', autoCheck: false, autoDownload: false, currentVersion: '2.0.0-cloud.3' }));
+ipcMain.handle('update:get-config', async () => ({ repoUrl: '', autoCheck: false, autoDownload: false, currentVersion: '2.0.0-cloud.4' }));
 ipcMain.handle('update:get-state', async () => ({ status: 'idle', progress: 0, message: '' }));
 ipcMain.handle('clipboard:write', async () => true);
 
