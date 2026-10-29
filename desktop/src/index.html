@@ -7,18 +7,19 @@
 <title>Banana Cord</title>
 <link rel="stylesheet" href="styles.css" />
 <link rel="stylesheet" href="v1.css" />
+<link rel="stylesheet" href="v110.css" />
 </head>
 <body>
 <div id="setup" class="setup">
   <div class="setup-card">
-    <div class="brand"><div class="logo">🍌</div><div><h1>Banana Cord</h1><p>Seu Discord privado, só que mais leve. <b>v1.0.1</b></p></div></div>
+    <div class="brand"><div class="logo"><img class="brand-logo-img" src="../assets/banana-cord.png" alt=""></div><div><h1>Banana Cord</h1><p>Privado, leve e feito para jogar. <b>v1.1.0</b></p></div></div>
     <label>Seu nome</label>
     <input id="setupName" maxlength="32" placeholder="Rafael" />
     <div class="setup-actions">
       <button id="hostBtn" class="primary">🍌 Hospedar meu Banana Cord</button>
       <div class="divider"><span>ou</span></div>
-      <label>Convite ou endereço do Banana Cord</label>
-      <input id="setupInvite" placeholder="Cole aqui o convite que seu amigo enviou" />
+      <label>Código de convite ou convite completo</label>
+      <input id="setupInvite" placeholder="Ex.: ABCD-EFGH" autocomplete="off" />
       <button id="connectBtn">Entrar no Banana Cord</button>
     </div>
     <div id="hostProgress" class="host-progress hidden"></div>
@@ -29,7 +30,7 @@
 
 <div id="app" class="app hidden">
   <aside class="servers">
-    <button id="homeServer" class="server-icon home-server active" title="Mensagens privadas"><span class="home-banana">🍌</span><span id="dmUnreadBadge" class="dm-unread-badge hidden">0</span></button>
+    <button id="homeServer" class="server-icon home-server active" title="Mensagens privadas"><img class="home-banana-img" src="../assets/banana-cord.png" alt="Banana Cord"><span id="dmUnreadBadge" class="dm-unread-badge hidden">0</span></button>
     <div id="serverList"></div>
     <button id="addServerBtn" class="server-icon add" title="Criar ou entrar">+</button>
   </aside>
@@ -51,7 +52,7 @@
 
   <main class="main">
     <header><span id="channelIcon">#</span><b id="channelName">geral</b><span id="channelDesc">Conversa do servidor</span><span id="connectionBadge" class="connection-badge">conectado</span><button id="updateBadge" class="update-badge hidden" title="Atualização do Banana Cord">⬇ Atualização</button></header>
-    <section id="emptyView" class="empty-view"><div class="big-banana">🍌</div><h2>Banana Cord</h2><p>Crie ou entre em um servidor pelo botão +.</p></section>
+    <section id="emptyView" class="empty-view"><img class="big-banana-img" src="../assets/banana-cord.png" alt=""><h2>Banana Cord</h2><p>Crie ou entre em um servidor pelo botão +.</p></section>
     <section id="textView" class="text-view hidden"><div id="messages" class="messages"></div><form id="messageForm" class="composer"><input id="messageInput" autocomplete="off" maxlength="2000" placeholder="Mensagem" /><button>Enviar</button></form></section>
     <section id="voiceView" class="voice-view hidden">
       <div class="voice-top">
@@ -70,5 +71,6 @@
 <script src="app.js"></script>
 <script src="v101-fix.js"></script>
 <script src="v1.js"></script>
+<script src="v110.js"></script>
 </body>
 </html>

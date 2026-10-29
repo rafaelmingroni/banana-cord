@@ -58,7 +58,8 @@ app.on('browser-window-created', (_event, win) => {
         tray.displayBalloon({
           title: 'Banana Cord continua aberto',
           content: 'A janela foi escondida. O app continua rodando na bandeja — inclusive o servidor, se você estiver hospedando.',
-          iconType: 'info'
+          iconType: 'info',
+          largeIcon: true
         });
       } catch {}
     }
@@ -71,17 +72,9 @@ app.on('second-instance', showWindow);
 app.whenReady().then(() => {
   app.setAppUserModelId('com.bananacord.app');
   try {
-    const raw = nativeImage.createFromPath(path.join(__dirname, 'assets', 'banana-cord.png'));
-    let icon = raw;
-    if (!raw.isEmpty()) {
-      const { width, height } = raw.getSize();
-      // O logo 512x512 tem bastante espaço vazio no topo. Para a bandeja,
-      // recortamos a área útil para a banana continuar legível em tamanho pequeno.
-      const cropSize = Math.max(1, Math.min(width, Math.round(height * 0.69)));
-      const x = Math.max(0, Math.round((width - cropSize) / 2));
-      const y = Math.max(0, Math.min(height - cropSize, Math.round(height * 0.29)));
-      icon = raw.crop({ x, y, width: cropSize, height: cropSize }).resize({ width: 20, height: 20, quality: 'best' });
-    }
+    const trayPath = path.join(__dirname, 'assets', 'banana-tray.png');
+    const raw = nativeImage.createFromPath(trayPath);
+    const icon = raw.isEmpty() ? raw : raw.resize({ width: 20, height: 20, quality: 'best' });
     tray = new Tray(icon);
     tray.setToolTip('Banana Cord');
     tray.on('click', showWindow);

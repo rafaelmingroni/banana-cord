@@ -1,0 +1,73 @@
+/* Banana Cord v1.1.0 — acabamento premium sem efeitos pesados. */
+:root{
+  --banana:#f7c928;
+  --banana-2:#ffdc56;
+  --banana-dark:#201400;
+  --premium-border:#34373d;
+  --premium-panel:#181a1e;
+  --premium-panel-2:#202329;
+}
+.brand-logo-img,.home-banana-img,.big-banana-img{display:block;object-fit:contain}
+.brand-logo-img{width:54px;height:54px;filter:drop-shadow(0 6px 12px #0007)}
+.home-banana-img{width:34px;height:34px}
+.big-banana-img{width:98px;height:98px;margin:0 auto 14px;filter:drop-shadow(0 10px 20px #0006)}
+.setup-card{
+  border:1px solid #2e3137;
+  box-shadow:0 22px 65px #0007;
+  background:linear-gradient(155deg,#1c1e22 0%,#15171a 66%);
+}
+.setup .brand{align-items:center}
+.setup .brand h1{letter-spacing:-.4px}
+.setup input:focus,.setup select:focus{
+  outline:none;
+  border-color:#77631d;
+  box-shadow:0 0 0 3px #f7c92818;
+}
+button{transition:transform .12s ease,border-color .12s ease,background-color .12s ease,opacity .12s ease}
+button:not(:disabled):active{transform:translateY(1px)}
+button.primary,.composer button,.action{
+  background:linear-gradient(180deg,var(--banana-2),var(--banana));
+  color:#17130a;
+  border-color:#e5b91a;
+  font-weight:800;
+}
+.server-icon.home-server{background:#191b1f;border:1px solid #2d3036}
+.server-icon.home-server:hover{border-color:#5a512a;background:#202126}
+.premium-invite{display:grid;gap:16px;min-width:min(520px,78vw)}
+.premium-invite-head{display:grid;gap:5px}
+.premium-invite-head h2{margin:0;font-size:24px;letter-spacing:-.35px}
+.premium-invite-head p{margin:0;color:#a7acb7}
+.premium-kicker{font-size:11px;font-weight:900;letter-spacing:1.3px;color:#d5b83e}
+.premium-code-card{
+  display:grid;gap:8px;padding:18px;border:1px solid #4a4225;border-radius:14px;
+  background:linear-gradient(145deg,#29250f,#1d1c17);
+}
+.premium-code-card>span{color:#c4b979;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.8px}
+.premium-code-card>strong{
+  font-size:32px;letter-spacing:3px;color:#ffe276;font-variant-numeric:tabular-nums;
+  user-select:all;
+}
+.premium-code-card>small,.temporary-invite-card small,.premium-invite-note{color:#969ca8}
+.premium-code-card button{justify-self:start;margin-top:4px}
+.temporary-invite-card{
+  display:grid;gap:12px;padding:15px;border-radius:12px;border:1px solid var(--premium-border);background:var(--premium-panel-2)
+}
+.temporary-invite-card>div:first-child{display:grid;gap:3px}
+.temporary-invite-row{display:grid;grid-template-columns:1fr auto;gap:9px}
+.temporary-invite-row select{min-width:0}
+.temporary-result{
+  display:grid;grid-template-columns:1fr auto;gap:5px 10px;align-items:center;padding:12px;border-radius:10px;background:#121417;border:1px solid #383c43
+}
+.temporary-result strong{font-size:20px;letter-spacing:2px;color:#f8d955}
+.temporary-result small{grid-column:1}
+.temporary-result button{grid-column:2;grid-row:1 / span 2}
+.legacy-invite{border-top:1px solid #30333a;padding-top:12px}
+.legacy-invite summary{cursor:pointer;color:#aeb3bd;font-weight:700}
+.legacy-invite .invite-box{margin:10px 0;max-height:100px;overflow:auto;font-size:11px}
+.premium-invite-warning{padding:12px;border:1px solid #725c24;background:#2d2715;border-radius:10px;color:#e9d58a}
+.premium-invite-note{font-size:12px;line-height:1.45;margin:0}
+.window-hidden *{animation-play-state:paused!important}
+@media (max-width:900px){
+  .premium-invite{min-width:0}
+  .premium-code-card>strong{font-size:25px}
+}

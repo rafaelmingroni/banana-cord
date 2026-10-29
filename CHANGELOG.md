@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0
+- Nova identidade visual com banana reconhecível, fundo transparente e ícone multi-resolução para Windows.
+- Ícone dedicado para a bandeja do Windows, sem o fundo preto que fazia a banana desaparecer.
+- Tela inicial e modal de convite com acabamento mais limpo e leve.
+- Cada servidor hospedado passa a ter um código curto e estável no formato `ABCD-EFGH`.
+- Códigos curtos resolvem automaticamente o endereço atual do host, mesmo quando o Quick Tunnel muda.
+- Convites temporários com expiração em 30 minutos, 1 hora, 24 horas ou 7 dias.
+- Convites completos antigos continuam compatíveis.
+- Rendezvous assinado e de baixo tráfego, sem polling pesado durante jogos.
+- Seus amigos continuam sem precisar instalar Node.js para hospedar.
+- Adiciona smoke test específico para estabilidade dos códigos de convite.
+
 ## 1.0.1
 - Corrige o congelamento ao abrir Configurações do servidor e Configurações gerais.
 - Remove o rótulo “pós-beta” da interface e documentação.

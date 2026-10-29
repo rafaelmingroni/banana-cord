@@ -1,11 +1,8 @@
-/* Banana Cord v1.0.1 — correções de estabilidade do renderer. */
+/* Banana Cord v1.1.0 — guard de estabilidade do renderer. */
 (() => {
-  const VERSION = '1.0.1';
+  const VERSION = '1.1.0';
   const descriptor = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent');
 
-  // A v1.0.0 atualizava labels de versão de dentro de um MutationObserver.
-  // Atribuir o mesmo textContent recriava o text node e disparava o observer sem parar.
-  // Este guard normaliza os três labels de versão e ignora atribuições idênticas.
   if (descriptor?.get && descriptor?.set && descriptor.configurable !== false) {
     Object.defineProperty(Node.prototype, 'textContent', {
       configurable: descriptor.configurable,
@@ -28,7 +25,6 @@
     });
   }
 
-  // Mantém o renderer leve quando a janela está escondida na bandeja.
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) document.body.classList.add('window-hidden');
     else document.body.classList.remove('window-hidden');

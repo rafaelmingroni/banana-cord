@@ -1,27 +1,30 @@
 {
   "name": "banana-cord",
-  "version": "1.0.1",
-  "description": "Banana Cord v1.0.1 - correções de estabilidade, desempenho e usabilidade",
+  "version": "1.1.0",
+  "description": "Banana Cord v1.1.0 - identidade premium, convites curtos e rendezvous leve",
   "private": true,
-  "main": "updater-prompt.js",
+  "main": "main-v110.js",
   "author": "Rafael Mingroni",
   "scripts": {
-    "prepare:source": "node scripts/merge-source.js",
+    "prepare:source": "node scripts/merge-source.js && node scripts/generate-icons.js",
     "prestart": "npm run prepare:source",
     "start": "electron .",
-    "predist:win": "npm run prepare:source && npm run smoke:ui",
+    "predist:win": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous",
     "dist:win": "electron-builder --win nsis",
-    "predist:portable": "npm run prepare:source && npm run smoke:ui",
+    "predist:portable": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous",
     "dist:portable": "electron-builder --win portable",
     "smoke:v1": "node scripts/smoke-v1.js",
-    "smoke:ui": "node scripts/smoke-ui.js"
+    "smoke:ui": "node scripts/smoke-ui.js",
+    "smoke:rendezvous": "node scripts/smoke-rendezvous.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
-    "electron-updater": "6.8.11"
+    "electron-updater": "6.8.11",
+    "nostr-tools": "2.25.2",
+    "ws": "8.22.0"
   },
   "devDependencies": {
     "electron": "45.1.0",
@@ -35,6 +38,8 @@
       "output": "dist"
     },
     "files": [
+      "main-v110.js",
+      "rendezvous.js",
       "tray.js",
       "updater-prompt.js",
       "main.js",
@@ -47,14 +52,17 @@
     "asar": true,
     "win": {
       "target": "nsis",
-      "icon": "assets/banana-cord.png"
+      "icon": "assets/banana-cord.ico"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Banana Cord"
+      "shortcutName": "Banana Cord",
+      "installerIcon": "assets/banana-cord.ico",
+      "uninstallerIcon": "assets/banana-cord.ico",
+      "installerHeaderIcon": "assets/banana-cord.ico"
     },
     "publish": [
       {
