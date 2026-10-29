@@ -37,13 +37,14 @@ assert(v120.includes('enhancementQueued'), 'invite MutationObserver must coalesc
 assert(!v120.includes('if (lead) lead.textContent ='), 'unconditional invite lead mutation can freeze the renderer');
 
 if (/^2\.0\.0-cloud\./.test(pkg.version)) {
-  assert(index.includes('cloud-browser/cloud-v2.browser.js'), 'v2 auth cloud browser bundle missing');
-  assert(index.includes('cloud-browser/cloud-v2-auth-fix.browser.js') && index.includes('cloud-v2-ui-fix.js'), 'v2 cloud auth UI layers missing');
-  assert(index.includes('cloud-v2-legacy-bridge.js') && index.includes('cloud-browser/cloud-v2-socket.browser.js'), 'v2 stable UI compatibility layers missing');
+  const cloudBundle = 'cloud-browser/cloud-v2-all.browser.js';
+  assert(index.includes(cloudBundle), 'v2 unified cloud browser bundle missing');
+  assert(index.includes('cloud-v2-legacy-bridge.js'), 'v2 stable UI compatibility bridge missing');
   assert(!index.includes('cloud-v2-home.js'), 'simplified cloud home must not replace v1.2.1 UI');
+  assert(!index.includes('cloud-v2.browser.js') && !index.includes('cloud-v2-auth-fix.browser.js') && !index.includes('cloud-v2-socket.browser.js'), 'legacy split Firebase bundles must not return');
   assert(index.indexOf('v1.js') < index.indexOf('cloud-v2-legacy-bridge.js'), 'cloud bridge must load after mature v1 renderer');
   assert(index.indexOf('cloud-v2-legacy-bridge.js') < index.indexOf('v110.js'), 'cloud mode must be active before invite extensions');
-  assert(index.indexOf('v120.js') < index.indexOf('cloud-browser/cloud-v2.browser.js'), 'Firebase auth layer must load after stable renderers');
+  assert(index.indexOf('v120.js') < index.indexOf(cloudBundle), 'unified Firebase cloud layer must load after stable renderers');
 }
 
 console.log(`Banana Cord v${pkg.version} UI smoke test: OK`);
