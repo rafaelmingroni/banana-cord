@@ -48,11 +48,15 @@
     return rows;
   }
 
-  function directorySession(socket, socketId) {
-    for (const dir of socket?.__bananaV207VoiceDirectoryByServer?.values?.() || []) {
-      if (dir.has(socketId)) return dir.get(socketId);
+  function directoryLocation(socket, socketId) {
+    for (const [serverId, dir] of socket?.__bananaV207VoiceDirectoryByServer?.entries?.() || []) {
+      if (dir.has(socketId)) return { serverId, session: dir.get(socketId) };
     }
     return null;
+  }
+
+  function directorySession(socket, socketId) {
+    return directoryLocation(socket, socketId)?.session || null;
   }
 
   function dedupePeerPayload(socket, peers = []) {
@@ -229,30 +233,39 @@
 
       // Never fall back to userId for media/speaking state when a socketId is supplied.
       // The old OR lookup could assign a screen-share flag to the wrong card after a
-      // stale session survived an update.
+      // stale session survived an update. Also resolve the server from that socket, not
+      // from whichever server the user happens to be browsing at the moment.
       if (event === 'voice:media-state-global' && payload.socketId) {
-        const cached = snapshotsByServer.get(state.selectedServer?.id) || [];
+        const location = directoryLocation(this, payload.socketId);
+        const targetServerId = location?.serverId;
+        const cached = snapshotsByServer.get(targetServerId) || [];
         const entry = cached.find(e => e.socketId === payload.socketId && e.channelId === payload.channelId);
         if (entry) {
           entry.mediaState = { ...entry.mediaState, ...(payload.mediaState || {}) };
-          applyCachedPresence(state.selectedServer?.id);
-          renderChannels();
+          if (state.selectedServer?.id === targetServerId) {
+            applyCachedPresence(targetServerId);
+            renderChannels();
+          }
         }
         return;
       }
       if (event === 'voice:speaking-global' && payload.socketId) {
-        const cached = snapshotsByServer.get(state.selectedServer?.id) || [];
+        const location = directoryLocation(this, payload.socketId);
+        const targetServerId = location?.serverId;
+        const cached = snapshotsByServer.get(targetServerId) || [];
         const entry = cached.find(e => e.socketId === payload.socketId && e.channelId === payload.channelId);
         if (entry) {
           entry.speaking = !!payload.speaking;
-          applyCachedPresence(state.selectedServer?.id);
-          renderChannels();
+          if (state.selectedServer?.id === targetServerId) {
+            applyCachedPresence(targetServerId);
+            renderChannels();
+          }
         }
         return;
       }
 
       if (event === 'server:removed' && payload.serverId === state.voice.serverId) {
-        setTimeout(() => leaveVoice().catch?.(() => {}), 0);
+        setTimeout(() => Promise.resolve(leaveVoice()).catch(() => {}), 0);
       }
       if (event === 'server:updated' && payload?.id === state.voice.serverId) {
         const stillExists = payload.channels?.some(c => c.id === state.voice.channelId && c.type === 'voice');
