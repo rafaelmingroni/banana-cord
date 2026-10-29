@@ -21,7 +21,7 @@ function assert(ok, message) {
 for (const file of ['src/cloud-v2.js','src/cloud-v2-auth-fix.js','src/cloud-v2-socket.js','src/cloud-v2-legacy-bridge.js']) {
   execFileSync(process.execPath, ['--check', path.join(root, file)], { stdio: 'inherit' });
 }
-assert(/^2\.0\.0-cloud\./.test(pkg.version), 'preview version must use 2.0.0-cloud.x');
+assert(/^2\.\d+\.\d+(?:-cloud\.\d+)?$/.test(pkg.version), 'V2 version must be a stable x.y.z or preview x.y.z-cloud.n');
 assert(pkg.dependencies?.firebase === '12.19.0', 'Firebase JS SDK must be pinned to 12.19.0');
 assert(pkg.devDependencies?.esbuild === '0.28.2', 'esbuild must be pinned for browser Firebase bundling');
 assert((pkg.build?.files || []).includes('cloud/**/*'), 'cloud config folder must be packaged');
