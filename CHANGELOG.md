@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.3
+- Corrige chamadas que ficavam presas em `conectando · 0 kbps` após a migração do signaling para Firebase.
+- Converte `RTCSessionDescription` e `RTCIceCandidate` em objetos JSON puros antes de gravar o signaling no Realtime Database.
+- Preserva offer/answer, `candidate`, `sdpMid`, `sdpMLineIndex` e `usernameFragment` durante a troca de ICE.
+- Mantém o restante do fluxo de voz/WebRTC e as correções da V2.0.2 inalterados.
+- Observação: redes com NAT/firewall mais restritivo ainda podem exigir TURN; a V2.0.3 corrige primeiro a regressão de serialização do signaling Cloud.
+
 ## 2.0.2
 - Corrige a tela preta após login/verificação quando o Firebase ainda usa um ID token antigo sem `email_verified=true`.
 - Força a renovação do token antes de iniciar o Banana Cloud e antes das leituras protegidas por regras do Firebase.
