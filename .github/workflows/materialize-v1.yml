@@ -81,7 +81,7 @@ jobs:
 
       - name: Build Windows release candidate
         working-directory: desktop
-        run: npm run dist:win
+        run: npm run dist:win -- --publish never
 
       - name: Verify Windows installer
         shell: pwsh
