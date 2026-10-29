@@ -26,13 +26,14 @@ assert(social.includes("doc(this.db, 'dmThreads', tid)"), 'A first DM must creat
 assert(socialUi.includes('Adicionar amigo'), 'Onboarding must expose Add friend clearly.');
 assert(socialUi.includes('Criar ou entrar em um servidor'), 'Onboarding must expose server creation/join clearly.');
 assert(socialUi.includes('Não é preciso estar no mesmo servidor'), 'Friend search must explain that a shared server is unnecessary.');
+assert(socialUi.includes('Banana Cloud'), 'Legacy host copy must be replaced by Banana Cloud wording.');
 
 // Stream UX and exact identity rules.
 assert(voice.includes('▶ Assistir transmissão'), 'Voice list/profile must expose Watch stream.');
 assert(voice.includes('socketId === state.socket?.id'), 'Remote cards must reject the current local socket.');
-assert(voice.includes("peer.user?.id === localUid"), 'Remote cards must reject the local authenticated UID.');
+assert(voice.includes('peer.user?.id === localUid'), 'Remote cards must reject the local authenticated UID.');
 assert(voice.includes('dedupeServerTree'), 'Voice state must dedupe one account globally across server voice channels.');
-assert(voice.includes("entry = cached.find(e => e.socketId === payload.socketId"), 'Media state must target exact socketId, not an ambiguous UID fallback.');
+assert(voice.includes('directoryLocation'), 'Media events must resolve the real server from the socket directory.');
 assert(voice.includes('snapshotsByServer'), 'Voice presence must be cached per server while browsing elsewhere.');
 
 // Execute the V2.0.7 voice compatibility layer with a controlled fake socket.
@@ -53,7 +54,10 @@ const fakeSocket = {
 const fakeState = {
   user: { id: 'me' },
   socket: fakeSocket,
-  servers: [{ id: 'server', channels: [{ id: 'voiceB', type: 'voice', name: 'Geral' }] }],
+  servers: [
+    { id: 'server', channels: [{ id: 'voiceB', type: 'voice', name: 'Geral' }] },
+    { id: 'other', channels: [{ id: 'text', type: 'text', name: 'chat' }] }
+  ],
   selectedServer: { id: 'server', channels: [{ id: 'voiceB', type: 'voice', name: 'Geral' }] },
   selectedChannel: null,
   voicePresence: new Map(),
@@ -68,13 +72,12 @@ const fakeDocument = {
   getElementById() { return null; },
   querySelector() { return null; }
 };
-const removed = [];
 const mockRequire = name => {
   if (name !== 'firebase/database') throw new Error(`Unexpected require: ${name}`);
   return {
     ref: (_db, dbPath) => ({ path: dbPath }),
     get: async () => ({ val: () => ({}) }),
-    remove: async target => { removed.push(target.path); },
+    remove: async () => {},
     set: async () => {},
     onDisconnect: () => ({ remove: async () => {} }),
     serverTimestamp: () => Date.now()
@@ -153,18 +156,19 @@ fakeSocket.receive('voice:snapshot', {
 let cachedFriend = fakeWindow.BananaVoiceSnapshotsByServer.get('server').find(e => e.userId === 'friend');
 assert.strictEqual(cachedFriend.mediaState.screen, true, 'Friend screen share must initially belong to the friend socket.');
 
-// A stale event from the old socket must NOT mutate the surviving friend session.
+// Browse another server while the call remains active. Media updates must still target
+// the server that owns the socket, not whichever server is visible in the UI.
+fakeState.selectedServer = { id: 'other', channels: [{ id: 'text', type: 'text', name: 'chat' }] };
 fakeSocket.receive('voice:media-state-global', {
   socketId: 'friendOld', userId: 'friend', channelId: 'voiceB', mediaState: { screen: false }
 });
 cachedFriend = fakeWindow.BananaVoiceSnapshotsByServer.get('server').find(e => e.userId === 'friend');
-assert.strictEqual(cachedFriend.mediaState.screen, true, 'Stale socket media events must not steal or clear another user card state.');
+assert.strictEqual(cachedFriend.mediaState.screen, true, 'A stale socket event must not steal or clear another participant screen-share state.');
 
-// The exact surviving socket is allowed to update its own media state.
 fakeSocket.receive('voice:media-state-global', {
   socketId: 'friendNew', userId: 'friend', channelId: 'voiceB', mediaState: { screen: false }
 });
 cachedFriend = fakeWindow.BananaVoiceSnapshotsByServer.get('server').find(e => e.userId === 'friend');
-assert.strictEqual(cachedFriend.mediaState.screen, false, 'Exact socket media events must update the correct participant.');
+assert.strictEqual(cachedFriend.mediaState.screen, false, 'Exact socket media events must update the correct server even while browsing elsewhere.');
 
 console.log('Banana Cord V2.0.7 social/voice/stream regression checks: OK');
