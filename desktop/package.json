@@ -1,7 +1,7 @@
 {
   "name": "banana-cord",
-  "version": "1.2.1",
-  "description": "Banana Cord v1.2.1 - correção de congelamento no convite e estabilidade do renderer",
+  "version": "2.0.0-cloud.1",
+  "description": "Banana Cord v2 Cloud preview - contas, servidores permanentes e mensagens sincronizadas",
   "private": true,
   "main": "main-v120.js",
   "author": "Rafael Mingroni",
@@ -9,13 +9,14 @@
     "prepare:source": "node scripts/merge-source.js && node scripts/generate-icons.js",
     "prestart": "npm run prepare:source",
     "start": "electron .",
-    "predist:win": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous",
+    "predist:win": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous && npm run smoke:cloud",
     "dist:win": "electron-builder --win nsis",
-    "predist:portable": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous",
+    "predist:portable": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous && npm run smoke:cloud",
     "dist:portable": "electron-builder --win portable",
     "smoke:v1": "node scripts/smoke-v1.js",
     "smoke:ui": "node scripts/smoke-ui.js",
-    "smoke:rendezvous": "node scripts/smoke-rendezvous.js"
+    "smoke:rendezvous": "node scripts/smoke-rendezvous.js",
+    "smoke:cloud": "node scripts/smoke-cloud.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -23,6 +24,7 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "electron-updater": "6.8.11",
+    "firebase": "12.19.0",
     "nostr-tools": "2.25.2",
     "ws": "8.22.0"
   },
@@ -52,6 +54,7 @@
       "main.js",
       "src/**/*",
       "server/**/*",
+      "cloud/**/*",
       "assets/**/*",
       "package.json",
       "node_modules/**/*"
