@@ -1,0 +1,19 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "presence": {
+      ".read": "auth != null && auth.token.email_verified == true",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && auth.token.email_verified == true",
+        ".validate": "newData.hasChildren(['state','lastChanged']) && (newData.child('state').val() === 'online' || newData.child('state').val() === 'offline')"
+      }
+    },
+    "signaling": {
+      "$roomId": {
+        ".read": "auth != null && auth.token.email_verified == true",
+        ".write": "auth != null && auth.token.email_verified == true"
+      }
+    }
+  }
+}
