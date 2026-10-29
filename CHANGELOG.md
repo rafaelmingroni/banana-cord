@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.4
+- Corrige compartilhamento de tela que falhava em alguns notebooks Windows com “Não consegui compartilhar a tela”.
+- Prioriza explicitamente uma fonte real de tela (`screen:*`) antes de qualquer janela retornada pelo `desktopCapturer`.
+- Não depende do `useSystemPicker` experimental do Electron no Windows.
+- Tenta compartilhar tela com áudio do sistema e, se o loopback de áudio falhar, repete automaticamente apenas com vídeo.
+- Mantém o compartilhamento funcional mesmo em máquinas onde o áudio do sistema não está disponível.
+- Passa a mostrar o nome do erro de captura quando o Windows/Electron ainda rejeitar a operação, facilitando diagnóstico.
+- Mantém as correções de login e signaling das versões 2.0.2 e 2.0.3.
+
 ## 2.0.3
 - Corrige chamadas que ficavam presas em `conectando · 0 kbps` após a migração do signaling para Firebase.
 - Converte `RTCSessionDescription` e `RTCIceCandidate` em objetos JSON puros antes de gravar o signaling no Realtime Database.
