@@ -49,6 +49,10 @@ if (/^2\.0\.0-cloud\./.test(pkg.version)) {
   assert(runtimeCss.includes('overflow-y:auto') && runtimeCss.includes('height:min(680px,86vh)'), 'settings scroll fix missing');
   assert(runtimeFix.includes('self-share-safe') && runtimeFix.includes('video.srcObject = null'), 'recursive self-share guard missing');
   assert(runtimeFix.includes('remoteShare') && !runtimeFix.includes('autoFocusShare && anyShare'), 'local share must not trigger automatic focus');
+  assert(runtimeFix.includes("window.addEventListener('banana:cloud-ready'") && runtimeFix.includes('staleBootstrap') && runtimeFix.includes('location.reload()'), 'relogin stale-bootstrap recovery missing');
+  assert(runtimeFix.includes("button.id = 'tabNotifications'") && runtimeFix.includes('soundMute') && runtimeFix.includes('soundDeafen') && runtimeFix.includes('soundDm'), 'notification sounds settings tab missing');
+  assert(runtimeFix.includes('playNotificationTone') && runtimeFix.includes('soundVolume'), 'notification tone engine or volume control missing');
+  assert(runtimeFix.includes("new MutationObserver") && runtimeFix.includes("modalBody.querySelector('.settings-shell')"), 'notification tab must inject for direct settings gear handler');
   assert(!index.includes('cloud-v2-home.js'), 'simplified cloud home must not replace v1.2.1 UI');
   assert(!index.includes('cloud-v2.browser.js') && !index.includes('cloud-v2-auth-fix.browser.js') && !index.includes('cloud-v2-socket.browser.js'), 'legacy split Firebase bundles must not return');
   assert(index.indexOf('v1.js') < index.indexOf('cloud-v2-legacy-bridge.js'), 'cloud bridge must load after mature v1 renderer');
