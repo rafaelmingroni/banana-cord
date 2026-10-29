@@ -25,6 +25,7 @@ function rebuildMenu() {
   if (!tray) return;
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Abrir Banana Cord', click: showWindow },
+    { label: `Versão ${app.getVersion()}`, enabled: false },
     { type: 'separator' },
     {
       label: 'Mutar / Desmutar',
@@ -71,7 +72,16 @@ app.whenReady().then(() => {
   app.setAppUserModelId('com.bananacord.app');
   try {
     const raw = nativeImage.createFromPath(path.join(__dirname, 'assets', 'banana-cord.png'));
-    const icon = raw.isEmpty() ? raw : raw.resize({ width: 16, height: 16 });
+    let icon = raw;
+    if (!raw.isEmpty()) {
+      const { width, height } = raw.getSize();
+      // O logo 512x512 tem bastante espaço vazio no topo. Para a bandeja,
+      // recortamos a área útil para a banana continuar legível em tamanho pequeno.
+      const cropSize = Math.max(1, Math.min(width, Math.round(height * 0.69)));
+      const x = Math.max(0, Math.round((width - cropSize) / 2));
+      const y = Math.max(0, Math.min(height - cropSize, Math.round(height * 0.29)));
+      icon = raw.crop({ x, y, width: cropSize, height: cropSize }).resize({ width: 20, height: 20, quality: 'best' });
+    }
     tray = new Tray(icon);
     tray.setToolTip('Banana Cord');
     tray.on('click', showWindow);
