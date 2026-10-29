@@ -20,7 +20,7 @@ for (const file of ['main-v120.js', 'main-v110.js', 'rendezvous.js', 'tray.js', 
   execFileSync(process.execPath, ['--check', path.join(root, file)], { stdio: 'inherit' });
 }
 
-assert(/^1\.2\./.test(pkg.version), 'package version must be in the 1.2 line');
+assert(pkg.version === '1.2.1', 'package version must be 1.2.1');
 assert(pkg.main === 'main-v120.js', 'v1.2 main entry must handle deep links');
 assert((pkg.build?.protocols || []).some(p => (p.schemes || []).includes('bananacord')), 'bananacord:// protocol registration missing');
 assert(!/p[oó]s-beta/i.test(index), 'index.html must not show pós-beta');
@@ -28,12 +28,16 @@ assert(index.includes('v101-fix.js'), 'renderer stability guard must be loaded')
 assert(index.includes('v110.js') && index.includes('v120.js'), 'v1.1 and v1.2 renderers must be loaded');
 assert(index.indexOf('v101-fix.js') < index.indexOf('v1.js'), 'stability guard must load before v1.js');
 assert(index.indexOf('v110.js') < index.indexOf('v120.js'), 'v1.2 renderer must load last');
-assert(hotfix.includes("this.matches('.version-label')"), 'version-label recursion guard missing');
-assert(hotfix.includes('current === String(next)'), 'same-value textContent guard missing');
+assert(hotfix.includes("this.matches('.version-label, .settings-nav-foot, .setup .brand p b')"), 'version recursion guard missing');
+assert(hotfix.includes('current === String(value)'), 'same-value textContent guard missing');
+assert(!hotfix.includes("VERSION = '1.1.1'"), 'stability guard must not pin an old version');
 assert(tray.includes("banana-tray.png"), 'dedicated tray icon missing');
 assert(index.includes('continua na bandeja'), 'host tray behavior should be explained');
 assert(index.includes('ABCD-EFGH'), 'short invite example should be visible');
 assert(v120.includes('https://rafaelmingroni.github.io/banana-cord/?invite='), 'public invite link base missing');
 assert(v120.includes("ipcRenderer.on('invite:deep-link'"), 'renderer deep-link listener missing');
+assert(v120.includes('lead && lead.textContent !== INVITE_LEAD'), 'invite lead must be idempotent inside MutationObserver');
+assert(v120.includes('enhancementQueued'), 'invite MutationObserver must coalesce DOM changes');
+assert(!v120.includes('if (lead) lead.textContent ='), 'unconditional invite lead mutation can freeze the renderer');
 
 console.log(`Banana Cord v${pkg.version} UI smoke test: OK`);
