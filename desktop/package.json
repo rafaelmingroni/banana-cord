@@ -1,7 +1,7 @@
 {
   "name": "banana-cord",
-  "version": "1.2.0",
-  "description": "Banana Cord v1.2.0 - convites por link, deep links e interface premium leve",
+  "version": "1.2.1",
+  "description": "Banana Cord v1.2.1 - correção de congelamento no convite e estabilidade do renderer",
   "private": true,
   "main": "main-v120.js",
   "author": "Rafael Mingroni",
