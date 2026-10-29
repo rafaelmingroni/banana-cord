@@ -1,4 +1,4 @@
-/* Banana Cord V2.0.5 social/DM permission fixes + user search. */
+/* Banana Cord V2.0.6 social/DM permission fixes + user search. */
 (() => {
   if (window.__bananaV205SocialFix) return;
   window.__bananaV205SocialFix = true;
@@ -22,8 +22,7 @@
       const rid = pairId(this.user.uid, otherUid);
       const q = fsQuery(
         collection(this.db, 'relationships'),
-        where('participants', 'array-contains', this.user.uid),
-        limit(250)
+        where('participants', 'array-contains', this.user.uid)
       );
       const snap = await getDocs(q);
       return snap.docs.find(row => row.id === rid) || emptyRelation();
@@ -46,6 +45,23 @@
       });
       await this.emitSocial().catch(() => {});
     };
+
+    // Opening a brand-new DM used to attach a messages listener before the parent
+    // dmThread existed. The rules intentionally require the caller to be listed in
+    // that parent document, so the first listener was rejected with permission-denied.
+    // Create/merge the parent thread first, then reuse the mature original watcher.
+    if (typeof socket.watchDm === 'function') {
+      const originalWatchDm = socket.watchDm.bind(socket);
+      socket.watchDm = async function watchDmV206(peerId) {
+        if (!(await this.canDm(peerId))) throw new Error('Essa conversa privada não está disponível.');
+        const tid = pairId(this.user.uid, peerId);
+        await setDoc(doc(this.db, 'dmThreads', tid), {
+          participants: [this.user.uid, peerId].sort(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        return originalWatchDm(peerId);
+      };
+    }
 
     async function refreshSearchName() {
       const name = String(socket.user?.displayName || '').trim();
