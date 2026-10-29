@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -37,6 +39,28 @@ jobs:
           node --check desktop/main.js
           node --check desktop/server/server.js
           node --check desktop/src/app.js
+
+      - name: Ensure version tag points to this commit
+        shell: pwsh
+        run: |
+          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
+          $tag = "v$version"
+          git fetch --tags --force
+          $existing = git tag -l $tag
+          if ($existing) {
+            $tagCommit = (git rev-list -n 1 $tag).Trim()
+            if ($tagCommit -ne $env:GITHUB_SHA) {
+              Write-Error "A versão $version já está marcada em outro commit. Aumente desktop/package.json antes de publicar uma nova versão."
+              exit 1
+            }
+            Write-Host "Tag $tag já aponta para este commit."
+          } else {
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag $tag $env:GITHUB_SHA
+            git push origin $tag
+            Write-Host "Tag $tag criada e publicada."
+          }
 
       - name: Build and publish GitHub Release
         working-directory: desktop
