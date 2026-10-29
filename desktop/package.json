@@ -6,8 +6,12 @@
   "main": "main.js",
   "author": "Rafael Mingroni",
   "scripts": {
+    "prepare:source": "node scripts/merge-source.js",
+    "prestart": "npm run prepare:source",
     "start": "electron .",
+    "predist:win": "npm run prepare:source",
     "dist:win": "electron-builder --win nsis",
+    "predist:portable": "npm run prepare:source",
     "dist:portable": "electron-builder --win portable"
   },
   "dependencies": {
@@ -32,6 +36,7 @@
       "main.js",
       "src/**/*",
       "server/**/*",
+      "assets/**/*",
       "package.json",
       "node_modules/**/*"
     ],
