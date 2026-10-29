@@ -16,7 +16,7 @@ function assert(ok, message) {
   }
 }
 
-for (const file of ['main-v120.js', 'main-v110.js', 'rendezvous.js', 'tray.js', 'updater-prompt.js', 'src/v101-fix.js', 'src/v1.js', 'src/v110.js', 'src/v120.js', 'src/cloud-v2.js', 'src/cloud-v2-home.js']) {
+for (const file of ['main-v120.js', 'main-v110.js', 'rendezvous.js', 'tray.js', 'updater-prompt.js', 'src/v101-fix.js', 'src/v1.js', 'src/v110.js', 'src/v120.js', 'src/cloud-v2.js', 'src/cloud-v2-auth-fix.js', 'src/cloud-v2-ui-fix.js', 'src/cloud-v2-home.js']) {
   execFileSync(process.execPath, ['--check', path.join(root, file)], { stdio: 'inherit' });
 }
 
@@ -39,8 +39,9 @@ assert(v120.includes('lead && lead.textContent !== INVITE_LEAD'), 'invite lead m
 assert(v120.includes('enhancementQueued'), 'invite MutationObserver must coalesce DOM changes');
 assert(!v120.includes('if (lead) lead.textContent ='), 'unconditional invite lead mutation can freeze the renderer');
 if (/^2\.0\.0-cloud\./.test(pkg.version)) {
-  assert(index.includes('cloud-v2.js') && index.includes('cloud-v2-home.js'), 'v2 cloud renderer layers must be loaded');
-  assert(index.indexOf('v120.js') < index.indexOf('cloud-v2.js'), 'cloud layer must load after stable renderer');
+  assert(index.includes('cloud-browser/cloud-v2.browser.js') && index.includes('cloud-v2-home.js'), 'v2 cloud browser renderer layers must be loaded');
+  assert(index.includes('cloud-browser/cloud-v2-auth-fix.browser.js') && index.includes('cloud-v2-ui-fix.js'), 'v2 cloud auth layers must be loaded');
+  assert(index.indexOf('v120.js') < index.indexOf('cloud-browser/cloud-v2.browser.js'), 'cloud browser layer must load after stable renderer');
 }
 
 console.log(`Banana Cord v${pkg.version} UI smoke test: OK`);
