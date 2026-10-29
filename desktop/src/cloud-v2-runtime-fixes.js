@@ -7,6 +7,20 @@
 
   const baseUpdateLocalVideo = updateLocalVideo;
 
+  // Auto-focus should react to another person's share, not our own static
+  // self-share status card. This keeps friends visible while we are sharing.
+  if (typeof applyFocusSharing === 'function') {
+    applyFocusSharing = function applyFocusSharingCloudSafe() {
+      const remoteShare = !![...state.voice.peers.values()].find(p => p.mediaState?.screen);
+      const focus = !state.ui.showAllOverride && (
+        state.ui.focusSharing || (state.ui.autoFocusShare && remoteShare)
+      );
+      els.videoGrid.classList.toggle('focus-sharing', focus);
+      els.hideCamsBtn.classList.toggle('active', focus);
+      els.hideCamsBtn.textContent = focus ? '👁 Mostrar todos' : '👁 Focar tela';
+    };
+  }
+
   updateLocalVideo = function updateLocalVideoCloudSafe() {
     const card = document.getElementById('video-local');
     if (!card) return baseUpdateLocalVideo();
