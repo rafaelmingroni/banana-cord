@@ -85,8 +85,42 @@ jobs:
             Write-Host "Tag $tag preparada para publicação/reparo."
           }
 
-      - name: Build and publish GitHub Release
+      - name: Build Windows installer and updater metadata
         working-directory: desktop
         run: npm run dist:win -- --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify and complete release assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
+          $tag = "v$version"
+          $exe = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe" | Select-Object -First 1
+          $blockmap = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe.blockmap" | Select-Object -First 1
+          $latest = Get-Item "desktop/dist/latest.yml" -ErrorAction SilentlyContinue
+
+          if (-not $exe) { Write-Error "Instalador .exe não foi gerado."; exit 1 }
+          if (-not $blockmap) { Write-Error "Blockmap não foi gerado."; exit 1 }
+          if (-not $latest) { Write-Error "latest.yml não foi gerado."; exit 1 }
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --title $version --target $env:GITHUB_SHA
+          }
+
+          gh release upload $tag $exe.FullName $blockmap.FullName $latest.FullName --clobber
+
+          $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" | ConvertFrom-Json
+          $names = @($release.assets | ForEach-Object { $_.name })
+          $hasExe = ($names | Where-Object { $_ -like "Banana-Cord-Setup-$version-*.exe" }).Count -gt 0
+          $hasBlockmap = ($names | Where-Object { $_ -like "*.exe.blockmap" }).Count -gt 0
+          $hasLatest = $names -contains "latest.yml"
+          if (-not ($hasExe -and $hasBlockmap -and $hasLatest)) {
+            Write-Error "Release incompleta após o upload explícito."
+            Write-Host ($names -join ", ")
+            exit 1
+          }
+          Write-Host "Release $tag completa: EXE + blockmap + latest.yml."
