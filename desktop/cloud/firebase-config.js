@@ -1,12 +1,12 @@
 // Banana Cord v2 Cloud
-// Preencha este objeto uma única vez com a configuração Web do projeto Firebase.
-// A apiKey do Firebase Web é identificadora do projeto, não uma senha de administrador.
+// Runtime values are injected into preview/release builds from GitHub Actions.
+// Public project metadata may stay here; apiKey/appId are injected at build time.
 module.exports = {
   apiKey: '',
-  authDomain: '',
-  projectId: '',
-  databaseURL: '',
-  storageBucket: '',
-  messagingSenderId: '',
+  authDomain: 'banana-cord.firebaseapp.com',
+  projectId: 'banana-cord',
+  databaseURL: 'https://banana-cord-default-rtdb.firebaseio.com',
+  storageBucket: 'banana-cord.firebasestorage.app',
+  messagingSenderId: '795658739276',
   appId: ''
 };
