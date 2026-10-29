@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.0.0
+- Lançamento oficial do Banana Cord V2.
+- Substitui o modelo antigo de hospedagem por contas e servidores persistentes no Banana Cloud.
+- Adiciona criação de conta com e-mail e senha, verificação de e-mail e sessão persistente.
+- Permite sair da conta e entrar novamente sem reiniciar manualmente ou cair em tela preta.
+- Servidores, membros, canais, mensagens e DMs passam a ficar sincronizados pelo Firebase.
+- Mantém voz, webcam e compartilhamento de tela em WebRTC entre os participantes.
+- Mantém a interface e as funções maduras da linha 1.2.x enquanto troca o backend por Cloud.
+- Adiciona criação e entrada em servidores sem depender de um host online.
+- Adiciona perfil com nome, avatar e status.
+- Adiciona configurações de microfone, saída de áudio, câmera, qualidade/FPS da tela e diagnóstico.
+- Adiciona aba de Notificações com controles de sons de chamada, entrada/saída, mute, deafen e mensagens privadas.
+- Corrige o som de mute/desmute e deafen quando os controles são acionados pelos botões da interface.
+- Corrige congelamento ao abrir Configurações causado por disputa entre observers da UI antiga e da camada Cloud.
+- Corrige rolagem das páginas longas de Configurações.
+- Corrige o preview recursivo da própria tela compartilhada; a prévia local vira um cartão estático para reduzir efeito espelho e uso de GPU.
+- O ping exibido durante calls passa a representar RTT WebRTC entre participantes; fora de uma call aparece `-- ms`.
+- Mantém atualização automática via GitHub Releases com `electron-updater`, incluindo EXE, blockmap e `latest.yml`.
+- O workflow oficial de Release agora injeta a configuração Firebase de produção e executa testes de regras, Cloud, UI, convites e Electron antes de publicar.
+
 ## 1.2.1
 - Corrige o congelamento ao clicar no botão de convite do servidor.
 - Torna a atualização do texto do modal idempotente para impedir loops do `MutationObserver`.

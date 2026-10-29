@@ -1,0 +1,102 @@
+name: Validate Banana Cord v2 Cloud Preview
+
+on:
+  push:
+    branches: [v2-cloud-foundation, v2-cloud4-stabilization]
+    paths:
+      - "desktop/**"
+      - "firebase/**"
+      - ".github/workflows/v2-cloud-preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Java for Firebase emulators
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Inject Firebase config
+        working-directory: desktop
+        env:
+          BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
+        run: node scripts/inject-firebase-config.js
+
+      - name: Prepare source
+        working-directory: desktop
+        run: npm run prepare:source
+
+      - name: Validate JavaScript
+        shell: pwsh
+        run: |
+          node --check desktop/src/cloud-v2-mode.js
+          node --check desktop/src/cloud-v2.js
+          node --check desktop/src/cloud-v2-auth-fix.js
+          node --check desktop/src/cloud-v2-socket.js
+          node --check desktop/src/cloud-v2-legacy-bridge.js
+          node --check desktop/scripts/inject-firebase-config.js
+          node --check desktop/scripts/smoke-cloud.js
+          node --check desktop/scripts/smoke-cloud-parity.js
+          node --check desktop/scripts/smoke-firebase-rules.js
+          node --check desktop/scripts/e2e-v2-renderer.js
+          node --check desktop/src/app.js
+          node --check desktop/main-v120.js
+
+      - name: Cloud foundation and parity tests
+        working-directory: desktop
+        run: npm run smoke:cloud
+
+      - name: Firebase security rules emulator tests
+        working-directory: desktop
+        run: npm run smoke:rules
+
+      - name: Existing UI regression tests
+        working-directory: desktop
+        run: npm run smoke:ui
+
+      - name: Existing invite regression tests
+        working-directory: desktop
+        run: npm run smoke:rendezvous
+
+      - name: Real Electron V2 interaction test
+        working-directory: desktop
+        run: npm run smoke:e2e-v2
+
+      - name: Build preview installer
+        working-directory: desktop
+        run: npm run dist:win -- --publish never
+
+      - name: Verify preview installer
+        shell: pwsh
+        run: |
+          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
+          $exe = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe" | Select-Object -First 1
+          if (-not $exe) { Write-Error "V2 preview installer was not generated."; exit 1 }
+          if ($exe.Length -lt 50000000) { Write-Error "V2 preview installer is unexpectedly small."; exit 1 }
+          Write-Host "Banana Cord V2 preview installer OK: $($exe.Name)"
+
+      - name: Upload V2 preview installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Banana-Cord-V2-Cloud-Preview
+          path: desktop/dist/Banana-Cord-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,37 @@
+/* Banana Cord V2 runtime UX fixes: settings scroll + safe local screen-share preview. */
+.settings-modal .settings-shell{
+  height:min(680px,86vh);
+  min-height:0;
+  max-height:86vh;
+  overflow:hidden;
+}
+.settings-modal .settings-content{
+  min-height:0;
+  max-height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.settings-modal #settingsArea{min-height:0}
+.settings-modal .settings-content::-webkit-scrollbar{width:10px}
+.settings-modal .settings-content::-webkit-scrollbar-track{background:#16181b}
+.settings-modal .settings-content::-webkit-scrollbar-thumb{background:#3a3e45;border-radius:999px;border:2px solid #16181b}
+.settings-modal .settings-content::-webkit-scrollbar-thumb:hover{background:#4b5059}
+
+.video-card.self-share-safe .video-placeholder{
+  min-height:260px;
+  padding:28px;
+  text-align:center;
+  background:radial-gradient(circle at 50% 25%,#27281d,#111214 62%);
+}
+.self-share-placeholder{display:grid;place-items:center;gap:9px;max-width:430px;margin:auto;color:#dfe2e7}
+.self-share-placeholder .self-share-icon{font-size:42px;filter:none}
+.self-share-placeholder b{font-size:16px}
+.self-share-placeholder small{display:block;max-width:360px;color:#9298a3;font-size:11px;line-height:1.5}
+.video-card.self-share-safe .expand-btn{display:none!important}
+
+@media(max-width:700px){
+  .settings-modal .settings-shell{height:86vh;max-height:86vh}
+  .video-card.self-share-safe .video-placeholder{min-height:220px;padding:20px}
+}

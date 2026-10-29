@@ -1,21 +1,25 @@
 {
   "name": "banana-cord",
-  "version": "1.2.1",
-  "description": "Banana Cord v1.2.1 - correção de congelamento no convite e estabilidade do renderer",
+  "version": "2.0.0",
+  "description": "Banana Cord V2 - contas, servidores persistentes e comunicação em nuvem com voz e tela via WebRTC",
   "private": true,
   "main": "main-v120.js",
   "author": "Rafael Mingroni",
   "scripts": {
-    "prepare:source": "node scripts/merge-source.js && node scripts/generate-icons.js",
+    "prepare:source": "node scripts/merge-source.js && node scripts/generate-icons.js && node scripts/build-cloud-browser.js",
     "prestart": "npm run prepare:source",
     "start": "electron .",
-    "predist:win": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous",
+    "predist:win": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous && npm run smoke:cloud",
     "dist:win": "electron-builder --win nsis",
-    "predist:portable": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous",
+    "predist:portable": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous && npm run smoke:cloud",
     "dist:portable": "electron-builder --win portable",
     "smoke:v1": "node scripts/smoke-v1.js",
     "smoke:ui": "node scripts/smoke-ui.js",
-    "smoke:rendezvous": "node scripts/smoke-rendezvous.js"
+    "smoke:rendezvous": "node scripts/smoke-rendezvous.js",
+    "smoke:parity": "node scripts/smoke-cloud-parity.js",
+    "smoke:cloud": "node scripts/smoke-cloud.js && node scripts/smoke-cloud-ui.js && node scripts/smoke-cloud-parity.js",
+    "smoke:rules": "firebase emulators:exec --project demo-banana-cord --config ../firebase/firebase.json --only firestore,database \"node scripts/smoke-firebase-rules.js\"",
+    "smoke:e2e-v2": "electron scripts/e2e-v2-release.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -23,44 +27,26 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "electron-updater": "6.8.11",
+    "firebase": "12.19.0",
     "nostr-tools": "2.25.2",
     "ws": "8.22.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.2",
     "electron": "45.1.0",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "esbuild": "0.28.2",
+    "firebase-tools": "15.34.2"
   },
   "build": {
     "appId": "com.bananacord.app",
     "productName": "Banana Cord",
     "artifactName": "Banana-Cord-Setup-${version}-${arch}.${ext}",
-    "protocols": [
-      {
-        "name": "Banana Cord Invite",
-        "schemes": ["bananacord"]
-      }
-    ],
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "main-v120.js",
-      "main-v110.js",
-      "rendezvous.js",
-      "tray.js",
-      "updater-prompt.js",
-      "main.js",
-      "src/**/*",
-      "server/**/*",
-      "assets/**/*",
-      "package.json",
-      "node_modules/**/*"
-    ],
+    "protocols": [{ "name": "Banana Cord Invite", "schemes": ["bananacord"] }],
+    "directories": { "output": "dist" },
+    "files": ["main-v120.js","main-v110.js","rendezvous.js","tray.js","updater-prompt.js","main.js","src/**/*","server/**/*","cloud/**/*","assets/**/*","package.json","node_modules/**/*"],
     "asar": true,
-    "win": {
-      "target": "nsis",
-      "icon": "assets/banana-cord.ico"
-    },
+    "win": { "target": "nsis", "icon": "assets/banana-cord.ico" },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
@@ -71,13 +57,6 @@
       "uninstallerIcon": "assets/banana-cord.ico",
       "installerHeaderIcon": "assets/banana-cord.ico"
     },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "rafaelmingroni",
-        "repo": "banana-cord",
-        "releaseType": "release"
-      }
-    ]
+    "publish": [{ "provider": "github", "owner": "rafaelmingroni", "repo": "banana-cord", "releaseType": "release" }]
   }
 }

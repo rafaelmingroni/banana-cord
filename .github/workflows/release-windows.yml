@@ -2,9 +2,12 @@ name: Build and publish Banana Cord for Windows
 
 on:
   push:
-    branches: [main, v1-post-beta, v1.0.1-stability, v1.1-premium, v1.1.1-private-rendezvous, v1.2-link-invites, v1.2.1-invite-freeze-fix]
+    branches: [main]
     paths:
       - "desktop/**"
+      - "firebase/**"
+      - "CHANGELOG.md"
+      - "README.md"
       - ".github/workflows/release-windows.yml"
   workflow_dispatch:
 
@@ -25,9 +28,21 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Setup Java for Firebase emulators
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
       - name: Install dependencies
         working-directory: desktop
-        run: npm install
+        run: npm install --no-audit --no-fund
+
+      - name: Inject production Firebase config
+        working-directory: desktop
+        env:
+          BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
+        run: node scripts/inject-firebase-config.js
 
       - name: Prepare source
         working-directory: desktop
@@ -38,51 +53,58 @@ jobs:
         run: |
           node --check desktop/main-v120.js
           node --check desktop/main-v110.js
-          node --check desktop/rendezvous.js
+          node --check desktop/main.js
           node --check desktop/updater-prompt.js
           node --check desktop/tray.js
-          node --check desktop/main.js
-          node --check desktop/server/server.js
           node --check desktop/src/app.js
-          node --check desktop/src/v1.js
           node --check desktop/src/v101-fix.js
+          node --check desktop/src/v1.js
           node --check desktop/src/v110.js
           node --check desktop/src/v120.js
-          node --check desktop/scripts/smoke-v1.js
+          node --check desktop/src/cloud-v2-mode.js
+          node --check desktop/src/cloud-v2.js
+          node --check desktop/src/cloud-v2-auth-fix.js
+          node --check desktop/src/cloud-v2-ui-fix.js
+          node --check desktop/src/cloud-v2-legacy-bridge.js
+          node --check desktop/src/cloud-v2-socket.js
+          node --check desktop/src/cloud-v2-runtime-fixes.js
+          node --check desktop/src/cloud-v2-release-fixes.js
+          node --check desktop/scripts/inject-firebase-config.js
+          node --check desktop/scripts/smoke-cloud.js
+          node --check desktop/scripts/smoke-cloud-parity.js
+          node --check desktop/scripts/smoke-firebase-rules.js
           node --check desktop/scripts/smoke-ui.js
-          node --check desktop/scripts/smoke-rendezvous.js
+          node --check desktop/scripts/e2e-v2-release.js
 
-      - name: Smoke test v1 protocol
+      - name: Cloud foundation and parity tests
         working-directory: desktop
-        run: npm run smoke:v1
+        run: npm run smoke:cloud
 
-      - name: Smoke test renderer regressions
+      - name: Firebase security rules emulator tests
+        working-directory: desktop
+        run: npm run smoke:rules
+
+      - name: UI regression tests
         working-directory: desktop
         run: npm run smoke:ui
 
-      - name: Smoke test short invite rendezvous
+      - name: Invite regression tests
         working-directory: desktop
         run: npm run smoke:rendezvous
 
-      - name: Validate app assets
+      - name: Real Electron V2 release interaction test
+        working-directory: desktop
+        run: npm run smoke:e2e-v2
+
+      - name: Validate official version
         shell: pwsh
         run: |
-          if (-not (Test-Path "desktop/assets/banana-cord.png")) { Write-Error "Logo da banana ausente."; exit 1 }
-          if (-not (Test-Path "desktop/assets/banana-cord.ico")) { Write-Error "ICO principal ausente."; exit 1 }
-          if (-not (Test-Path "desktop/assets/banana-tray.png")) { Write-Error "Icone da bandeja ausente."; exit 1 }
-          if (-not (Test-Path "desktop/src/v1.css")) { Write-Error "CSS da v1 ausente."; exit 1 }
-          if (-not (Test-Path "desktop/src/v110.css")) { Write-Error "CSS da v1.1 ausente."; exit 1 }
-          if (-not (Test-Path "desktop/src/v120.css")) { Write-Error "CSS da v1.2 ausente."; exit 1 }
-          $html = Get-Content "desktop/src/index.html" -Raw
-          if ($html -notmatch 'v1\.js') { Write-Error "index.html não carrega v1.js"; exit 1 }
-          if ($html -notmatch 'v101-fix\.js') { Write-Error "index.html não carrega v101-fix.js"; exit 1 }
-          if ($html -notmatch 'v110\.js') { Write-Error "index.html não carrega v110.js"; exit 1 }
-          if ($html -notmatch 'v110\.css') { Write-Error "index.html não carrega v110.css"; exit 1 }
-          if ($html -notmatch 'v120\.js') { Write-Error "index.html não carrega v120.js"; exit 1 }
-          if ($html -notmatch 'v120\.css') { Write-Error "index.html não carrega v120.css"; exit 1 }
+          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { Write-Error "Release oficial exige versão sem sufixo: $version"; exit 1 }
+          if ($version -notmatch '^2\.') { Write-Error "Este workflow publica a linha V2: $version"; exit 1 }
+          Write-Host "Banana Cord official version: $version"
 
-      - name: Prepare version tag and release
-        if: github.ref == 'refs/heads/main'
+      - name: Prepare version tag
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -104,75 +126,95 @@ jobs:
             $hasLatest = $assetNames -contains "latest.yml"
             $releaseComplete = $hasExe -and $hasBlockmap -and $hasLatest
 
-            if (-not $releaseComplete) {
-              Write-Host "Release $tag existe, mas está incompleta. Limpando assets para republicar."
-              foreach ($asset in $release.assets) { gh api -X DELETE "repos/$repo/releases/assets/$($asset.id)" }
+            if ($releaseComplete) {
+              $tagCommit = (git rev-list -n 1 $tag).Trim()
+              if ($tagCommit -ne $env:GITHUB_SHA) {
+                Write-Error "A versão $version já foi publicada. Aumente desktop/package.json antes de publicar novas mudanças."
+                exit 1
+              }
+              Write-Host "Release $tag já está completa no commit atual."
+              exit 0
             }
+
+            foreach ($asset in $release.assets) { gh api -X DELETE "repos/$repo/releases/assets/$($asset.id)" }
           }
 
-          if ($releaseComplete) {
-            $tagCommit = (git rev-list -n 1 $tag).Trim()
-            if ($tagCommit -ne $env:GITHUB_SHA) {
-              Write-Error "A versão $version já foi publicada por completo. Aumente desktop/package.json antes de publicar mudanças novas."
-              exit 1
-            }
-            Write-Host "Release $tag já está completa."
-          } else {
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git tag -f $tag $env:GITHUB_SHA
-            git push origin "refs/tags/$tag" --force
-            Write-Host "Tag $tag preparada para publicação/reparo."
-          }
-
-      - name: Build Windows installer (validation branch)
-        if: github.ref != 'refs/heads/main'
-        working-directory: desktop
-        run: npm run dist:win -- --publish never
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f $tag $env:GITHUB_SHA
+          git push origin "refs/tags/$tag" --force
 
       - name: Build Windows installer and updater metadata
-        if: github.ref == 'refs/heads/main'
         working-directory: desktop
         run: npm run dist:win -- --publish never
 
-      - name: Verify validation installer
-        if: github.ref != 'refs/heads/main'
+      - name: Verify installer and updater files
         shell: pwsh
         run: |
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
           $exe = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe" | Select-Object -First 1
-          if (-not $exe) { Write-Error "Instalador de validação não foi gerado."; exit 1 }
-          if ($exe.Length -lt 50000000) { Write-Error "Instalador de validação parece pequeno demais."; exit 1 }
-          Write-Host "Instalador de validação OK: $($exe.Name) - $($exe.Length) bytes"
+          $blockmap = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe.blockmap" | Select-Object -First 1
+          $latest = Get-Item "desktop/dist/latest.yml" -ErrorAction SilentlyContinue
+          if (-not $exe) { Write-Error "Instalador .exe não foi gerado."; exit 1 }
+          if ($exe.Length -lt 50000000) { Write-Error "Instalador parece pequeno demais."; exit 1 }
+          if (-not $blockmap) { Write-Error "Blockmap não foi gerado."; exit 1 }
+          if (-not $latest) { Write-Error "latest.yml não foi gerado."; exit 1 }
+          Write-Host "Installer: $($exe.Name) - $($exe.Length) bytes"
 
-      - name: Verify and complete release assets
-        if: github.ref == 'refs/heads/main'
+      - name: Prepare release notes from changelog
+        shell: pwsh
+        run: |
+          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
+          $lines = Get-Content CHANGELOG.md
+          $header = "## $version"
+          $start = [Array]::IndexOf($lines, $header)
+          if ($start -lt 0) { Write-Error "CHANGELOG.md não possui a seção $header"; exit 1 }
+          $body = New-Object System.Collections.Generic.List[string]
+          for ($i = $start + 1; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match '^##\s+') { break }
+            $body.Add($lines[$i])
+          }
+          @(
+            "# Banana Cord V$version"
+            ""
+            "Esta é a primeira versão oficial da nova arquitetura do Banana Cord. A experiência deixa de depender de um usuário hospedando a sessão e passa a usar contas e servidores persistentes no Banana Cloud, mantendo voz, câmera e compartilhamento de tela em WebRTC."
+            ""
+            "## O que mudou"
+          ) + $body | Set-Content release-notes.md -Encoding UTF8
+
+      - name: Create or update GitHub Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
           $tag = "v$version"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release edit $tag --title "Banana Cord V$version" --notes-file release-notes.md --latest
+          } else {
+            gh release create $tag --title "Banana Cord V$version" --target $env:GITHUB_SHA --notes-file release-notes.md --latest
+          }
+
           $exe = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe" | Select-Object -First 1
           $blockmap = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe.blockmap" | Select-Object -First 1
-          $latest = Get-Item "desktop/dist/latest.yml" -ErrorAction SilentlyContinue
-
-          if (-not $exe) { Write-Error "Instalador .exe não foi gerado."; exit 1 }
-          if (-not $blockmap) { Write-Error "Blockmap não foi gerado."; exit 1 }
-          if (-not $latest) { Write-Error "latest.yml não foi gerado."; exit 1 }
-
-          gh release view $tag *> $null
-          if ($LASTEXITCODE -ne 0) { gh release create $tag --title $version --target $env:GITHUB_SHA }
+          $latest = Get-Item "desktop/dist/latest.yml"
           gh release upload $tag $exe.FullName $blockmap.FullName $latest.FullName --clobber
 
+      - name: Verify published release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
+          $tag = "v$version"
           $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" | ConvertFrom-Json
           $names = @($release.assets | ForEach-Object { $_.name })
           $hasExe = ($names | Where-Object { $_ -like "Banana-Cord-Setup-$version-*.exe" }).Count -gt 0
           $hasBlockmap = ($names | Where-Object { $_ -like "*.exe.blockmap" }).Count -gt 0
           $hasLatest = $names -contains "latest.yml"
           if (-not ($hasExe -and $hasBlockmap -and $hasLatest)) {
-            Write-Error "Release incompleta após o upload explícito."
-            Write-Host ($names -join ", ")
+            Write-Error "Release incompleta: $($names -join ', ')"
             exit 1
           }
-          Write-Host "Release $tag completa: EXE + blockmap + latest.yml."
+          Write-Host "Banana Cord V$version publicado com EXE + blockmap + latest.yml."
