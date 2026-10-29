@@ -1,6 +1,6 @@
 {
   "name": "banana-cord",
-  "version": "2.0.0-cloud.5",
+  "version": "2.0.0-cloud.6",
   "description": "Banana Cord v2 Cloud preview - login-first, sem host, com interface v1.2.1 completa sobre Firebase",
   "private": true,
   "main": "main-v120.js",
