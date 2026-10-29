@@ -46,6 +46,7 @@ const fakeSocket = {
   voice: null,
   processVoiceServer(serverId, tree) { processed.push({ serverId, tree }); },
   receive(event, payload) { received.push({ event, payload }); },
+  async joinVoice() {},
   async loadServer() { return { channels: [{ id: 'voiceB', type: 'voice', name: 'Geral' }] }; },
   async leaveVoice() { this.voice = null; },
   async publicUser(uid) { return { id: uid, name: uid === 'me' ? 'Eu' : 'Amigo' }; }
