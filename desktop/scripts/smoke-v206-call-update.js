@@ -13,7 +13,12 @@ const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 new Function(callFix);
 new Function(graceful);
 
-assert.strictEqual(pkg.version, '2.0.6', 'Critical restart fix must ship as 2.0.6.');
+const versionParts = String(pkg.version || '').split('.').map(Number);
+const [major = 0, minor = 0, patch = 0] = versionParts;
+assert(
+  major > 2 || (major === 2 && (minor > 0 || (minor === 0 && patch >= 6))),
+  'The V2.0.6 critical restart guard must remain present in V2.0.6+ releases.'
+);
 assert(pkg.build.files.includes('graceful-shutdown.js'), 'Installer must include graceful-shutdown.js.');
 
 assert(graceful.includes('window.BananaCloudSocket?.disconnect'), 'Updater shutdown must explicitly disconnect Banana Cloud.');
@@ -81,7 +86,7 @@ assert(index.includes('v206-call-update-fix.js'), 'Renderer must load the V2.0.6
   assert(fakeSocket.joined, 'Original joinVoice must still run after stale-session cleanup.');
   assert(removed.includes('voiceRooms/server/voice/staleSelf'), 'A stale session belonging to the same account must be removed before joining.');
 
-  console.log('Banana Cord V2.0.6 call/update restart regression checks: OK');
+  console.log(`Banana Cord ${pkg.version} preserves the V2.0.6 call/update restart regressions: OK`);
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;
