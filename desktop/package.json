@@ -1,7 +1,7 @@
 {
   "name": "banana-cord",
-  "version": "2.0.0-cloud.2",
-  "description": "Banana Cord v2 Cloud preview - v1.2.1 completa sobre Firebase",
+  "version": "2.0.0-cloud.3",
+  "description": "Banana Cord v2 Cloud preview - login-first, sem host, com interface v1.2.1 completa sobre Firebase",
   "private": true,
   "main": "main-v120.js",
   "author": "Rafael Mingroni",
