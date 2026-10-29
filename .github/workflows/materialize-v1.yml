@@ -1,0 +1,92 @@
+name: Validate Banana Cord v1 release candidate
+
+on:
+  push:
+    branches: [v1-post-beta]
+    paths:
+      - "desktop/scripts/v1-blob-manifest.json"
+      - "desktop/scripts/materialize-v1.js"
+      - ".github/workflows/materialize-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate-v1:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout release-candidate branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Materialize exact v1 source blobs
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node desktop/scripts/materialize-v1.js
+
+      - name: Commit materialized v1 source
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if (-not (git diff --cached --quiet)) {
+            git commit -m "Materialize Banana Cord v1.0.0 source"
+            git push origin HEAD:v1-post-beta
+          } else {
+            Write-Host "Source already materialized."
+          }
+
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Assemble fallback split sources
+        working-directory: desktop
+        run: npm run prepare:source
+
+      - name: Validate JavaScript
+        shell: pwsh
+        run: |
+          node --check desktop/updater-prompt.js
+          node --check desktop/tray.js
+          node --check desktop/main.js
+          node --check desktop/server/server.js
+          node --check desktop/src/app.js
+          node --check desktop/src/v1.js
+          node --check desktop/scripts/smoke-v1.js
+
+      - name: Run v1 two-user smoke test
+        working-directory: desktop
+        run: npm run smoke:v1
+
+      - name: Validate post-beta assets
+        shell: pwsh
+        run: |
+          $pkg = Get-Content desktop/package.json | ConvertFrom-Json
+          if ($pkg.version -ne "1.0.0") { throw "Expected Banana Cord 1.0.0" }
+          if (-not (Test-Path desktop/tray.js)) { throw "Tray module missing" }
+          if (-not (Test-Path desktop/src/v1.js)) { throw "v1 UI missing" }
+          if (-not (Test-Path desktop/src/v1.css)) { throw "v1 CSS missing" }
+          if (-not ((Get-Content desktop/src/index.html -Raw).Contains("v1.js"))) { throw "index.html does not load v1.js" }
+          if (-not ((Get-Content desktop/src/index.html -Raw).Contains("v1.css"))) { throw "index.html does not load v1.css" }
+
+      - name: Build Windows release candidate
+        working-directory: desktop
+        run: npm run dist:win
+
+      - name: Verify Windows installer
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "desktop/dist/Banana-Cord-Setup-1.0.0-x64.exe")) { throw "Windows installer was not generated" }
+          $size = (Get-Item "desktop/dist/Banana-Cord-Setup-1.0.0-x64.exe").Length
+          if ($size -lt 50000000) { throw "Installer looks unexpectedly small" }
+          Write-Host "Banana Cord v1.0.0 RC installer verified: $size bytes"
