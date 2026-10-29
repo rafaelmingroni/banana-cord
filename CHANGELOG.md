@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.0.7
+- Corrige identidade duplicada em calls quando uma sessão antiga da mesma conta ainda existe: o usuário local nunca pode reaparecer como peer remoto.
+- Deduplica a presença de voz por UID em todo o servidor, inclusive quando registros antigos ficaram em canais diferentes.
+- Faz o limite de 5 participantes contar usuários únicos, e não sessões fantasmas do Firebase.
+- Usa `socketId` como identidade principal para mute, fala, câmera e compartilhamento de tela, evitando atribuir uma transmissão ao usuário errado.
+- Mantém um diretório de voz por servidor para que a tela compartilhada continue associada ao participante correto mesmo enquanto o usuário navega em outro servidor.
+- Mantém snapshots de voz em cache por servidor, permitindo navegar entre servidores sem sair da call e sem perder o estado visual da chamada ativa.
+- Adiciona o botão `Assistir transmissão` diretamente ao usuário que estiver compartilhando tela e também no perfil dele; o clique abre o canal correto e foca a transmissão sem exigir localizar manualmente o canal Geral.
+- Corrige pedido de amizade que podia falhar com `missing or insufficient permissions` ao consultar uma relação ainda inexistente.
+- Permite procurar e adicionar amigos pelo nome de usuário sem exigir servidor em comum.
+- Corrige a primeira DM que podia falhar com permissão ao tentar ouvir mensagens antes de o documento da conversa existir.
+- A lista de nova DM passa a incluir amigos aceitos mesmo sem servidor em comum.
+- Melhora o primeiro acesso com ações visíveis para `Criar ou entrar em um servidor` e `Adicionar amigo`, sem depender de descobrir o botão `+`.
+- Atualiza textos herdados da arquitetura antiga de host para explicar corretamente o Banana Cloud.
+- Se o usuário for removido do servidor da call ou o canal de voz for excluído, a sessão de voz é encerrada de forma limpa.
+- Adiciona regressões específicas para sessão duplicada, atribuição exata de screen share, amizade/DM e fluxo de transmissão.
+
 ## 2.0.6
 - Corrige regressão grave em que atualizar o Banana Cord durante uma call podia deixar sessões antigas de voz no Banana Cloud e fazer participantes/estado aparecerem duplicados após o restart.
 - Antes de `quitAndInstall`, o updater agora aguarda `BananaCloudSocket.disconnect()` concluir, incluindo `leaveVoice()` e remoção da sessão do Realtime Database.
