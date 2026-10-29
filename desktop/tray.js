@@ -1,5 +1,6 @@
 const { app, Tray, Menu, nativeImage, BrowserWindow } = require('electron');
 const path = require('path');
+const { prepareRendererShutdown } = require('./graceful-shutdown');
 
 let tray = null;
 let quitting = false;
@@ -9,7 +10,7 @@ let closeHintShown = false;
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) app.quit();
 
-const isCloudV2 = () => /^2\.0\.0-cloud\./.test(String(app.getVersion() || ''));
+const isCloudV2 = () => /^2\.0\./.test(String(app.getVersion() || ''));
 
 function mainWindow() {
   return BrowserWindow.getAllWindows().find(w => !w.isDestroyed()) || null;
@@ -37,7 +38,12 @@ function rebuildMenu() {
     { type: 'separator' },
     {
       label: 'Sair do Banana Cord',
-      click: () => { quitting = true; app.quit(); }
+      click: async () => {
+        if (quitting) return;
+        quitting = true;
+        try { await prepareRendererShutdown(); } catch {}
+        app.quit();
+      }
     }
   ];
   tray.setContextMenu(Menu.buildFromTemplate(template));
