@@ -2,7 +2,7 @@ name: Build and publish Banana Cord for Windows
 
 on:
   push:
-    branches: [main, v1-post-beta, v1.0.1-stability, v1.1-premium, v1.1.1-private-rendezvous]
+    branches: [main, v1-post-beta, v1.0.1-stability, v1.1-premium, v1.1.1-private-rendezvous, v1.2-link-invites]
     paths:
       - "desktop/**"
       - ".github/workflows/release-windows.yml"
@@ -36,6 +36,7 @@ jobs:
       - name: Validate JavaScript
         shell: pwsh
         run: |
+          node --check desktop/main-v120.js
           node --check desktop/main-v110.js
           node --check desktop/rendezvous.js
           node --check desktop/updater-prompt.js
@@ -46,6 +47,7 @@ jobs:
           node --check desktop/src/v1.js
           node --check desktop/src/v101-fix.js
           node --check desktop/src/v110.js
+          node --check desktop/src/v120.js
           node --check desktop/scripts/smoke-v1.js
           node --check desktop/scripts/smoke-ui.js
           node --check desktop/scripts/smoke-rendezvous.js
@@ -70,11 +72,14 @@ jobs:
           if (-not (Test-Path "desktop/assets/banana-tray.png")) { Write-Error "Icone da bandeja ausente."; exit 1 }
           if (-not (Test-Path "desktop/src/v1.css")) { Write-Error "CSS da v1 ausente."; exit 1 }
           if (-not (Test-Path "desktop/src/v110.css")) { Write-Error "CSS da v1.1 ausente."; exit 1 }
+          if (-not (Test-Path "desktop/src/v120.css")) { Write-Error "CSS da v1.2 ausente."; exit 1 }
           $html = Get-Content "desktop/src/index.html" -Raw
           if ($html -notmatch 'v1\.js') { Write-Error "index.html não carrega v1.js"; exit 1 }
           if ($html -notmatch 'v101-fix\.js') { Write-Error "index.html não carrega v101-fix.js"; exit 1 }
           if ($html -notmatch 'v110\.js') { Write-Error "index.html não carrega v110.js"; exit 1 }
           if ($html -notmatch 'v110\.css') { Write-Error "index.html não carrega v110.css"; exit 1 }
+          if ($html -notmatch 'v120\.js') { Write-Error "index.html não carrega v120.js"; exit 1 }
+          if ($html -notmatch 'v120\.css') { Write-Error "index.html não carrega v120.css"; exit 1 }
 
       - name: Prepare version tag and release
         if: github.ref == 'refs/heads/main'
