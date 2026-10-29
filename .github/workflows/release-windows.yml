@@ -133,9 +133,7 @@ jobs:
       - name: Build Windows installer and updater metadata
         if: github.ref == 'refs/heads/main'
         working-directory: desktop
-        run: npm run dist:win -- --publish always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run dist:win -- --publish never
 
       - name: Verify validation installer
         if: github.ref != 'refs/heads/main'
