@@ -47,6 +47,7 @@ jobs:
       - name: Validate JavaScript
         shell: pwsh
         run: |
+          node --check desktop/src/cloud-v2-mode.js
           node --check desktop/src/cloud-v2.js
           node --check desktop/src/cloud-v2-auth-fix.js
           node --check desktop/src/cloud-v2-socket.js
@@ -55,6 +56,7 @@ jobs:
           node --check desktop/scripts/smoke-cloud.js
           node --check desktop/scripts/smoke-cloud-parity.js
           node --check desktop/scripts/smoke-firebase-rules.js
+          node --check desktop/scripts/e2e-v2-renderer.js
           node --check desktop/src/app.js
           node --check desktop/main-v120.js
 
@@ -73,6 +75,10 @@ jobs:
       - name: Existing invite regression tests
         working-directory: desktop
         run: npm run smoke:rendezvous
+
+      - name: Real Electron V2 interaction test
+        working-directory: desktop
+        run: npm run smoke:e2e-v2
 
       - name: Build preview installer
         working-directory: desktop
