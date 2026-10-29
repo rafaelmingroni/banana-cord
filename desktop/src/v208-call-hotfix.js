@@ -55,12 +55,9 @@
     return null;
   }
 
-  function findUid(uid) {
-    for (const [serverId, dir] of directoryByServer) {
-      const row = dir.byUid.get(uid);
-      if (row) return { serverId, row };
-    }
-    return null;
+  function currentVoiceDirectory(socket) {
+    const serverId = socket?.voice?.serverId || state.voice?.serverId || '';
+    return serverId ? directoryByServer.get(serverId) || null : null;
   }
 
   function patchSocket(socket) {
@@ -85,15 +82,16 @@
     const baseReceive = socket.receive.bind(socket);
     socket.receive = function receiveV208(event, payload = {}) {
       const localUid = String(this.user?.uid || state.user?.id || '');
+      const roomDir = currentVoiceDirectory(this);
 
       if (event === 'voice:peers' && Array.isArray(payload.peers)) {
         const best = new Map();
         for (const raw of payload.peers) {
-          const auth = findSocket(raw?.socketId)?.row;
+          const auth = roomDir?.bySocket.get(raw?.socketId) || null;
           const uid = String(auth?.userId || raw?.user?.id || raw?.userId || raw?.socketId || '');
           if (!uid || uid === localUid || raw?.socketId === this.id) continue;
 
-          const authoritative = findUid(uid)?.row;
+          const authoritative = roomDir?.byUid.get(uid) || null;
           if (authoritative && authoritative.socketId !== raw.socketId) continue;
 
           const peer = auth
@@ -105,10 +103,10 @@
       }
 
       if (event === 'voice:user-joined') {
-        const auth = findSocket(payload.socketId)?.row;
+        const auth = roomDir?.bySocket.get(payload.socketId) || null;
         const uid = String(auth?.userId || payload.user?.id || '');
         if (!uid || uid === localUid || payload.socketId === this.id) return;
-        const authoritative = findUid(uid)?.row;
+        const authoritative = roomDir?.byUid.get(uid) || null;
         if (authoritative && authoritative.socketId !== payload.socketId) return;
 
         for (const peer of [...state.voice.peers.values()]) {
@@ -120,18 +118,20 @@
       }
 
       if (event === 'webrtc:signal') {
-        const auth = findSocket(payload.fromSocketId)?.row;
+        const auth = roomDir?.bySocket.get(payload.fromSocketId) || null;
         const uid = String(auth?.userId || payload.fromUser?.id || '');
         if (payload.fromSocketId === this.id || (uid && uid === localUid)) return;
-        const authoritative = uid ? findUid(uid)?.row : null;
+        const authoritative = uid ? roomDir?.byUid.get(uid) || null : null;
         if (authoritative && authoritative.socketId !== payload.fromSocketId) return;
         if (auth) payload = { ...payload, fromUser: auth.user };
       }
 
       if ((event === 'voice:media-state-global' || event === 'voice:speaking-global') && payload.socketId) {
-        const auth = findSocket(payload.socketId)?.row;
+        const location = findSocket(payload.socketId);
+        const auth = location?.row || null;
         const uid = String(auth?.userId || payload.userId || '');
-        const authoritative = uid ? findUid(uid)?.row : null;
+        const dir = location ? directoryByServer.get(location.serverId) : null;
+        const authoritative = uid ? dir?.byUid.get(uid) || null : null;
         if (authoritative && authoritative.socketId !== payload.socketId) return;
         if (auth) payload = { ...payload, userId: auth.userId, channelId: auth.channelId };
       }
