@@ -1,0 +1,31 @@
+.settings-tabs{display:flex;gap:8px;margin:0 0 18px}.settings-tabs button{flex:1;border:1px solid #3b3d42;background:#2a2c30;color:#d7d7dc;padding:10px 12px;border-radius:8px;cursor:pointer}.settings-tabs button.active{background:var(--accent);color:#241d00;border-color:var(--accent);font-weight:800}.audio-settings label{display:block;margin:14px 0 6px;font-size:12px;font-weight:800;text-transform:uppercase;color:#c9c9cf}.audio-settings select,.audio-settings input[type=range]{width:100%}.audio-settings select{background:#151517;border:1px solid #444;color:white;border-radius:8px;padding:11px}.audio-settings button.secondary{width:100%;margin-top:9px;background:#303238;color:#f2f2f4;border:1px solid #44474d;padding:10px;border-radius:8px;cursor:pointer}.audio-settings .action{margin-top:18px}.mic-meter{height:12px;background:#131416;border:1px solid #3b3d42;border-radius:999px;overflow:hidden;margin:10px 0 6px}.mic-meter span{display:block;width:0;height:100%;background:linear-gradient(90deg,#45c76f,#f3c623,#e24c4c);transition:width .05s linear}.audio-settings small{display:block;color:#9fa0a7;margin-top:6px}.settings-note{line-height:1.45;margin-top:12px!important}
+
+/* Banana Cord v0.4 - chamadas e compartilhamento */
+:root{--accent:var(--yellow)}
+.control-row{grid-template-columns:repeat(5,1fr)}
+.video-card.speaking{border-color:#35d275;box-shadow:0 0 0 2px #35d27555 inset}
+.video-card.is-sharing{grid-column:1 / -1;min-height:360px}
+.video-card:fullscreen{width:100%;height:100%;border-radius:0;background:#050607;display:grid;place-items:center}
+.video-card:fullscreen video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.video-card:fullscreen .video-placeholder{width:100%;height:100%}
+.video-card audio.remote-audio{display:none}
+.expand-btn{position:absolute;top:8px;left:8px;z-index:4;width:34px!important;height:30px;padding:0!important;margin:0!important;border-radius:7px!important;background:#000b!important;color:#fff!important;font-size:18px!important}
+.audio-unlock{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;width:auto!important;padding:9px 13px!important;margin:0!important;background:#f3c623!important;color:#1a1605!important;border-radius:8px!important;font-weight:800}
+.peer-volume{position:absolute;right:8px;bottom:8px;z-index:4;display:flex;align-items:center;gap:5px;background:#000a;border-radius:7px;padding:4px 7px}
+.peer-volume input[type=range]{width:78px;padding:0;background:transparent;border:0}
+.peer-volume small{font-size:10px;color:#eee;min-width:30px;text-align:right}
+.video-card .video-label{max-width:55%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.settings-tabs{overflow-x:auto}.settings-tabs button{min-width:max-content}
+.settings-sep{border:0;border-top:1px solid #35373c;margin:20px 0}
+.settings-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.switch-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+.switch-line{display:flex!important;align-items:center;gap:8px;margin:0!important;padding:9px;border:1px solid #383b40;border-radius:8px;background:#181a1d;text-transform:none!important;letter-spacing:0!important;font-weight:600!important;color:#ddd!important}
+.switch-line input{width:auto;margin:0}
+.camera-preview{width:100%;max-height:260px;background:#101113;border:1px solid #34363d;border-radius:10px;margin-top:10px;object-fit:contain}
+.diagnostics{display:grid;gap:9px}.diag-row{display:grid;gap:4px;background:#17181b;border:1px solid #36383e;border-radius:8px;padding:10px}.diag-row b{font-size:12px}.diag-row span{color:#aeb2ba;font-size:12px;word-break:break-word}
+@media(max-width:900px){.video-card.is-sharing{min-height:300px}.settings-2col,.switch-grid{grid-template-columns:1fr}}
+
+/* Banana Cord v0.8 */
+.server-actions{display:flex;align-items:center;gap:2px}.server-title strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.voice-top-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.voice-top .secondary-mini{width:auto;margin:0;background:#303238;color:#f3f4f5;border:1px solid #45484f;padding:8px 10px;border-radius:8px;font-weight:700}.voice-top .secondary-mini.active{background:#3c3520;border-color:#8a7420;color:#ffe36b}
+.channel-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;border-radius:7px}.channel-row.dragging{opacity:.45}.channel-row.drag-over{outline:1px solid var(--yellow)}.channel-row .channel{min-width:0}.channel-actions{display:flex;align-items:center}.channel-more{background:transparent;color:#777c85;width:27px;height:27px;border-radius:6px}.channel-more:hover{background:#34363b;color:#fff}
+.voice-user-list{display:grid;gap:2px;padding:2px 5px 6px 34px}.voice-user-row{display:flex;align-items:center;gap:7px;min-width:0;padding:3px 4px;border-radius:6px;color:#999ea7;font-size:11px}.voice-user-row:hover{background:#23252a;color:#ddd}.voice-user-row .avatar{width:23px;height:23px;font-size:10px;outline:2px solid transparent;transition:outline-color .08s,box-shadow .08s}.voice-user-row.speaking{color:#dfffea}.voice-user-row.speaking .avatar{outline-color:#35d275;box-shadow:0 0 0 2px #35d27533}.voice-user-row .voice-user-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.voice-user-icons{display:flex;gap:3px;font-size:10px;opacity:.8}
