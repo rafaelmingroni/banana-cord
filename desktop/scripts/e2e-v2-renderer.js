@@ -6,7 +6,7 @@ app.commandLine.appendSwitch('disable-software-rasterizer');
 
 // The renderer asks these during startup in the real app. Stub them here so
 // the interaction test measures the UI flow, not missing test-harness IPC.
-ipcMain.handle('update:get-config', async () => ({ repoUrl: '', autoCheck: false, autoDownload: false, currentVersion: '2.0.0-cloud.6' }));
+ipcMain.handle('update:get-config', async () => ({ repoUrl: '', autoCheck: false, autoDownload: false, currentVersion: '2.0.0-cloud.7' }));
 ipcMain.handle('update:get-state', async () => ({ status: 'idle', progress: 0, message: '' }));
 ipcMain.handle('clipboard:write', async () => true);
 
@@ -117,7 +117,7 @@ app.whenReady().then(async () => {
         const profileGear = document.getElementById('profileBtn');
         if (!profileGear) return { ok: false, reason: 'profile settings gear missing' };
         profileGear.click();
-        await sleep(80);
+        await sleep(100);
         const settingsModal = document.getElementById('modal');
         const settingsShell = document.querySelector('#modalBody .settings-shell');
         if (!settingsModal || settingsModal.classList.contains('hidden') || !settingsShell) {
@@ -128,7 +128,7 @@ app.whenReady().then(async () => {
           return { ok: false, reason: 'Cloud settings version label was overwritten by legacy observer' };
         }
 
-        const settingsTabs = ['tabProfile', 'tabAudio', 'tabVideo', 'tabGeneral', 'tabDiag', 'tabUpdates'];
+        const settingsTabs = ['tabProfile', 'tabAudio', 'tabVideo', 'tabGeneral', 'tabDiag', 'tabNotifications', 'tabUpdates'];
         for (const tabId of settingsTabs) {
           const tab = document.getElementById(tabId);
           if (!tab) return { ok: false, reason: 'settings tab missing: ' + tabId };
@@ -142,6 +142,21 @@ app.whenReady().then(async () => {
           if (!tabLoopAlive) return { ok: false, reason: 'settings tab froze renderer: ' + tabId };
         }
 
+        // Notification controls must be independently configurable and persist.
+        document.getElementById('tabNotifications')?.click();
+        await sleep(60);
+        const requiredSoundControls = ['soundMaster','soundCall','soundPeople','soundMute','soundDeafen','soundDm','soundVolume','testNotificationSound','saveNotificationSounds'];
+        for (const id of requiredSoundControls) if (!document.getElementById(id)) return { ok: false, reason: 'notification control missing: ' + id };
+        const muteSound = document.getElementById('soundMute');
+        muteSound.checked = false;
+        document.getElementById('soundVolume').value = '0.42';
+        document.getElementById('saveNotificationSounds').click();
+        await sleep(30);
+        if (localStorage.getItem('banana.soundMute') !== 'false') return { ok: false, reason: 'mute sound preference did not persist' };
+        if (localStorage.getItem('banana.soundVolume') !== '0.42') return { ok: false, reason: 'notification volume did not persist' };
+        // Restore default for following tests/builds in this renderer profile.
+        localStorage.setItem('banana.soundMute', 'true');
+
         // Regression: long settings pages (Audio / Video e tela) were visually
         // clipped because the grid child could grow behind an overflow:hidden modal.
         document.getElementById('tabVideo')?.click();
@@ -149,16 +164,12 @@ app.whenReady().then(async () => {
         const settingsScroller = document.querySelector('.settings-content');
         if (!settingsScroller) return { ok: false, reason: 'settings content scroller missing' };
         const overflowY = getComputedStyle(settingsScroller).overflowY;
-        if (!['auto', 'scroll'].includes(overflowY)) {
-          return { ok: false, reason: 'settings content is not vertically scrollable' };
-        }
+        if (!['auto', 'scroll'].includes(overflowY)) return { ok: false, reason: 'settings content is not vertically scrollable' };
         const scrollRange = settingsScroller.scrollHeight - settingsScroller.clientHeight;
         if (scrollRange <= 0) return { ok: false, reason: 'video settings page has no usable scroll range' };
         settingsScroller.scrollTop = scrollRange;
         await sleep(30);
-        if (settingsScroller.scrollTop < Math.max(1, scrollRange - 2)) {
-          return { ok: false, reason: 'settings content cannot scroll to the bottom' };
-        }
+        if (settingsScroller.scrollTop < Math.max(1, scrollRange - 2)) return { ok: false, reason: 'settings content cannot scroll to the bottom' };
 
         document.getElementById('modalClose')?.click();
         await sleep(30);
@@ -166,9 +177,7 @@ app.whenReady().then(async () => {
         // Regression: rendering our own display capture inside the Banana Cord
         // window creates a recursive hall-of-mirrors when that window is on the
         // shared monitor. The local card must switch to a static safe preview.
-        if (typeof addLocalCard !== 'function' || typeof updateLocalVideo !== 'function') {
-          return { ok: false, reason: 'local video renderer unavailable' };
-        }
+        if (typeof addLocalCard !== 'function' || typeof updateLocalVideo !== 'function') return { ok: false, reason: 'local video renderer unavailable' };
         state.voice.screen = { getTracks: () => [], getAudioTracks: () => [], getVideoTracks: () => [] };
         addLocalCard();
         updateLocalVideo();
@@ -177,24 +186,14 @@ app.whenReady().then(async () => {
         const localVideo = localCard?.querySelector('video');
         const localPlaceholder = localCard?.querySelector('.video-placeholder');
         const localExpand = localCard?.querySelector('.expand-btn');
-        if (!localCard?.classList.contains('self-share-safe')) {
-          return { ok: false, reason: 'local screen share did not enter safe-preview mode' };
-        }
-        if (localVideo?.style.display !== 'none' || localVideo?.srcObject) {
-          return { ok: false, reason: 'local screen share is still being rendered recursively' };
-        }
-        if (!/compartilhando sua tela/i.test(localPlaceholder?.textContent || '')) {
-          return { ok: false, reason: 'safe self-share placeholder missing' };
-        }
-        if (localExpand && !localExpand.classList.contains('hidden')) {
-          return { ok: false, reason: 'local self-share fullscreen control must be disabled' };
-        }
+        if (!localCard?.classList.contains('self-share-safe')) return { ok: false, reason: 'local screen share did not enter safe-preview mode' };
+        if (localVideo?.style.display !== 'none' || localVideo?.srcObject) return { ok: false, reason: 'local screen share is still being rendered recursively' };
+        if (!/compartilhando sua tela/i.test(localPlaceholder?.textContent || '')) return { ok: false, reason: 'safe self-share placeholder missing' };
+        if (localExpand && !localExpand.classList.contains('hidden')) return { ok: false, reason: 'local self-share fullscreen control must be disabled' };
         state.voice.screen = null;
         updateLocalVideo();
         await sleep(20);
-        if (localCard.classList.contains('self-share-safe')) {
-          return { ok: false, reason: 'safe self-share mode did not reset after sharing stopped' };
-        }
+        if (localCard.classList.contains('self-share-safe')) return { ok: false, reason: 'safe self-share mode did not reset after sharing stopped' };
 
         const plus = document.getElementById('addServerBtn');
         if (!plus) return { ok: false, reason: 'add server button missing' };
@@ -204,13 +203,9 @@ app.whenReady().then(async () => {
         const modal = document.getElementById('modal');
         const input = document.getElementById('newServerName');
         const create = document.getElementById('createServerNow');
-        if (!modal || modal.classList.contains('hidden') || !input || !create) {
-          return { ok: false, reason: 'server modal did not open from + button' };
-        }
+        if (!modal || modal.classList.contains('hidden') || !input || !create) return { ok: false, reason: 'server modal did not open from + button' };
         const modalText = document.getElementById('modalBody')?.textContent || '';
-        if (!modalText.includes('Banana Cloud') || /mesmo host/i.test(modalText)) {
-          return { ok: false, reason: 'server modal still exposes host-era copy' };
-        }
+        if (!modalText.includes('Banana Cloud') || /mesmo host/i.test(modalText)) return { ok: false, reason: 'server modal still exposes host-era copy' };
 
         input.value = 'Servidor E2E';
         create.click();
@@ -231,7 +226,8 @@ app.whenReady().then(async () => {
           settingsVersion: versionFoot,
           settingsTabs,
           settingsScrollRange: scrollRange,
-          selfShareSafe: true
+          selfShareSafe: true,
+          notificationSettings: true
         };
       })();
     `, true),
@@ -239,7 +235,7 @@ app.whenReady().then(async () => {
   ]);
 
   if (!result?.ok) return fail(result?.reason || 'unknown renderer failure');
-  console.log('Banana Cord V2 Electron server/settings/self-share interaction test: OK');
+  console.log('Banana Cord V2 Electron server/settings/self-share/notifications interaction test: OK');
   console.log(JSON.stringify(result));
   try { win.destroy(); } catch {}
   finish(0);
