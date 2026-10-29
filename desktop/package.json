@@ -6,7 +6,7 @@
   "main": "main-v120.js",
   "author": "Rafael Mingroni",
   "scripts": {
-    "prepare:source": "node scripts/merge-source.js && node scripts/generate-icons.js",
+    "prepare:source": "node scripts/merge-source.js && node scripts/generate-icons.js && node scripts/build-cloud-browser.js",
     "prestart": "npm run prepare:source",
     "start": "electron .",
     "predist:win": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous && npm run smoke:cloud",
@@ -30,7 +30,8 @@
   },
   "devDependencies": {
     "electron": "45.1.0",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "esbuild": "0.28.2"
   },
   "build": {
     "appId": "com.bananacord.app",
