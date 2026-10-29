@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1
+- Corrige o congelamento ao clicar no botão de convite do servidor.
+- Torna a atualização do texto do modal idempotente para impedir loops do `MutationObserver`.
+- Agrupa alterações do modal em microtasks para evitar tempestades de mutações no renderer.
+- Remove um guard antigo que ainda prendia alguns rótulos de versão em `v1.1.1` após atualizações.
+- Adiciona teste de regressão específico para o congelamento do modal de convite.
+
 ## 1.2.0
 - Reequilibra a tipografia e o espaçamento do modal de convite para um visual mais compacto e proporcional.
 - Remove o overflow horizontal do modal em janelas menores.
