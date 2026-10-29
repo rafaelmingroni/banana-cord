@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0
+- Reequilibra a tipografia e o espaçamento do modal de convite para um visual mais compacto e proporcional.
+- Remove o overflow horizontal do modal em janelas menores.
+- Adiciona link público de convite para servidores e convites temporários.
+- Registra o protocolo `bananacord://` no instalador do Windows.
+- Um link de convite pode abrir o Banana Cord já instalado, carregar o código e conectar ao servidor.
+- Se o usuário ainda não tiver o aplicativo, a página pública oferece/redireciona para o instalador mais recente.
+- Mantém o código curto como alternativa e conserva compatibilidade com convites completos antigos.
+- A página de convite é estática e não transporta voz, vídeo, chat ou compartilhamento de tela.
+- Ajusta o workflow de Release para impedir publicações duplicadas no GitHub.
+
 ## 1.1.1
 - Criptografa o registro de rendezvous dos convites curtos com AES-256-GCM.
 - O endereço do host, código interno e nome do servidor deixam de ficar em texto aberto nos relays.
