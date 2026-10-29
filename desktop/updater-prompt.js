@@ -1,5 +1,8 @@
 const { app, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
+const { patchAutoUpdater } = require('./graceful-shutdown');
+
+patchAutoUpdater(autoUpdater);
 
 let seenAvailable = '';
 let seenDownloaded = '';
@@ -28,7 +31,7 @@ function showDownloaded(info) {
     type: 'info',
     title: 'Atualização pronta',
     message: `Banana Cord ${version} está pronto para instalar`,
-    detail: 'Reinicie agora para aplicar a atualização. Se escolher Depois, ela será instalada quando você usar “Sair do Banana Cord” na bandeja.',
+    detail: 'Ao reiniciar, o Banana Cord encerra a call atual com segurança, limpa sua sessão no Banana Cloud e abre novamente já atualizado. Se escolher Depois, a atualização fica pronta para a próxima saída do app.',
     buttons: ['Reiniciar e instalar', 'Depois'],
     defaultId: 0,
     cancelId: 1,

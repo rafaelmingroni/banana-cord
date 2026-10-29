@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.6
+- Corrige regressão grave em que atualizar o Banana Cord durante uma call podia deixar sessões antigas de voz no Banana Cloud e fazer participantes/estado aparecerem duplicados após o restart.
+- Antes de `quitAndInstall`, o updater agora aguarda `BananaCloudSocket.disconnect()` concluir, incluindo `leaveVoice()` e remoção da sessão do Realtime Database.
+- A saída pela bandeja também aguarda a limpeza da sessão Cloud antes de encerrar o aplicativo.
+- Ao entrar em uma call, remove sessões antigas da própria conta que tenham sobrevivido a um encerramento abrupto.
+- Deduplica snapshots e lista inicial de peers por usuário, mantendo apenas a sessão mais recente quando houver registros repetidos.
+- O popup de atualização informa que a call atual será encerrada com segurança antes do reinício.
+- Adiciona teste de regressão específico para cleanup antes do updater, sessões fantasmas e deduplicação de voz.
+
 ## 2.0.5
 - Corrige exclusão de servidores criados pelo próprio usuário que podia parar com erro de permissão no Firebase.
 - Remove mensagens e canais enquanto o dono ainda mantém as permissões necessárias, antes da limpeza final de membros, referências, convite e servidor.
