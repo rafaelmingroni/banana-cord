@@ -31,6 +31,9 @@ assert(!social.includes('Vocês precisam estar em um servidor em comum'), 'Frien
 assert(social.includes("event === 'friend:search'"), 'Backend must support user search.');
 assert(social.includes("event === 'friend:request'"), 'Friend request must acknowledge success/failure to the UI.');
 assert(social.includes('searchName'), 'Searchable normalized usernames must be maintained.');
+const dmCreateAt = social.indexOf("setDoc(doc(this.db, 'dmThreads', tid)");
+const dmWatchAt = social.indexOf('return originalWatchDm(peerId)');
+assert(dmCreateAt >= 0 && dmWatchAt > dmCreateAt, 'A new DM thread must exist before the original messages watcher starts.');
 
 assert(socialUi.includes('Adicionar amigo'), 'DM/onboarding UI must expose Add friend.');
 assert(socialUi.includes('Criar ou entrar em um servidor'), 'First-run UI must expose a clear server CTA.');
@@ -38,7 +41,7 @@ assert(socialUi.includes('v1?.social?.friends'), 'New DM picker must include acc
 
 assert(index.includes('v205-navigation-fix.js'), 'Index must load V2.0.5 navigation fix.');
 assert(index.includes('v205-server-delete-fix.js'), 'Index must load V2.0.5 server deletion fix.');
-assert(index.includes('v205-social-fix.js'), 'Index must load V2.0.5 social backend fix.');
-assert(index.includes('v205-social-ui-fix.js'), 'Index must load V2.0.5 social/onboarding UI fix.');
+assert(index.includes('v205-social-fix.js'), 'Index must load V2.0.6 social backend fix.');
+assert(index.includes('v205-social-ui-fix.js'), 'Index must load V2.0.6 social/onboarding UI fix.');
 
-console.log('Banana Cord V2.0.5 regression checks: OK');
+console.log('Banana Cord V2.0.6 regression checks: OK');
