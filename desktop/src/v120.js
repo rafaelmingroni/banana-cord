@@ -1,8 +1,9 @@
-/* Banana Cord v1.2.0 — links públicos e deep links. */
+/* Banana Cord v1.2.1 — links públicos, deep links e estabilidade do modal de convite. */
 (() => {
   const { ipcRenderer } = require('electron');
-  const VERSION = '1.2.0';
+  const VERSION = '1.2.1';
   const PUBLIC_INVITE_BASE = 'https://rafaelmingroni.github.io/banana-cord/?invite=';
+  const INVITE_LEAD = 'Compartilhe o código ou um link. O Banana Cord encontra o host automaticamente.';
   const CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
   const normalizeShort = value => String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -71,6 +72,9 @@
     if (!card || !codeNode || !copyCode || card.dataset.linkReady === '1') return;
     const code = formatShort(codeNode.textContent);
     if (!looksShort(code)) return;
+
+    // Marque antes de alterar o DOM: o MutationObserver verá as mudanças,
+    // mas não repetirá esta transformação.
     card.dataset.linkReady = '1';
     const link = publicInviteLink(code);
     const preview = document.createElement('div');
@@ -105,18 +109,32 @@
     const root = document.querySelector('#modalBody .premium-invite');
     if (!root) return;
     const lead = root.querySelector('.premium-invite-head p');
-    if (lead) lead.textContent = 'Compartilhe o código ou um link. O Banana Cord encontra o host automaticamente.';
+
+    // IMPORTANTE: alterar textContent incondicionalmente dentro de um
+    // MutationObserver cria uma nova mutação e pode travar o renderer.
+    if (lead && lead.textContent !== INVITE_LEAD) lead.textContent = INVITE_LEAD;
+
     enhancePermanentInvite(root);
     enhanceTemporaryInvite(root);
   }
 
   const modalBody = document.getElementById('modalBody');
   if (modalBody) {
-    const observer = new MutationObserver(() => enhanceInviteModal());
+    let enhancementQueued = false;
+    const scheduleEnhancement = () => {
+      if (enhancementQueued) return;
+      enhancementQueued = true;
+      queueMicrotask(() => {
+        enhancementQueued = false;
+        try { enhanceInviteModal(); }
+        catch (error) { console.error('Banana Cord invite enhancement:', error); }
+      });
+    };
+    const observer = new MutationObserver(scheduleEnhancement);
     observer.observe(modalBody, { childList: true, subtree: true });
   }
 
   document.querySelectorAll('.setup .brand p b, .settings-nav-foot').forEach(el => {
-    el.textContent = `v${VERSION}`;
+    if (el.textContent !== `v${VERSION}`) el.textContent = `v${VERSION}`;
   });
 })();
