@@ -37,10 +37,22 @@
       <button id="joinServerNow" class="secondary">Entrar pelo código</button>`);
   }, true);
 
-  // O handler original de modal da 1.2.1 continua sendo usado e envia
-  // server:create/server:join para o socket virtual do Cloud.
+  async function cloudLogout() {
+    try { await window.BananaCloudSocket?.disconnect?.(); } catch (error) { console.warn('Banana Cloud disconnect:', error); }
+    try { await window.BananaCloud?.signOut?.(); } catch (error) { console.error('Banana Cloud logout:', error); return toast('Não consegui sair da conta.', 4200); }
+    window.BananaCloudSocket = null;
+    state.socket = null;
+    state.readyOnce = false;
+    state.user = null;
+    state.servers = [];
+    state.selectedServer = null;
+    state.selectedChannel = null;
+    setConnection(false);
+    els.app?.classList.add('hidden');
+    closeModal();
+  }
 
-  // Na V2, "Desconectar" deve encerrar a conta, e não apenas recarregar.
+  // Na V2, "Desconectar" encerra a conta e limpa o transporte Cloud.
   const modalObserver = new MutationObserver(() => {
     if (!window.BananaCloud?.ready) return;
     const disconnect = document.getElementById('disconnectNow');
@@ -50,7 +62,7 @@
       disconnect.addEventListener('click', event => {
         event.preventDefault();
         event.stopImmediatePropagation();
-        window.BananaCloud?.signOut?.();
+        cloudLogout();
       }, true);
     }
     const foot = document.querySelector('.settings-nav-foot');
@@ -62,6 +74,7 @@
 
   window.BananaLegacy = {
     attachSocket,
+    cloudLogout,
     get state() { return state; },
     get els() { return els; },
     showEmpty: () => showEmpty(),
