@@ -1,0 +1,35 @@
+name: Export Cloud 3 Source Snapshot
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [v2-cloud-foundation]
+    paths:
+      - ".github/workflows/export-cloud3-source.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout exact Cloud 3 source
+        uses: actions/checkout@v4
+        with:
+          ref: 093ef7c2678ff05657ef5730f79ce8c6aa179c5c
+          fetch-depth: 1
+
+      - name: Create source ZIP
+        shell: pwsh
+        run: |
+          if (Test-Path .git) { Remove-Item .git -Recurse -Force }
+          Compress-Archive -Path * -DestinationPath Banana-Cord-Cloud-3-Source.zip -CompressionLevel Optimal
+
+      - name: Upload source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: Banana-Cord-Cloud-3-Source
+          path: Banana-Cord-Cloud-3-Source.zip
+          if-no-files-found: error
+          retention-days: 7
