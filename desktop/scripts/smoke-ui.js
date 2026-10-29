@@ -5,6 +5,8 @@ const { execFileSync } = require('child_process');
 const root = path.resolve(__dirname, '..');
 const index = fs.readFileSync(path.join(root, 'src', 'index.html'), 'utf8');
 const hotfix = fs.readFileSync(path.join(root, 'src', 'v101-fix.js'), 'utf8');
+const runtimeFix = fs.readFileSync(path.join(root, 'src', 'cloud-v2-runtime-fixes.js'), 'utf8');
+const runtimeCss = fs.readFileSync(path.join(root, 'src', 'cloud-v2-runtime-fixes.css'), 'utf8');
 const tray = fs.readFileSync(path.join(root, 'tray.js'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const v120 = fs.readFileSync(path.join(root, 'src', 'v120.js'), 'utf8');
@@ -13,7 +15,7 @@ function assert(ok, message) {
   if (!ok) { console.error(`UI smoke test failed: ${message}`); process.exit(1); }
 }
 
-for (const file of ['main-v120.js','main-v110.js','rendezvous.js','tray.js','updater-prompt.js','src/v101-fix.js','src/v1.js','src/v110.js','src/v120.js','src/cloud-v2.js','src/cloud-v2-auth-fix.js','src/cloud-v2-ui-fix.js','src/cloud-v2-legacy-bridge.js','src/cloud-v2-socket.js']) {
+for (const file of ['main-v120.js','main-v110.js','rendezvous.js','tray.js','updater-prompt.js','src/v101-fix.js','src/v1.js','src/v110.js','src/v120.js','src/cloud-v2.js','src/cloud-v2-auth-fix.js','src/cloud-v2-ui-fix.js','src/cloud-v2-legacy-bridge.js','src/cloud-v2-socket.js','src/cloud-v2-runtime-fixes.js']) {
   execFileSync(process.execPath, ['--check', path.join(root, file)], { stdio: 'inherit' });
 }
 
@@ -41,6 +43,12 @@ if (/^2\.0\.0-cloud\./.test(pkg.version)) {
   const cloudBundle = 'cloud-browser/cloud-v2-all.browser.js';
   assert(index.includes(cloudBundle), 'v2 unified cloud browser bundle missing');
   assert(index.includes('cloud-v2-legacy-bridge.js'), 'v2 stable UI compatibility bridge missing');
+  assert(index.includes('cloud-v2-runtime-fixes.css'), 'cloud runtime UX stylesheet missing');
+  assert(index.includes('cloud-v2-runtime-fixes.js'), 'cloud runtime UX script missing');
+  assert(index.indexOf(cloudBundle) < index.indexOf('cloud-v2-runtime-fixes.js'), 'runtime fixes must load after unified cloud bundle');
+  assert(runtimeCss.includes('overflow-y:auto') && runtimeCss.includes('height:min(680px,86vh)'), 'settings scroll fix missing');
+  assert(runtimeFix.includes('self-share-safe') && runtimeFix.includes('video.srcObject = null'), 'recursive self-share guard missing');
+  assert(runtimeFix.includes('remoteShare') && !runtimeFix.includes('autoFocusShare && anyShare'), 'local share must not trigger automatic focus');
   assert(!index.includes('cloud-v2-home.js'), 'simplified cloud home must not replace v1.2.1 UI');
   assert(!index.includes('cloud-v2.browser.js') && !index.includes('cloud-v2-auth-fix.browser.js') && !index.includes('cloud-v2-socket.browser.js'), 'legacy split Firebase bundles must not return');
   assert(index.indexOf('v1.js') < index.indexOf('cloud-v2-legacy-bridge.js'), 'cloud bridge must load after mature v1 renderer');
