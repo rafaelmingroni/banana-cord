@@ -15,17 +15,21 @@ function assert(ok, message) {
   }
 }
 
-for (const file of ['tray.js', 'updater-prompt.js', 'src/v101-fix.js', 'src/v1.js']) {
+for (const file of ['main-v110.js', 'rendezvous.js', 'tray.js', 'updater-prompt.js', 'src/v101-fix.js', 'src/v1.js', 'src/v110.js']) {
   execFileSync(process.execPath, ['--check', path.join(root, file)], { stdio: 'inherit' });
 }
 
-assert(pkg.version === '1.0.1', 'package version must be 1.0.1');
+assert(/^1\.1\./.test(pkg.version), 'package version must be in the 1.1 line');
 assert(!/p[oó]s-beta/i.test(index), 'index.html must not show pós-beta');
-assert(index.includes('v101-fix.js'), 'renderer hotfix must be loaded');
-assert(index.indexOf('v101-fix.js') < index.indexOf('v1.js'), 'renderer hotfix must load before v1.js');
+assert(index.includes('v101-fix.js'), 'renderer stability guard must be loaded');
+assert(index.includes('v110.js'), 'v1.1 renderer must be loaded');
+assert(index.indexOf('v101-fix.js') < index.indexOf('v1.js'), 'stability guard must load before v1.js');
+assert(index.indexOf('v1.js') < index.indexOf('v110.js'), 'v1.1 renderer must load after v1.js');
 assert(hotfix.includes("this.matches('.version-label')"), 'version-label recursion guard missing');
 assert(hotfix.includes('current === String(next)'), 'same-value textContent guard missing');
-assert(tray.includes('.crop({ x, y, width: cropSize, height: cropSize })'), 'tray icon visibility crop missing');
+assert(tray.includes("banana-tray.png"), 'dedicated tray icon missing');
+assert(!tray.includes('.crop({ x, y, width: cropSize, height: cropSize })'), 'old tray crop workaround should be removed');
 assert(index.includes('continua na bandeja'), 'host tray behavior should be explained');
+assert(index.includes('ABCD-EFGH'), 'short invite example should be visible');
 
-console.log('Banana Cord v1.0.1 UI smoke test: OK');
+console.log(`Banana Cord v${pkg.version} UI smoke test: OK`);
