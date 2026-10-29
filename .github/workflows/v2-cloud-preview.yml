@@ -28,8 +28,7 @@ jobs:
         working-directory: desktop
         run: npm install --no-audit --no-fund
 
-      - name: Inject Firebase config when available
-        if: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON != '' }}
+      - name: Inject Firebase config
         working-directory: desktop
         env:
           BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
@@ -43,6 +42,7 @@ jobs:
         shell: pwsh
         run: |
           node --check desktop/src/cloud-v2.js
+          node --check desktop/src/cloud-v2-auth-fix.js
           node --check desktop/scripts/inject-firebase-config.js
           node --check desktop/scripts/smoke-cloud.js
           node --check desktop/src/app.js
