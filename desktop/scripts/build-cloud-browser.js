@@ -7,30 +7,31 @@ const outdir = path.join(root, 'src', 'cloud-browser');
 fs.rmSync(outdir, { recursive: true, force: true });
 fs.mkdirSync(outdir, { recursive: true });
 
-const builds = [
-  ['cloud-v2.js', 'cloud-v2.browser.js'],
-  ['cloud-v2-auth-fix.js', 'cloud-v2-auth-fix.browser.js'],
-  ['cloud-v2-socket.js', 'cloud-v2-socket.browser.js']
-];
-
 (async () => {
-  for (const [entry, outfile] of builds) {
-    await esbuild.build({
-      entryPoints: [path.join(root, 'src', entry)],
-      outfile: path.join(outdir, outfile),
-      bundle: true,
-      platform: 'browser',
-      format: 'iife',
-      target: ['chrome140'],
-      minify: false,
-      sourcemap: false,
-      logLevel: 'warning',
-      define: {
-        'process.env.NODE_ENV': '"production"'
-      }
-    });
-  }
-  console.log('Banana Cloud browser bundles generated.');
+  await esbuild.build({
+    stdin: {
+      contents: [
+        "require('./cloud-v2.js');",
+        "require('./cloud-v2-auth-fix.js');",
+        "require('./cloud-v2-ui-fix.js');",
+        "require('./cloud-v2-socket.js');"
+      ].join('\n'),
+      resolveDir: path.join(root, 'src'),
+      sourcefile: 'cloud-v2-browser-entry.js'
+    },
+    outfile: path.join(outdir, 'cloud-v2-all.browser.js'),
+    bundle: true,
+    platform: 'browser',
+    format: 'iife',
+    target: ['chrome140'],
+    minify: false,
+    sourcemap: false,
+    logLevel: 'warning',
+    define: {
+      'process.env.NODE_ENV': '"production"'
+    }
+  });
+  console.log('Banana Cloud single browser bundle generated.');
 })().catch(err => {
   console.error(err);
   process.exit(1);
