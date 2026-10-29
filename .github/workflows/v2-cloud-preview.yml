@@ -2,7 +2,7 @@ name: Validate Banana Cord v2 Cloud Preview
 
 on:
   push:
-    branches: [v2-cloud-foundation]
+    branches: [v2-cloud-foundation, v2-cloud4-stabilization]
     paths:
       - "desktop/**"
       - "firebase/**"
