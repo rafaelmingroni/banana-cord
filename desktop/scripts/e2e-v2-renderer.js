@@ -127,10 +127,21 @@ app.whenReady().then(async () => {
         if (versionFoot !== 'v2 Cloud Preview') {
           return { ok: false, reason: 'Cloud settings version label was overwritten by legacy observer' };
         }
-        let eventLoopAlive = false;
-        setTimeout(() => { eventLoopAlive = true; }, 0);
-        await sleep(60);
-        if (!eventLoopAlive) return { ok: false, reason: 'settings gear froze renderer event loop' };
+
+        const settingsTabs = ['tabProfile', 'tabAudio', 'tabVideo', 'tabGeneral', 'tabDiag', 'tabUpdates'];
+        for (const tabId of settingsTabs) {
+          const tab = document.getElementById(tabId);
+          if (!tab) return { ok: false, reason: 'settings tab missing: ' + tabId };
+          tab.click();
+          await sleep(70);
+          const areaText = document.getElementById('settingsArea')?.textContent?.trim() || '';
+          if (!areaText) return { ok: false, reason: 'settings tab rendered empty: ' + tabId };
+          let tabLoopAlive = false;
+          setTimeout(() => { tabLoopAlive = true; }, 0);
+          await sleep(20);
+          if (!tabLoopAlive) return { ok: false, reason: 'settings tab froze renderer: ' + tabId };
+        }
+
         document.getElementById('modalClose')?.click();
         await sleep(30);
 
@@ -162,7 +173,7 @@ app.whenReady().then(async () => {
         if (!serverVisible) return { ok: false, reason: 'created server did not render in server rail' };
         if (!channelsText.includes('geral') || !channelsText.includes('Geral')) return { ok: false, reason: 'default text/voice channels did not render' };
 
-        return { ok: true, emitted: emitted.map(x => x.event), channelsText, settingsVersion: versionFoot };
+        return { ok: true, emitted: emitted.map(x => x.event), channelsText, settingsVersion: versionFoot, settingsTabs };
       })();
     `, true),
     new Promise(resolve => setTimeout(() => resolve({ ok: false, reason: 'renderer interaction timeout' }), 10000))
