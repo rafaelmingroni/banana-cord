@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Convite Banana Cord</title>
+  <style>
+    :root{--bg:#0d0f12;--panel:#181b20;--panel2:#20242a;--line:#32363e;--text:#f5f6f7;--muted:#9ca3ae;--banana:#f7c928;--banana2:#ffdf62}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 50% 12%,#2a2511 0,#111318 36%,var(--bg) 70%);color:var(--text)}body{min-height:100vh;display:grid;place-items:center;padding:24px}.card{width:min(520px,100%);background:linear-gradient(160deg,#1e2126,#15171b);border:1px solid var(--line);border-radius:20px;padding:26px;box-shadow:0 28px 80px #0009}.brand{display:flex;align-items:center;gap:13px;margin-bottom:22px}.banana{font-size:42px;line-height:1}.brand h1{font-size:22px;margin:0;letter-spacing:-.3px}.brand p{margin:3px 0 0;color:var(--muted);font-size:13px}.invite{padding:18px;border:1px solid #514621;border-radius:14px;background:linear-gradient(145deg,#29250f,#1b1a16);margin-bottom:16px}.invite small{display:block;color:#bfb67f;font-size:11px;text-transform:uppercase;font-weight:800;letter-spacing:.8px}.invite strong{display:block;font-size:30px;letter-spacing:2.4px;color:#ffe37b;margin-top:7px}.status{color:#c8cbd1;line-height:1.5;font-size:14px;margin:12px 0 18px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.btn{display:grid;place-items:center;min-height:46px;border-radius:10px;text-decoration:none;font-weight:800;font-size:14px;border:1px solid #3b3f47;background:#25282e;color:#f5f6f7;cursor:pointer}.btn.primary{background:linear-gradient(180deg,var(--banana2),var(--banana));color:#17130a;border-color:#d6aa12}.hint{display:block;margin-top:16px;color:#777e89;font-size:11px;line-height:1.45;text-align:center}@media(max-width:520px){.card{padding:20px;border-radius:16px}.invite strong{font-size:25px}.actions{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand"><div class="banana">🍌</div><div><h1>Banana Cord</h1><p>Convite para servidor privado</p></div></div>
+    <section class="invite"><small>Código do convite</small><strong id="code">—</strong></section>
+    <p id="status" class="status">Preparando seu convite…</p>
+    <div class="actions">
+      <a id="openApp" class="btn primary" href="#">Abrir Banana Cord</a>
+      <a id="download" class="btn" href="https://github.com/rafaelmingroni/banana-cord/releases/latest">Baixar Banana Cord</a>
+    </div>
+    <small class="hint">Se o Banana Cord já estiver instalado, este link abre o aplicativo. Caso contrário, você será direcionado para a versão mais recente.</small>
+  </main>
+<script>
+(() => {
+  const alphabet='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const normalize=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const format=v=>{const raw=normalize(v);return raw.length===12?`${raw.slice(0,4)}-${raw.slice(4,8)}-${raw.slice(8)}`:raw.length===8?`${raw.slice(0,4)}-${raw.slice(4)}`:raw};
+  const raw=normalize(new URLSearchParams(location.search).get('invite'));
+  const valid=[8,12].includes(raw.length)&&[...raw].every(ch=>alphabet.includes(ch));
+  const code=format(raw);
+  const codeEl=document.getElementById('code');
+  const status=document.getElementById('status');
+  const open=document.getElementById('openApp');
+  const download=document.getElementById('download');
+  if(!valid){codeEl.textContent='INVÁLIDO';status.textContent='Esse link de convite não é válido.';open.style.display='none';return;}
+  codeEl.textContent=code;
+  const deep=`bananacord://join/${encodeURIComponent(code)}`;
+  open.href=deep;
+  status.textContent='Tentando abrir o Banana Cord…';
+  let leftPage=false;
+  let downloadUrl='https://github.com/rafaelmingroni/banana-cord/releases/latest';
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)leftPage=true});
+  fetch('https://api.github.com/repos/rafaelmingroni/banana-cord/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
+    .then(r=>r.ok?r.json():Promise.reject())
+    .then(release=>{
+      const asset=(release.assets||[]).find(a=>/^Banana-Cord-Setup-.*-x64\.exe$/i.test(a.name));
+      if(asset?.browser_download_url){downloadUrl=asset.browser_download_url;download.href=downloadUrl;}
+    }).catch(()=>{});
+  setTimeout(()=>{location.href=deep},180);
+  setTimeout(()=>{
+    if(leftPage||document.hidden)return;
+    status.textContent='O aplicativo não abriu? Vamos levar você para o download.';
+  },1800);
+  setTimeout(()=>{
+    if(leftPage||document.hidden)return;
+    location.href=downloadUrl;
+  },3800);
+})();
+</script>
+</body>
+</html>

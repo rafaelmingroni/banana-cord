@@ -1,9 +1,9 @@
 {
   "name": "banana-cord",
-  "version": "1.1.1",
-  "description": "Banana Cord v1.1.1 - identidade premium e convites curtos com rendezvous criptografado",
+  "version": "1.2.0",
+  "description": "Banana Cord v1.2.0 - convites por link, deep links e interface premium leve",
   "private": true,
-  "main": "main-v110.js",
+  "main": "main-v120.js",
   "author": "Rafael Mingroni",
   "scripts": {
     "prepare:source": "node scripts/merge-source.js && node scripts/generate-icons.js",
@@ -34,10 +34,17 @@
     "appId": "com.bananacord.app",
     "productName": "Banana Cord",
     "artifactName": "Banana-Cord-Setup-${version}-${arch}.${ext}",
+    "protocols": [
+      {
+        "name": "Banana Cord Invite",
+        "schemes": ["bananacord"]
+      }
+    ],
     "directories": {
       "output": "dist"
     },
     "files": [
+      "main-v120.js",
       "main-v110.js",
       "rendezvous.js",
       "tray.js",

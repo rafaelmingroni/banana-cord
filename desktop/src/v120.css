@@ -1,0 +1,36 @@
+/* Banana Cord v1.2.0 — convite mais compacto, legível e responsivo. */
+.modal-card:has(.premium-invite){
+  width:min(520px,calc(100vw - 28px));
+  max-height:min(720px,calc(100vh - 34px));
+  padding:20px;
+  overflow-x:hidden;
+}
+.premium-invite{width:100%;min-width:0;gap:14px;font-size:14px}
+.premium-invite-head{gap:4px}
+.premium-invite-head h2{font-size:21px;line-height:1.15;letter-spacing:-.2px}
+.premium-invite-head p{font-size:14px;line-height:1.42}
+.premium-kicker{font-size:10px;letter-spacing:1.15px}
+.premium-code-card{gap:7px;padding:15px;border-radius:12px}
+.premium-code-card>span{font-size:11px;letter-spacing:.65px}
+.premium-code-card>strong{font-size:27px;line-height:1.05;letter-spacing:2.4px}
+.premium-code-card>small,.temporary-invite-card small,.premium-invite-note{font-size:12px;line-height:1.4}
+.premium-copy-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.premium-copy-row button,.temporary-invite-row button,.temporary-link-button{width:100%!important;margin:0!important;padding:10px 12px!important;font-size:13px!important}
+.temporary-invite-card{gap:10px;padding:14px}
+.temporary-invite-card>div:first-child b{font-size:14px}
+.temporary-invite-row{grid-template-columns:minmax(0,1fr) 128px;gap:8px;align-items:stretch}
+.temporary-invite-row select{width:100%;height:40px;padding:0 10px;font-size:13px;border-radius:8px;background:#15171a;color:#f1f2f4;border:1px solid #3b3e45}
+.temporary-result{grid-template-columns:minmax(0,1fr) auto;padding:10px;gap:4px 8px}
+.temporary-result strong{font-size:18px;letter-spacing:1.5px}
+.temporary-result small{font-size:11px}
+.invite-link-preview{display:grid;gap:4px;padding:9px 10px;border:1px solid #353943;border-radius:9px;background:#15171a;color:#aeb3bd}
+.invite-link-preview span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.65px;color:#8f95a1}
+.invite-link-preview code{font:11px/1.35 Consolas,monospace;color:#d7dbe3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legacy-invite{padding-top:10px}
+.legacy-invite summary{font-size:13px}
+.premium-invite .invite-box{font-size:10.5px;line-height:1.4}
+@media(max-width:560px){
+  .modal-card:has(.premium-invite){width:calc(100vw - 18px);padding:16px}
+  .premium-code-card>strong{font-size:23px;letter-spacing:1.7px}
+  .premium-copy-row,.temporary-invite-row{grid-template-columns:1fr}
+}
