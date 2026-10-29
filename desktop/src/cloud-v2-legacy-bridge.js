@@ -5,6 +5,69 @@
   window.BananaCloudMode = true;
   window.BananaCloudNative = true;
 
+  // Na V2 o "ping" da barra lateral deve representar a chamada WebRTC,
+  // não o round-trip até o Firebase. O backend Cloud participa do controle/
+  // sinalização, mas a mídia da call continua peer-to-peer.
+  let cloudPingTimer = null;
+  async function peerRttMs(pc) {
+    if (!pc?.getStats) return null;
+    try {
+      const stats = await pc.getStats();
+      let selectedPairId = '';
+      let selectedPairRtt = null;
+      let nominatedPairRtt = null;
+      let remoteInboundRtt = null;
+
+      stats.forEach(report => {
+        if (report.type === 'transport' && report.selectedCandidatePairId) selectedPairId = report.selectedCandidatePairId;
+      });
+      stats.forEach(report => {
+        if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+          const rtt = Number(report.currentRoundTripTime);
+          if (Number.isFinite(rtt) && rtt >= 0) {
+            if (selectedPairId && report.id === selectedPairId) selectedPairRtt = rtt * 1000;
+            else if (report.nominated && nominatedPairRtt == null) nominatedPairRtt = rtt * 1000;
+          }
+        }
+        if (report.type === 'remote-inbound-rtp') {
+          const rtt = Number(report.roundTripTime);
+          if (Number.isFinite(rtt) && rtt >= 0 && remoteInboundRtt == null) remoteInboundRtt = rtt * 1000;
+        }
+      });
+
+      const value = selectedPairRtt ?? nominatedPairRtt ?? remoteInboundRtt;
+      return Number.isFinite(value) ? value : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function voiceRttMs() {
+    const peers = [...(state.voice?.peers?.values?.() || [])];
+    if (!peers.length) return null;
+    const values = (await Promise.all(peers.map(peer => peerRttMs(peer?.pc)))).filter(Number.isFinite);
+    if (!values.length) return null;
+    return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+  }
+
+  try {
+    startPing = function startCloudPing() {
+      if (cloudPingTimer) clearInterval(cloudPingTimer);
+      const update = async () => {
+        if (!state.socket?.connected) {
+          if (els.ping) els.ping.textContent = 'offline';
+          return;
+        }
+        const rtt = await voiceRttMs();
+        if (els.ping) els.ping.textContent = rtt == null ? '-- ms' : `${rtt} ms`;
+      };
+      update();
+      cloudPingTimer = setInterval(update, 3000);
+    };
+  } catch (error) {
+    console.warn('Banana Cloud: não consegui ativar RTT WebRTC.', error);
+  }
+
   function attachSocket(socket, user) {
     if (!socket) throw new Error('Socket Banana Cloud inválido.');
     state.socket = socket;
