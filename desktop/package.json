@@ -1,6 +1,6 @@
 {
   "name": "banana-cord",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Banana Cord V2 - contas, servidores persistentes e comunicação em nuvem com voz e tela via WebRTC",
   "private": true,
   "main": "main-v120.js",

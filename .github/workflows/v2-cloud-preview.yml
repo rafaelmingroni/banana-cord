@@ -2,7 +2,7 @@ name: Validate Banana Cord v2 Cloud Preview
 
 on:
   push:
-    branches: [v2-cloud-foundation, v2-cloud4-stabilization, hotfix/v2.0.1-registration-black-screen]
+    branches: [v2-cloud-foundation, v2-cloud4-stabilization, 'hotfix/**']
     paths:
       - "desktop/**"
       - "firebase/**"
@@ -52,6 +52,7 @@ jobs:
           node --check desktop/src/cloud-v2-auth-fix.js
           node --check desktop/src/cloud-v2-socket.js
           node --check desktop/src/cloud-v2-legacy-bridge.js
+          node --check desktop/src/cloud-v2-release-fixes.js
           node --check desktop/scripts/inject-firebase-config.js
           node --check desktop/scripts/smoke-cloud.js
           node --check desktop/scripts/smoke-cloud-parity.js
