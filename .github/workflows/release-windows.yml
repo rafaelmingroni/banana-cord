@@ -40,32 +40,49 @@ jobs:
           node --check desktop/server/server.js
           node --check desktop/src/app.js
 
-      - name: Prepare version tag
+      - name: Prepare version tag and release
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
           $tag = "v$version"
+          $repo = $env:GITHUB_REPOSITORY
           git fetch --tags --force
 
-          gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" *> $null
+          $releaseJson = gh api "repos/$repo/releases/tags/$tag" 2>$null
           $releaseExists = ($LASTEXITCODE -eq 0)
+          $releaseComplete = $false
 
-          $existing = git tag -l $tag
           if ($releaseExists) {
+            $release = $releaseJson | ConvertFrom-Json
+            $assetNames = @($release.assets | ForEach-Object { $_.name })
+            $hasExe = ($assetNames | Where-Object { $_ -like "Banana-Cord-Setup-$version-*.exe" }).Count -gt 0
+            $hasBlockmap = ($assetNames | Where-Object { $_ -like "*.exe.blockmap" }).Count -gt 0
+            $hasLatest = $assetNames -contains "latest.yml"
+            $releaseComplete = $hasExe -and $hasBlockmap -and $hasLatest
+
+            if (-not $releaseComplete) {
+              Write-Host "Release $tag existe, mas está incompleta. Limpando assets para republicar."
+              foreach ($asset in $release.assets) {
+                gh api -X DELETE "repos/$repo/releases/assets/$($asset.id)"
+              }
+            }
+          }
+
+          if ($releaseComplete) {
             $tagCommit = (git rev-list -n 1 $tag).Trim()
             if ($tagCommit -ne $env:GITHUB_SHA) {
-              Write-Error "A versão $version já foi publicada. Aumente desktop/package.json antes de publicar mudanças novas."
+              Write-Error "A versão $version já foi publicada por completo. Aumente desktop/package.json antes de publicar mudanças novas."
               exit 1
             }
-            Write-Host "Release $tag já existe e aponta para este commit."
+            Write-Host "Release $tag já está completa."
           } else {
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git tag -f $tag $env:GITHUB_SHA
             git push origin "refs/tags/$tag" --force
-            Write-Host "Tag $tag preparada para a primeira publicação."
+            Write-Host "Tag $tag preparada para publicação/reparo."
           }
 
       - name: Build and publish GitHub Release
