@@ -111,6 +111,29 @@ app.whenReady().then(async () => {
         const appVisible = !document.getElementById('app')?.classList.contains('hidden');
         if (!setupHidden || !appVisible) return { ok: false, reason: 'login-first shell state incorrect' };
 
+        // Regression: opening user settings in Cloud used to start an infinite
+        // MutationObserver loop (v1 version label vs v2 Cloud label), freezing
+        // the whole renderer. Click the real gear and prove the event loop lives.
+        const profileGear = document.getElementById('profileBtn');
+        if (!profileGear) return { ok: false, reason: 'profile settings gear missing' };
+        profileGear.click();
+        await sleep(80);
+        const settingsModal = document.getElementById('modal');
+        const settingsShell = document.querySelector('#modalBody .settings-shell');
+        if (!settingsModal || settingsModal.classList.contains('hidden') || !settingsShell) {
+          return { ok: false, reason: 'profile settings did not open from gear' };
+        }
+        const versionFoot = document.querySelector('.settings-nav-foot')?.textContent || '';
+        if (versionFoot !== 'v2 Cloud Preview') {
+          return { ok: false, reason: 'Cloud settings version label was overwritten by legacy observer' };
+        }
+        let eventLoopAlive = false;
+        setTimeout(() => { eventLoopAlive = true; }, 0);
+        await sleep(60);
+        if (!eventLoopAlive) return { ok: false, reason: 'settings gear froze renderer event loop' };
+        document.getElementById('modalClose')?.click();
+        await sleep(30);
+
         const plus = document.getElementById('addServerBtn');
         if (!plus) return { ok: false, reason: 'add server button missing' };
         plus.click();
@@ -139,14 +162,14 @@ app.whenReady().then(async () => {
         if (!serverVisible) return { ok: false, reason: 'created server did not render in server rail' };
         if (!channelsText.includes('geral') || !channelsText.includes('Geral')) return { ok: false, reason: 'default text/voice channels did not render' };
 
-        return { ok: true, emitted: emitted.map(x => x.event), channelsText };
+        return { ok: true, emitted: emitted.map(x => x.event), channelsText, settingsVersion: versionFoot };
       })();
     `, true),
     new Promise(resolve => setTimeout(() => resolve({ ok: false, reason: 'renderer interaction timeout' }), 10000))
   ]);
 
   if (!result?.ok) return fail(result?.reason || 'unknown renderer failure');
-  console.log('Banana Cord V2 Electron server interaction test: OK');
+  console.log('Banana Cord V2 Electron server/settings interaction test: OK');
   console.log(JSON.stringify(result));
   try { win.destroy(); } catch {}
   finish(0);
