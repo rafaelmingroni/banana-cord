@@ -1,9 +1,9 @@
 {
   "name": "banana-cord",
-  "version": "0.10.0",
-  "description": "Banana Cord v0.10 - chat privado leve com DMs, áudio aprimorado, voz, cargos, câmera e compartilhamento de tela",
+  "version": "0.10.1",
+  "description": "Banana Cord v0.10.1 - chat privado leve com updater visível, DMs, áudio aprimorado, voz, cargos, câmera e compartilhamento de tela",
   "private": true,
-  "main": "main.js",
+  "main": "updater-prompt.js",
   "author": "Rafael Mingroni",
   "scripts": {
     "prepare:source": "node scripts/merge-source.js",
@@ -33,6 +33,7 @@
       "output": "dist"
     },
     "files": [
+      "updater-prompt.js",
       "main.js",
       "src/**/*",
       "server/**/*",
