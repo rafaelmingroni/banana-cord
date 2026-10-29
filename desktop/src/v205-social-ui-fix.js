@@ -96,6 +96,21 @@
     newDm?.insertAdjacentElement('afterend', button);
   };
 
+  // "Nova mensagem" now includes accepted friends even when they do not share a server.
+  openNewDmModal = function openNewDmModalV205() {
+    const byId = new Map();
+    for (const user of [...state.members.values()]) if (user?.id && user.id !== state.user?.id) byId.set(user.id, user);
+    try {
+      for (const user of (v1?.social?.friends || [])) if (user?.id && user.id !== state.user?.id) byId.set(user.id, user);
+    } catch {}
+    const candidates = [...byId.values()];
+    openModal(`<div class="simple-modal-head"><h2>Nova mensagem</h2><p>Escolha um amigo ou alguém do servidor atual.</p></div><div class="dm-picker">${candidates.map(u=>`<button class="dm-picker-row" data-user="${escapeHtml(u.id)}"><span class="dm-picker-avatar avatar" data-avatar="${escapeHtml(u.id)}"></span><span><b>${escapeHtml(u.name)}</b><small>${STATUS_LABEL[u.status||'offline']||'Offline'}</small></span></button>`).join('')||'<p>Nenhum contato disponível. Use “Adicionar amigo” para procurar alguém pelo nome.</p>'}</div>`);
+    for (const av of document.querySelectorAll('.dm-picker-avatar')) avatarStyle(av, byId.get(av.dataset.avatar));
+    for (const button of document.querySelectorAll('.dm-picker-row')) button.onclick = () => {
+      const user = byId.get(button.dataset.user); closeModal(); startDm(button.dataset.user, user);
+    };
+  };
+
   const showEmptyBase = showEmpty;
   showEmpty = function showEmptyV205() {
     showEmptyBase();
@@ -111,4 +126,10 @@
     document.getElementById('v205StartServer')?.addEventListener('click', () => els.addServerBtn?.click());
     document.getElementById('v205StartFriend')?.addEventListener('click', openFriendSearch);
   };
+
+  // If auth completed before this late compatibility layer loaded, refresh the view now.
+  queueMicrotask(() => {
+    if (!state?.servers?.length && !document.getElementById('app')?.classList.contains('hidden')) showEmpty();
+    if (state?.viewMode === 'dm') renderDmSidebar();
+  });
 })();
