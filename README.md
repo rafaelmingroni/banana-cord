@@ -2,123 +2,97 @@
 
 **Projeto pessoal de Rafael Mingroni.**
 
-Banana Cord é um aplicativo leve e privado de comunicação para grupos pequenos de amigos. A proposta é reunir o essencial de um app como Discord — servidores, texto, voz, webcam, compartilhamento de tela e mensagens privadas — priorizando simplicidade, baixo consumo de recursos e boa experiência durante jogos.
+Banana Cord é um aplicativo leve e privado de comunicação para grupos pequenos de amigos. Ele reúne servidores, canais de texto e voz, webcam, compartilhamento de tela e mensagens privadas, com foco em simplicidade, baixo consumo de recursos e boa experiência durante jogos.
 
-> **Versão atual: v1.0.0 — primeira versão pós-beta.**
+> **Versão atual: v1.0.1**
 
-## ✨ Principais recursos
+## ✨ Recursos
 
 ### Servidores e canais
-
 - Servidores privados por convite
 - Foto e nome personalizados do servidor
-- Menu de contexto no servidor para convite, configurações, renomear, alterar foto, sair ou excluir
-- Exclusão de servidor restrita ao dono
-- Canais de texto e voz
-- Categorias de canais recolhíveis
-- Canais privados por cargo
-- Reorganização de servidores
+- Menu de contexto do servidor
 - Cargos: Dono, Administrador, Moderador e Membro
-- Permissões para gerenciamento de canais e membros
+- Permissões reais no backend
+- Canais de texto e voz
+- Categorias recolhíveis
+- Canais privados por cargo
+- Reorganização de servidores e canais
+- Duplo clique em canal de voz para entrar na call
 
 ### Chat
-
-- Envio de mensagens em canais de texto
-- Editar mensagens com indicador **editado**
+- Editar mensagens com indicação de edição
 - Excluir mensagens
 - Responder mensagens
 - Reações rápidas
-- Menções com `@usuário`
+- @menções
 - Indicadores de mensagens não lidas e menções
-- Moderação de mensagens de acordo com permissões
+- Moderação de mensagens conforme permissões
 
 ### Amigos e mensagens privadas
-
 - Solicitações de amizade
 - Aceitar, recusar e remover amigos
 - Bloquear e desbloquear usuários
-- Mensagens privadas entre usuários permitidos
-- Lista de conversas recentes
-- Conversas privadas fixadas
+- DMs entre amigos e membros de servidores em comum
+- Conversas recentes
+- DMs fixadas
 - Indicadores de mensagens não lidas
-- Edição, exclusão, resposta e reações também em DMs
 - Status personalizado
 
-### Voz, vídeo e compartilhamento
-
-- Voz via WebRTC para até 5 pessoas por sala
-- Duplo clique no canal de voz para entrar imediatamente
+### Voz, câmera e compartilhamento
+- Voz WebRTC para até 5 pessoas por sala
 - Indicador verde de quem está falando
-- Volume individual por usuário
-- Mute, deafen e push-to-talk
+- Volume individual
+- Mute e deafen
+- Push-to-talk
 - Webcam
-- Compartilhamento de tela em 720p/1080p e 30/60 FPS
-- Perfis de transmissão voltados a qualidade, fluidez ou economia
-- Prioridade para manter o compartilhamento leve durante jogos
+- Compartilhamento em 720p/1080p e 30/60 FPS
+- Perfis Automático, Qualidade, Fluidez e Economia
+- Prioridade para compartilhamento de tela durante jogos
+- Tela cheia, stream fixado e foco no compartilhamento
 - Reconexão de voz e diagnóstico WebRTC
 
 ### Áudio e configurações
-
 - Seleção de microfone, saída de áudio e câmera
-- Medidor de entrada do microfone
-- Teste de microfone por **gravação e reprodução da própria voz**
-- Cancelamento de eco, supressão de ruído e ganho automático
-- Interface de configurações redesenhada
+- Teste de microfone por gravação e reprodução da própria voz
+- Cancelamento de eco, redução de ruído e ganho automático
+- Atalhos de mute, deafen e compartilhamento
+- Atualizações automáticas pelo GitHub Releases
 
-### Windows e experiência desktop
+### Bandeja do Windows
+Clicar no **X** esconde a janela, mas não encerra o Banana Cord. O aplicativo continua na bandeja do Windows — inclusive o servidor de quem estiver hospedando.
 
-- Aplicativo Electron para Windows
-- Identidade visual da banana no aplicativo e instalador
-- Ícone na bandeja do Windows
-- Fechar a janela pelo **X não encerra o Banana Cord**
-- O aplicativo continua rodando em segundo plano, inclusive quando o usuário é o host
-- Menu da bandeja para reabrir, mutar/desmutar e sair do aplicativo
-- Somente **Sair do Banana Cord** encerra o processo de verdade
+Para encerrar completamente, use **Sair do Banana Cord** no menu da bandeja.
+
+## 🚀 Instalação
+
+Baixe a versão mais recente em **Releases**:
+
+https://github.com/rafaelmingroni/banana-cord/releases/latest
+
+O instalador ainda não possui assinatura digital, então o Windows SmartScreen pode exibir um aviso.
 
 ## 🔄 Atualizações automáticas
 
-O Banana Cord usa **GitHub Releases** como fonte oficial de atualizações.
-
-Quando uma nova versão é publicada, versões compatíveis consultam automaticamente:
+O Banana Cord consulta este próprio repositório:
 
 `https://github.com/rafaelmingroni/banana-cord`
 
-O aplicativo pode detectar a nova versão, baixar os arquivos em segundo plano e oferecer **Reiniciar e instalar**.
+Quando uma nova versão é publicada, o aplicativo detecta, baixa em segundo plano e oferece **Reiniciar e instalar**.
 
-A partir da linha **v0.10.1+**, a experiência do updater também inclui avisos mais claros de nova versão e atualização pronta.
+Os arquivos de update publicados em cada Release são:
 
-A Release precisa conter os três arquivos usados pelo updater:
-
-- `Banana-Cord-Setup-<versão>-x64.exe`
-- `Banana-Cord-Setup-<versão>-x64.exe.blockmap`
+- `Banana-Cord-Setup-x.x.x-x64.exe`
+- `Banana-Cord-Setup-x.x.x-x64.exe.blockmap`
 - `latest.yml`
 
-## ⬇️ Instalação
-
-Baixe sempre a versão mais recente em:
-
-**[GitHub Releases](https://github.com/rafaelmingroni/banana-cord/releases/latest)**
-
-Execute o instalador `Banana-Cord-Setup-<versão>-x64.exe`.
-
-> O aplicativo ainda não possui assinatura digital de código. Por isso, o Windows SmartScreen pode exibir um aviso ao executar uma versão recém-baixada.
-
-## 🖥️ Como funciona o host
-
-Um dos amigos inicia o Banana Cord como host. O aplicativo sobe o backend local e abre automaticamente um **Cloudflare Quick Tunnel**, gerando o endereço usado pelos demais participantes.
-
-O host pode minimizar ou fechar a janela pelo **X**: o Banana Cord continua ativo na bandeja e o servidor permanece funcionando.
-
-O servidor só fica offline quando o processo do Banana Cord é realmente encerrado ou o computador do host é desligado/desconectado.
-
-## 🛠️ Desenvolvimento
-
-### Gerar o instalador no Windows
+## 🛠️ Gerar o instalador no Windows
 
 1. Instale o Node.js.
 2. Entre na pasta `desktop`.
-3. Instale as dependências.
-4. Gere o instalador.
+3. Execute `GERAR-EXE.bat`.
+
+Ou:
 
 ```bash
 cd desktop
@@ -126,43 +100,37 @@ npm install
 npm run dist:win
 ```
 
-O instalador é criado em `desktop/dist`.
+O instalador será criado em `desktop/dist`.
 
-### Testes da v1
+## 🌐 Como funciona o host
 
-O projeto inclui validação de sintaxe e um smoke test automatizado do fluxo principal entre dois usuários:
+Um usuário hospeda a sessão. O Banana Cord inicia o backend local e abre automaticamente um Cloudflare Quick Tunnel.
 
-```bash
-cd desktop
-npm run smoke:v1
-```
+O host precisa manter o **aplicativo em execução**, mas pode fechar a janela normalmente: o Banana Cord continua na bandeja.
 
-## 🚀 Pipeline de release
+## ⚙️ Arquitetura
 
-Antes de uma versão pública, o projeto valida o código, monta as fontes necessárias, executa o smoke test e gera o instalador Windows.
-
-A **v1.0.0** foi promovida para `main` somente após o release candidate passar por essas verificações.
-
-As Releases oficiais ficam em:
-
-**https://github.com/rafaelmingroni/banana-cord/releases**
-
-## ⚙️ Estrutura do projeto
-
-- `desktop/` — aplicativo Electron para Windows
-- `desktop/src/` — interface do aplicativo
-- `desktop/server/` — backend embutido usado pelo host
-- `desktop/scripts/` — montagem, testes e ferramentas de release
-- `.github/workflows/` — automações de build e publicação
+- Electron no desktop
+- Node.js + Express + Socket.IO no backend embutido
+- WebRTC para voz, webcam e compartilhamento
+- Cloudflare Quick Tunnel para acesso ao servidor
+- GitHub Releases + `electron-updater` para atualizações
 
 ## ⚠️ Limitações atuais
 
 - Até 5 participantes por sala de voz
-- A arquitetura de mídia atual usa WebRTC peer-to-peer
-- Redes muito restritas podem exigir TURN para conectividade mais confiável
-- O instalador ainda não possui assinatura digital
-- O funcionamento do grupo depende do computador do host permanecer ligado e conectado
+- Redes com NAT/firewall muito restritivo podem exigir TURN no futuro
+- O host precisa permanecer com o Banana Cord em execução
+- O instalador ainda não é assinado digitalmente
+
+## 📁 Estrutura
+
+- `desktop/` — aplicativo Electron para Windows
+- `desktop/server/` — backend embutido
+- `desktop/src/` — interface
+- `server/` — backend standalone para desenvolvimento/testes
+- `.github/workflows/` — build e publicação de Releases
 
 ---
 
-**Banana Cord v1.0.0** marca o fim da fase beta e o início da linha pós-beta do projeto. 🍌
+Banana Cord é um projeto pessoal em desenvolvimento, criado para comunicação privada entre amigos.
