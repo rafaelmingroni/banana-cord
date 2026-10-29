@@ -1,0 +1,58 @@
+{
+  "name": "banana-cord",
+  "version": "0.9.0",
+  "description": "Banana Cord v0.9 - chat privado leve com autoatualização, texto, voz, cargos, câmera e compartilhamento de tela",
+  "private": true,
+  "main": "main.js",
+  "author": "Rafael Mingroni",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis",
+    "dist:portable": "electron-builder --win portable"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "electron-updater": "6.8.11"
+  },
+  "devDependencies": {
+    "electron": "45.1.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.bananacord.app",
+    "productName": "Banana Cord",
+    "artifactName": "Banana-Cord-Setup-${version}-${arch}.${ext}",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "src/**/*",
+      "server/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "asar": true,
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Banana Cord"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "rafaelmingroni",
+        "repo": "banana-cord",
+        "releaseType": "release"
+      }
+    ]
+  }
+}
