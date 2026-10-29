@@ -68,3 +68,4 @@ app.whenReady().then(() => { const timer = setInterval(extraCheck, 30 * 60 * 100
 
 require('./tray.js');
 require('./main.js');
+require('./screen-share-main-fix.js');
