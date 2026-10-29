@@ -111,6 +111,13 @@
     };
   };
 
+  const renderDmMessagesBase = renderDmMessages;
+  renderDmMessages = function renderDmMessagesV207(forceBottom = false) {
+    renderDmMessagesBase(forceBottom);
+    const emptyCopy = els.messages?.querySelector?.('.dm-conversation-empty span');
+    if (emptyCopy) emptyCopy.textContent = 'As mensagens ficam sincronizadas com segurança no Banana Cloud.';
+  };
+
   const showEmptyBase = showEmpty;
   showEmpty = function showEmptyV207() {
     showEmptyBase();
@@ -126,6 +133,14 @@
     document.getElementById('v207StartServer')?.addEventListener('click', () => els.addServerBtn?.click());
     document.getElementById('v207StartFriend')?.addEventListener('click', openFriendSearch);
   };
+
+  // Replace the legacy host-era copy in the + modal. The delegated create/join handlers
+  // from app.js remain in place, so only the explanatory UI changes here.
+  els.addServerBtn?.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    openModal(`<h2>Criar ou entrar em servidor</h2><p>Servidores do Banana Cord ficam salvos no Banana Cloud e continuam disponíveis sem depender do PC de um dono ficar online.</p><label>Nome do novo servidor</label><input id="newServerName" maxlength="40" placeholder="Banana Gang"><button id="createServerNow">Criar servidor</button><div class="divider"><span>ou</span></div><label>Código de convite</label><input id="joinCode" maxlength="16" placeholder="A1B2C3D4"><button id="joinServerNow">Entrar pelo código</button>`);
+  }, true);
 
   queueMicrotask(() => {
     if (!state?.servers?.length && !document.getElementById('app')?.classList.contains('hidden')) showEmpty();
