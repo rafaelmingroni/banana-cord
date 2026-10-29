@@ -51,6 +51,7 @@ jobs:
           node --check desktop/src/cloud-v2.js
           node --check desktop/src/cloud-v2-auth-fix.js
           node --check desktop/src/cloud-v2-socket.js
+          node --check desktop/src/cloud-v2-webrtc-fix.js
           node --check desktop/src/cloud-v2-legacy-bridge.js
           node --check desktop/src/cloud-v2-release-fixes.js
           node --check desktop/scripts/inject-firebase-config.js
