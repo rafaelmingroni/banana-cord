@@ -1,0 +1,196 @@
+/* Banana Cord v1.0.0 — camada pós-beta, sem frameworks pesados. */
+(() => {
+  const V1_VERSION = '1.0.0';
+  const REACTIONS = ['👍', '❤️', '😂', '👎'];
+  const v1 = state.v1 = {
+    unreadChannels: new Set(),
+    mentionCounts: new Map(),
+    social: { friends: [], incoming: [], outgoing: [], blocked: [] },
+    reply: null,
+    editing: null,
+    menu: null,
+    serverOrder: readJson('serverOrder', []),
+    pinnedDms: new Set(readJson('pinnedDms', [])),
+    collapsedCategories: new Set(readJson('collapsedCategories', [])),
+    lastVolumes: readJson('lastPeerVolumes', {}),
+    socialLoaded: false,
+  };
+
+  function readJson(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(`banana.${key}`) || JSON.stringify(fallback)); }
+    catch { return fallback; }
+  }
+  function writeJson(key, value) { localStorage.setItem(`banana.${key}`, JSON.stringify(value)); }
+  function channelKey(serverId, channelId) { return `${serverId || ''}:${channelId || ''}`; }
+  function socialIds(kind) { return new Set((v1.social[kind] || []).map(u => u.id)); }
+  function isBlocked(id) { return socialIds('blocked').has(id); }
+  function isFriend(id) { return socialIds('friends').has(id); }
+  function isIncoming(id) { return socialIds('incoming').has(id); }
+  function isOutgoing(id) { return socialIds('outgoing').has(id); }
+  function currentPeer(id) { return state.members.get(id) || ['friends','incoming','outgoing','blocked'].flatMap(k=>v1.social[k]||[]).find(u=>u.id===id) || state.dmConversations.find(c => c.user?.id === id)?.user || null; }
+
+  function closeContextMenu() {
+    v1.menu?.remove();
+    v1.menu = null;
+  }
+  function openContextMenu(x, y, items) {
+    closeContextMenu();
+    const menu = document.createElement('div');
+    menu.className = 'v1-context-menu';
+    for (const item of items.filter(Boolean)) {
+      if (item.separator) {
+        const sep = document.createElement('div'); sep.className = 'v1-menu-sep'; menu.appendChild(sep); continue;
+      }
+      if (item.reactions) {
+        const row = document.createElement('div'); row.className = 'v1-menu-reactions';
+        for (const emoji of item.reactions) {
+          const b = document.createElement('button'); b.textContent = emoji; b.title = `Reagir com ${emoji}`;
+          b.onclick = () => { closeContextMenu(); item.onPick?.(emoji); };
+          row.appendChild(b);
+        }
+        menu.appendChild(row); continue;
+      }
+      const b = document.createElement('button');
+      b.className = `v1-menu-item${item.danger ? ' danger' : ''}`;
+      b.disabled = !!item.disabled;
+      b.innerHTML = `<span>${item.icon || ''}</span><b>${escapeHtml(item.label || '')}</b>${item.hint ? `<small>${escapeHtml(item.hint)}</small>` : ''}`;
+      b.onclick = () => { closeContextMenu(); item.action?.(); };
+      menu.appendChild(b);
+    }
+    document.body.appendChild(menu);
+    const rect = menu.getBoundingClientRect();
+    menu.style.left = `${Math.max(8, Math.min(x, innerWidth - rect.width - 8))}px`;
+    menu.style.top = `${Math.max(8, Math.min(y, innerHeight - rect.height - 8))}px`;
+    v1.menu = menu;
+  }
+  window.addEventListener('mousedown', e => { if (v1.menu && !v1.menu.contains(e.target)) closeContextMenu(); }, true);
+  window.addEventListener('blur', closeContextMenu);
+  window.addEventListener('resize', closeContextMenu);
+
+  // ---------- Socket v1 ----------
+  const bindSocketBase = bindSocket;
+  bindSocket = function bindSocketV1(socket) {
+    bindSocketBase(socket);
+    socket.on('auth:ready', () => socket.emit('social:get'));
+    socket.on('social:state', data => {
+      const previousIncoming = new Set((v1.social.incoming || []).map(u => u.id));
+      v1.social = {
+        friends: Array.isArray(data?.friends) ? data.friends : [],
+        incoming: Array.isArray(data?.incoming) ? data.incoming : [],
+        outgoing: Array.isArray(data?.outgoing) ? data.outgoing : [],
+        blocked: Array.isArray(data?.blocked) ? data.blocked : [],
+      };
+      const fresh = v1.social.incoming.find(u => !previousIncoming.has(u.id));
+      if (fresh && v1.socialLoaded) toast(`${fresh.name} enviou uma solicitação de amizade.`, 3600);
+      v1.socialLoaded = true;
+      if (state.viewMode === 'dm') renderDmSidebar();
+      renderMembers();
+    });
+    socket.on('message:updated', m => {
+      const arr = state.messagesByChannel.get(m.channelId) || [];
+      const i = arr.findIndex(x => x.id === m.id); if (i >= 0) arr[i] = m;
+      state.messagesByChannel.set(m.channelId, arr);
+      if (state.selectedChannel?.id === m.channelId) renderMessages();
+    });
+    socket.on('message:deleted', ({ channelId, messageId }) => {
+      const arr = (state.messagesByChannel.get(channelId) || []).filter(m => m.id !== messageId);
+      state.messagesByChannel.set(channelId, arr);
+      if (v1.reply?.messageId === messageId || v1.editing?.messageId === messageId) clearComposerMode();
+      if (state.selectedChannel?.id === channelId) renderMessages();
+    });
+    socket.on('message:new', m => {
+      const key = channelKey(m.serverId || state.selectedServer?.id, m.channelId);
+      const visible = state.viewMode === 'server' && state.selectedChannel?.id === m.channelId && !document.hidden;
+      if (!visible && m.authorId !== state.user?.id) v1.unreadChannels.add(key);
+      if (Array.isArray(m.mentionIds) && m.mentionIds.includes(state.user?.id) && !visible) v1.mentionCounts.set(key, (v1.mentionCounts.get(key) || 0) + 1);
+      renderChannels();
+    });
+    socket.on('mention:new', ({ serverId, channelId, from }) => {
+      const key = channelKey(serverId, channelId);
+      const visible = state.viewMode === 'server' && state.selectedServer?.id === serverId && state.selectedChannel?.id === channelId && !document.hidden;
+      if (!visible) {
+        v1.unreadChannels.add(key);
+        v1.mentionCounts.set(key, (v1.mentionCounts.get(key) || 0) + 1);
+        if (from?.name) toast(`${from.name} mencionou você.`, 2800);
+        renderChannels();
+      }
+    });
+    socket.on('dm:updated', ({ userId, message }) => {
+      const arr = state.dmMessages.get(userId) || [];
+      const i = arr.findIndex(x => x.id === message?.id); if (i >= 0) arr[i] = message;
+      state.dmMessages.set(userId, arr);
+      mergeDmConversation(currentPeer(userId) || { id: userId, name: 'Amigo' }, message);
+      if (state.viewMode === 'dm') { renderDmSidebar(); if (state.activeDmUserId === userId) renderDmMessages(); }
+    });
+    socket.on('dm:deleted', ({ userId, messageId }) => {
+      const arr = (state.dmMessages.get(userId) || []).filter(m => m.id !== messageId);
+      state.dmMessages.set(userId, arr);
+      if (v1.reply?.messageId === messageId || v1.editing?.messageId === messageId) clearComposerMode();
+      if (state.viewMode === 'dm' && state.activeDmUserId === userId) renderDmMessages();
+    });
+    socket.on('server:removed', ({ serverId }) => {
+      v1.serverOrder = v1.serverOrder.filter(id => id !== serverId); writeJson('serverOrder', v1.serverOrder);
+    });
+  };
+
+  // ---------- Perfil/status ----------
+  const renderSelfBase = renderSelf;
+  renderSelf = function renderSelfV1() {
+    renderSelfBase();
+    if (state.user?.customStatus) els.myStatusText.textContent = state.user.customStatus;
+  };
+
+  const modalObserver = new MutationObserver(() => {
+    const profileName = $('profileName');
+    if (profileName && !$('customStatus')) {
+      const grid = profileName.closest('.settings-form-grid');
+      if (grid) {
+        const field = document.createElement('div'); field.className = 'settings-field v1-custom-status';
+        field.innerHTML = `<label>Status personalizado</label><input id="customStatus" maxlength="80" placeholder="Jogando, trabalhando…" value="${escapeHtml(state.user?.customStatus || '')}"><small>Aparece abaixo do seu nome.</small>`;
+        grid.insertAdjacentElement('afterend', field);
+        $('saveProfile')?.addEventListener('click', () => state.socket?.emit('profile:update', { customStatus: $('customStatus')?.value || '' }), true);
+      }
+    }
+    const version = document.querySelector('.version-label'); if (version) version.textContent = `Banana Cord v${V1_VERSION} · pós-beta`;
+    const settingsFoot = document.querySelector('.settings-nav-foot'); if (settingsFoot) settingsFoot.textContent = `v${V1_VERSION} · pós-beta`;
+  });
+  modalObserver.observe(els.modalBody, { childList: true, subtree: true });
+
+  // ---------- Servidores ----------
+  function orderedServers() {
+    const existing = new Map(state.servers.map(s => [s.id, s]));
+    const out = [];
+    for (const id of v1.serverOrder) if (existing.has(id)) { out.push(existing.get(id)); existing.delete(id); }
+    out.push(...existing.values());
+    v1.serverOrder = out.map(s => s.id); writeJson('serverOrder', v1.serverOrder);
+    return out;
+  }
+
+  renderServers = function renderServersV1() {
+    els.homeServer?.classList.toggle('active', state.viewMode === 'dm');
+    els.serverList.innerHTML = '';
+    for (const s of orderedServers()) {
+      const b = document.createElement('button');
+      b.className = `server-icon${state.viewMode === 'server' && state.selectedServer?.id === s.id ? ' active' : ''}`;
+      b.title = s.name; b.dataset.serverId = s.id; b.draggable = true;
+      if (s.icon) { b.style.backgroundImage = `url(${s.icon})`; b.classList.add('has-server-image'); }
+      else { const initials=document.createElement('span'); initials.textContent=s.name.trim().slice(0,2).toUpperCase(); b.appendChild(initials); }
+      const hasUnread=[...v1.unreadChannels].some(k=>k.startsWith(`${s.id}:`)); const mentionTotal=[...v1.mentionCounts.entries()].filter(([k])=>k.startsWith(`${s.id}:`)).reduce((n,[,v])=>n+v,0);
+      if(hasUnread||mentionTotal){const badge=document.createElement('span');badge.className=mentionTotal?'v1-server-mention':'v1-server-unread';badge.textContent=mentionTotal?String(Math.min(9,mentionTotal))+(mentionTotal>9?'+':''):'';b.appendChild(badge);}
+      b.onclick = () => selectServer(s.id);
+      b.oncontextmenu = e => { e.preventDefault(); openServerMenu(e.clientX, e.clientY, s); };
+      b.ondragstart = e => { e.dataTransfer.setData('application/x-banana-server', s.id); e.dataTransfer.effectAllowed = 'move'; b.classList.add('dragging'); };
+      b.ondragend = () => b.classList.remove('dragging');
+      b.ondragover = e => e.preventDefault();
+      b.ondrop = e => {
+        e.preventDefault(); const from = e.dataTransfer.getData('application/x-banana-server'); if (!from || from === s.id) return;
+        const order = orderedServers().map(x => x.id).filter(id => id !== from); const at = order.indexOf(s.id); order.splice(Math.max(0, at), 0, from);
+        v1.serverOrder = order; writeJson('serverOrder', order); renderServers();
+      };
+      els.serverList.appendChild(b);
+    }
+  };
+
+  async function copyInviteFor(s) {
+    const url = state.isHost ? (state.publicHostUrl || state.serverUrl) : state.serverUrl;
+    await ipcRenderer.invoke('clipboard:write', makeInvite(url, s.inviteCode))

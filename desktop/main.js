@@ -17,7 +17,9 @@ let updaterEventsBound = false;
 let updateCheckTimer = null;
 
 function sendHostStatus(status, extra = {}) {
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('host:status', { status, ...extra });
+  const payload = { status, ...extra };
+  app.emit('banana:host-status', payload);
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('host:status', payload);
 }
 
 function updateConfigFile() {
@@ -158,7 +160,7 @@ function createWindow() {
 function download(url, destination, redirects = 0) {
   return new Promise((resolve, reject) => {
     if (redirects > 8) return reject(new Error('Muitos redirecionamentos.'));
-    const request = https.get(url, { headers: { 'User-Agent': 'BananaCord/0.9' } }, response => {
+    const request = https.get(url, { headers: { 'User-Agent': 'BananaCord/0.10' } }, response => {
       if ([301,302,303,307,308].includes(response.statusCode)) {
         const next = new URL(response.headers.location, url).toString();
         response.resume();

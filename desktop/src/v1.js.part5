@@ -1,0 +1,27 @@
+enu(x, y, u) {
+    const pinned = v1.pinnedDms.has(u.id);
+    openContextMenu(x, y, [
+      { icon: '💬', label: 'Abrir conversa', action: () => startDm(u.id, u) },
+      { icon: '📌', label: pinned ? 'Desafixar conversa' : 'Fixar conversa', action: () => { pinned ? v1.pinnedDms.delete(u.id) : v1.pinnedDms.add(u.id); writeJson('pinnedDms', [...v1.pinnedDms]); renderDmSidebar(); } },
+      { separator: true },
+      ...memberActions(u.id).filter(x => x && !x.separator).slice(-2),
+    ]);
+  }
+  openNewDmModal = function openNewDmModalV1() {
+    const map = new Map(); for (const u of v1.social.friends) map.set(u.id, u); for (const u of state.members.values()) if (u.id !== state.user?.id) map.set(u.id, u);
+    const candidates = [...map.values()].filter(u => !isBlocked(u.id));
+    openModal(`<div class="simple-modal-head"><h2>Nova mensagem</h2><p>Escolha um amigo ou alguém do servidor atual.</p></div><div class="dm-picker">${candidates.map(u => `<button class="dm-picker-row" data-user="${escapeHtml(u.id)}"><span class="dm-picker-avatar avatar" data-avatar="${escapeHtml(u.id)}"></span><span><b>${escapeHtml(u.name)}</b><small>${isFriend(u.id) ? 'Amigo · ' : ''}${STATUS_LABEL[u.status || 'offline'] || 'Offline'}</small></span></button>`).join('') || '<p>Ninguém disponível.</p>'}</div>`);
+    for (const av of document.querySelectorAll('.dm-picker-avatar')) avatarStyle(av, currentPeer(av.dataset.avatar)); for (const b of document.querySelectorAll('.dm-picker-row')) b.onclick = () => { const u = currentPeer(b.dataset.user); closeModal(); startDm(b.dataset.user, u); };
+  };
+
+  // Duplo clique em qualquer sala de voz, inclusive se a sidebar for redesenhada depois.
+  els.channels.addEventListener('dblclick', async e => {
+    const row = e.target.closest('.channel-row'); if (!row || !state.selectedServer) return;
+    const c = state.selectedServer.channels.find(x => x.id === row.dataset.channelId); if (!c || c.type !== 'voice') return;
+    e.preventDefault(); selectChannel(c.id); await joinVoice(c);
+  });
+
+  // Atualiza a versão exibida na tela inicial sem tocar no app principal.
+  const setupVersion = document.querySelector('.setup .brand p b'); if (setupVersion) setupVersion.textContent = 'v1.0 · pós-beta';
+  ensureComposerBar();
+})();

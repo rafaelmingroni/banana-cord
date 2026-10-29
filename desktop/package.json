@@ -1,7 +1,7 @@
 {
   "name": "banana-cord",
-  "version": "0.10.1",
-  "description": "Banana Cord v0.10.1 - chat privado leve com updater visível, DMs, áudio aprimorado, voz, cargos, câmera e compartilhamento de tela",
+  "version": "1.0.0",
+  "description": "Banana Cord v1.0 - primeira versão pós-beta: chat, amigos, cargos, voz e compartilhamento de tela leve",
   "private": true,
   "main": "updater-prompt.js",
   "author": "Rafael Mingroni",
@@ -12,7 +12,8 @@
     "predist:win": "npm run prepare:source",
     "dist:win": "electron-builder --win nsis",
     "predist:portable": "npm run prepare:source",
-    "dist:portable": "electron-builder --win portable"
+    "dist:portable": "electron-builder --win portable",
+    "smoke:v1": "node scripts/smoke-v1.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -33,6 +34,7 @@
       "output": "dist"
     },
     "files": [
+      "tray.js",
       "updater-prompt.js",
       "main.js",
       "src/**/*",

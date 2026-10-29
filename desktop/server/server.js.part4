@@ -1,0 +1,131 @@
+ids.includes(socket.data.userId) ? ids.filter(id => id !== socket.data.userId) : [...ids, socket.data.userId];
+      if (!m.reactions[emoji].length) delete m.reactions[emoji];
+      saveSoon(); emitChannelEvent(serverId, channelId, 'message:updated', m);
+    });
+
+    socket.on('members:get', payload => {
+      const serverId = payload?.serverId;
+      if (!membership(socket, serverId)) return;
+      broadcastMembers(serverId); emitVoiceSnapshot(serverId);
+    });
+
+    socket.on('dm:conversations:get', () => { if (socket.data.userId) socket.emit('dm:conversations', { conversations: dmConversations(socket.data.userId) }); });
+
+    socket.on('dm:load', payload => {
+      const userId = socket.data.userId;
+      const peerId = String(payload?.userId || '').trim();
+      if (!canDm(userId, peerId)) return socket.emit('app:error', 'Essa conversa privada não está disponível.');
+      const messages = Array.isArray(db.dms[dmKey(userId, peerId)]) ? db.dms[dmKey(userId, peerId)] : [];
+      socket.emit('dm:list', { user: publicUser(db.users[peerId]), messages: messages.slice(-250) });
+    });
+
+    socket.on('dm:send', payload => {
+      const fromId = socket.data.userId;
+      const toId = String(payload?.userId || '').trim();
+      const text = String(payload?.text || '').trim().slice(0, 2000);
+      if (!fromId || !toId || !text) return;
+      if (!canDm(fromId, toId)) return socket.emit('app:error', 'Essa conversa privada não está disponível.');
+      const key = dmKey(fromId, toId);
+      const replyToId = payload?.replyToId && findDmMessage(fromId, toId, String(payload.replyToId)) ? String(payload.replyToId) : null;
+      const message = { id: uid('dm_'), fromId, toId, text, at: now(), editedAt: null, replyToId, reactions: {} };
+      db.dms[key] = Array.isArray(db.dms[key]) ? db.dms[key] : [];
+      db.dms[key].push(message); if (db.dms[key].length > 1500) db.dms[key] = db.dms[key].slice(-1500);
+      saveSoon();
+      const payloadOut = { message, from: publicUser(db.users[fromId]), to: publicUser(db.users[toId]) };
+      io.to(`user:${fromId}`).emit('dm:new', payloadOut); io.to(`user:${toId}`).emit('dm:new', payloadOut); emitDmConversations(fromId); emitDmConversations(toId);
+    });
+
+    socket.on('dm:edit', payload => {
+      const me = socket.data.userId, peerId = String(payload?.userId || '');
+      if (!canDm(me, peerId)) return;
+      const m = findDmMessage(me, peerId, String(payload?.messageId || ''));
+      if (!m || m.fromId !== me) return socket.emit('app:error', 'Você só pode editar suas próprias mensagens.');
+      const text = String(payload?.text || '').trim().slice(0, 2000); if (!text) return;
+      m.text = text; m.editedAt = now(); saveSoon();
+      io.to(`user:${me}`).emit('dm:updated', { userId: peerId, message: m }); io.to(`user:${peerId}`).emit('dm:updated', { userId: me, message: m }); emitDmConversations(me); emitDmConversations(peerId);
+    });
+
+    socket.on('dm:delete', payload => {
+      const me = socket.data.userId, peerId = String(payload?.userId || '');
+      if (!canDm(me, peerId)) return;
+      const key = dmKey(me, peerId), arr = db.dms[key] || [], m = arr.find(x => x.id === payload?.messageId);
+      if (!m || m.fromId !== me) return socket.emit('app:error', 'Você só pode apagar suas próprias mensagens.');
+      db.dms[key] = arr.filter(x => x.id !== payload.messageId); saveSoon();
+      io.to(`user:${me}`).emit('dm:deleted', { userId: peerId, messageId: payload.messageId }); io.to(`user:${peerId}`).emit('dm:deleted', { userId: me, messageId: payload.messageId }); emitDmConversations(me); emitDmConversations(peerId);
+    });
+
+    socket.on('dm:react', payload => {
+      const me = socket.data.userId, peerId = String(payload?.userId || ''), emoji = String(payload?.emoji || '');
+      if (!canDm(me, peerId) || !QUICK_REACTIONS.has(emoji)) return;
+      const m = findDmMessage(me, peerId, String(payload?.messageId || '')); if (!m) return;
+      m.reactions = m.reactions && typeof m.reactions === 'object' ? m.reactions : {};
+      const ids = uniqueStrings(m.reactions[emoji]); m.reactions[emoji] = ids.includes(me) ? ids.filter(id => id !== me) : [...ids, me]; if (!m.reactions[emoji].length) delete m.reactions[emoji];
+      saveSoon(); io.to(`user:${me}`).emit('dm:updated', { userId: peerId, message: m }); io.to(`user:${peerId}`).emit('dm:updated', { userId: me, message: m });
+    });
+
+    socket.on('voice:join', async payload => {
+      const { serverId, channelId } = payload || {};
+      if (!membership(socket, serverId)) return;
+      const s = db.servers[serverId], ch = s?.channels.find(c => c.id === channelId && c.type === 'voice');
+      if (!ch || !canAccessChannel(s, ch, socket.data.userId)) return socket.emit('app:error', 'Você não tem acesso a essa sala de voz.');
+      if (socket.data.voiceRoom) await leaveVoice(socket);
+      const room = voiceRoom(serverId, channelId), sockets = await io.in(room).fetchSockets();
+      if (sockets.length >= 5) return socket.emit('voice:full', { channelId });
+      socket.data.voiceRoom = room; socket.data.voiceServerId = serverId; socket.data.voiceChannelId = channelId; socket.data.speaking = false; socket.join(room);
+      socket.data.mediaState = socket.data.mediaState || { muted: false, camera: false, screen: false };
+      const peers = sockets.map(sx => ({ socketId: sx.id, user: publicUser(db.users[sx.data.userId]), mediaState: sx.data.mediaState || { muted: false, camera: false, screen: false } }));
+      socket.emit('voice:peers', { channelId, peers }); socket.to(room).emit('voice:user-joined', { socketId: socket.id, user: publicUser(db.users[socket.data.userId]), mediaState: socket.data.mediaState });
+      emitChannelEvent(serverId, channelId, 'voice:presence-event', { type: 'join', userId: socket.data.userId, channelId }); emitVoiceSnapshot(serverId);
+    });
+
+    socket.on('voice:leave', () => leaveVoice(socket));
+    socket.on('voice:media-state', payload => {
+      if (!socket.data.voiceRoom) return;
+      const mediaState = { muted: !!payload?.muted, camera: !!payload?.camera, screen: !!payload?.screen };
+      socket.data.mediaState = mediaState; socket.to(socket.data.voiceRoom).emit('voice:media-state', { socketId: socket.id, mediaState });
+      if (socket.data.voiceServerId) emitChannelEvent(socket.data.voiceServerId, socket.data.voiceChannelId, 'voice:media-state-global', { socketId: socket.id, userId: socket.data.userId, channelId: socket.data.voiceChannelId, mediaState });
+    });
+    socket.on('voice:speaking', payload => {
+      if (!socket.data.voiceRoom) return;
+      socket.data.speaking = !!payload?.speaking; socket.to(socket.data.voiceRoom).emit('voice:speaking', { socketId: socket.id, speaking: socket.data.speaking });
+      if (socket.data.voiceServerId) emitChannelEvent(socket.data.voiceServerId, socket.data.voiceChannelId, 'voice:speaking-global', { socketId: socket.id, userId: socket.data.userId, channelId: socket.data.voiceChannelId, speaking: socket.data.speaking });
+    });
+    socket.on('webrtc:signal', payload => {
+      const { targetSocketId, data } = payload || {};
+      if (!targetSocketId || !socket.data.voiceRoom) return;
+      const target = io.sockets.sockets.get(targetSocketId);
+      if (!target || target.data.voiceRoom !== socket.data.voiceRoom) return;
+      io.to(targetSocketId).emit('webrtc:signal', { fromSocketId: socket.id, fromUser: publicUser(db.users[socket.data.userId]), data });
+    });
+    socket.on('latency:ping', (stamp, cb) => cb?.(stamp));
+
+    socket.on('disconnect', async () => {
+      await leaveVoice(socket);
+      const id = socket.data.userId;
+      if (id && db.users[id]) {
+        const remaining = [...io.sockets.sockets.values()].some(s => s.data.userId === id && s.connected);
+        if (!remaining) {
+          db.users[id].status = 'offline'; db.users[id].lastSeen = now(); saveSoon(); io.emit('presence:update', publicUser(db.users[id]));
+          for (const s of getUserServers(id)) broadcastMembers(s.id);
+          for (const friendId of db.users[id].friends) emitSocial(friendId);
+        }
+      }
+    });
+  });
+
+  return await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, '127.0.0.1', () => {
+      server.off('error', reject);
+      console.log(`Banana Cord ${VERSION} server listening on 127.0.0.1:${port}`);
+      resolve({ server, io, port, close: () => new Promise(r => io.close(() => server.close(() => r()))) });
+    });
+  });
+}
+
+module.exports = { startBananaServer };
+
+if (require.main === module) {
+  const dataFile = process.env.BANANA_DATA || path.join(__dirname, 'data.json');
+  startBananaServer({ port: Number(process.env.PORT || 3210), dataFile }).catch(err => { console.error(err); process.exit(1); });
+}

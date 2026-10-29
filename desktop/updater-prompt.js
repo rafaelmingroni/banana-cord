@@ -28,7 +28,7 @@ function showDownloaded(info) {
     type: 'info',
     title: 'Atualização pronta',
     message: `Banana Cord ${version} está pronto para instalar`,
-    detail: 'Reinicie agora para aplicar a atualização. Se escolher Depois, ela será instalada ao fechar o Banana Cord.',
+    detail: 'Reinicie agora para aplicar a atualização. Se escolher Depois, ela será instalada quando você usar “Sair do Banana Cord” na bandeja.',
     buttons: ['Reiniciar e instalar', 'Depois'],
     defaultId: 0,
     cancelId: 1,
@@ -49,31 +49,22 @@ autoUpdater.on('download-progress', progress => {
 });
 
 autoUpdater.on('update-downloaded', () => {
-  try {
-    const win = require('electron').BrowserWindow.getAllWindows()[0];
-    if (win && !win.isDestroyed()) win.setProgressBar(-1);
-  } catch {}
+  try { const win = require('electron').BrowserWindow.getAllWindows()[0]; if (win && !win.isDestroyed()) win.setProgressBar(-1); } catch {}
 });
-
 autoUpdater.on('error', () => {
-  try {
-    const win = require('electron').BrowserWindow.getAllWindows()[0];
-    if (win && !win.isDestroyed()) win.setProgressBar(-1);
-  } catch {}
+  try { const win = require('electron').BrowserWindow.getAllWindows()[0]; if (win && !win.isDestroyed()) win.setProgressBar(-1); } catch {}
 });
 
 function extraCheck() {
   if (!app.isPackaged) return;
-  const now = Date.now();
-  if (now - lastExtraCheck < 5 * 60 * 1000) return;
-  lastExtraCheck = now;
+  const stamp = Date.now();
+  if (stamp - lastExtraCheck < 5 * 60 * 1000) return;
+  lastExtraCheck = stamp;
   setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 800);
 }
 
 app.on('browser-window-focus', extraCheck);
-app.whenReady().then(() => {
-  const timer = setInterval(extraCheck, 30 * 60 * 1000);
-  timer.unref?.();
-});
+app.whenReady().then(() => { const timer = setInterval(extraCheck, 30 * 60 * 1000); timer.unref?.(); });
 
+require('./tray.js');
 require('./main.js');

@@ -1,0 +1,81 @@
+;
+    if (incoming) {
+      items.push({ icon: '✅', label: 'Aceitar amizade', action: () => state.socket.emit('friend:accept', { userId }) });
+      items.push({ icon: '✖', label: 'Recusar solicitação', action: () => state.socket.emit('friend:reject', { userId }) });
+    } else if (friend) items.push({ icon: '👤', label: 'Remover amigo', action: () => { if (confirm(`Remover ${u.name} dos amigos?`)) state.socket.emit('friend:remove', { userId }); } });
+    else if (!outgoing && !blocked) items.push({ icon: '➕', label: 'Adicionar amigo', action: () => state.socket.emit('friend:request', { userId }) });
+    else if (outgoing) items.push({ icon: '⌛', label: 'Solicitação enviada', disabled: true });
+    items.push({ separator: true });
+    items.push({ icon: '🔊', label: 'Volume deste usuário…', action: () => openMemberVolume(userId, u) });
+    const volume = peerVolume(userId);
+    items.push(volume > 0 ? { icon: '🔇', label: 'Mutar localmente', action: () => { v1.lastVolumes[userId] = volume; state.media.peerVolumes[userId] = 0; writeJson('lastPeerVolumes', v1.lastVolumes); savePrefs(); refreshAllOutputs(); } } : { icon: '🔊', label: 'Desmutar localmente', action: () => { state.media.peerVolumes[userId] = Number(v1.lastVolumes[userId] ?? 1); savePrefs(); refreshAllOutputs(); } });
+    items.push({ icon: '👁', label: 'Ver perfil', action: () => openMemberProfile(userId) });
+    items.push({ separator: true });
+    items.push(blocked ? { icon: '🔓', label: 'Desbloquear', action: () => state.socket.emit('friend:unblock', { userId }) } : { icon: '⛔', label: 'Bloquear', danger: true, action: () => { if (confirm(`Bloquear ${u.name}? Essa pessoa não poderá enviar DMs ou solicitações de amizade.`)) state.socket.emit('friend:block', { userId }); } });
+    if (state.viewMode === 'server' && currentRole() === 'owner' && state.selectedServer && userId !== state.selectedServer.ownerId) items.push({ icon: '🚪', label: 'Expulsar do servidor', danger: true, action: () => { if (confirm(`Remover ${u.name} deste servidor?`)) state.socket.emit('member:kick', { serverId: state.selectedServer.id, userId }); } });
+    return items;
+  }
+  function openMemberMenu(x, y, userId) { const items = memberActions(userId); if (items.length) openContextMenu(x, y, items); }
+  function openMemberVolume(userId, u) {
+    const current = Math.round(peerVolume(userId) * 100);
+    openModal(`<h2>Volume de ${escapeHtml(u?.name || 'usuário')}</h2><label>Volume <span id="v1MemberVolumeLabel">${current}%</span></label><input id="v1MemberVolume" type="range" min="0" max="100" value="${current}"><button id="v1SaveMemberVolume" class="action">Salvar</button>`);
+    $('v1MemberVolume').oninput = e => $('v1MemberVolumeLabel').textContent = `${e.target.value}%`;
+    $('v1SaveMemberVolume').onclick = () => { state.media.peerVolumes[userId] = Number($('v1MemberVolume').value) / 100; savePrefs(); refreshAllOutputs(); closeModal(); };
+  }
+
+  renderMembers = function renderMembersV1() {
+    els.memberList.innerHTML = '';
+    const arr = [...state.members.values()].sort((a, b) => (b.status === 'online') - (a.status === 'online') || (ROLE_RANK[b.role || 'member'] - ROLE_RANK[a.role || 'member']) || a.name.localeCompare(b.name));
+    for (const u of arr) {
+      const role = u.role || roleFor(u.id), row = document.createElement('div'); row.className = `member${u.status === 'offline' ? ' offline' : ''}${isFriend(u.id) ? ' friend' : ''}`; row.dataset.userId = u.id;
+      const av = document.createElement('div'); av.className = 'avatar'; avatarStyle(av, u);
+      const tx = document.createElement('div'); tx.className = 'member-name';
+      const sub = u.customStatus || `${STATUS_LABEL[u.status || 'offline'] || 'Offline'} · ${ROLE_LABEL[role]}`;
+      tx.innerHTML = `<b class="role-color-${role}">${escapeHtml(u.name)}${role === 'owner' ? ' 👑' : ''}${isFriend(u.id) ? ' · <span class="v1-friend-mark">amigo</span>' : ''}</b><small><span class="status-dot status-${escapeHtml(u.status || 'offline')}"></span>${escapeHtml(sub)}</small>`;
+      row.append(av, tx); row.onclick = () => openMemberProfile(u.id); row.oncontextmenu = e => { e.preventDefault(); openMemberMenu(e.clientX, e.clientY, u.id); }; els.memberList.appendChild(row);
+    }
+  };
+
+  openMemberProfile = function openMemberProfileV1(userId) {
+    const u = currentPeer(userId); if (!u) return; const role = state.members.has(userId) ? (state.members.get(userId).role || roleFor(userId)) : 'member'; const mine = userId === state.user?.id;
+    const rel = !mine ? relationLabel(userId) : '';
+    openModal(`<h2>${escapeHtml(u.name)}</h2><div class="profile-preview"><div id="profilePreviewAvatar" class="avatar" style="width:76px;height:76px;font-size:28px"></div><p><span class="status-dot status-${escapeHtml(u.status || 'offline')}"></span>${STATUS_LABEL[u.status || 'offline'] || 'Offline'}${u.customStatus ? ` · ${escapeHtml(u.customStatus)}` : ''}</p>${state.members.has(userId) ? `<span class="role-badge role-${role}">${ROLE_LABEL[role]}</span>` : ''}${rel ? `<span class="v1-relation-badge">${escapeHtml(rel)}</span>` : ''}<div id="v1ProfileActions" class="v1-profile-actions"></div></div>`);
+    avatarStyle($('profilePreviewAvatar'), u);
+    const actions = $('v1ProfileActions');
+    for (const item of memberActions(userId).filter(x => x && !x.separator && !x.disabled).slice(0, 4)) { const b = document.createElement('button'); b.className = item.danger ? 'danger-action' : 'secondary'; b.textContent = `${item.icon || ''} ${item.label}`; b.onclick = () => { closeModal(); item.action?.(); }; actions.appendChild(b); }
+  };
+
+  function openFriendsPanel() {
+    const f = v1.social.friends, incoming = v1.social.incoming, outgoing = v1.social.outgoing, blocked = v1.social.blocked;
+    const row = (u, actions) => `<div class="v1-social-row"><span class="avatar v1-social-avatar" data-user="${escapeHtml(u.id)}"></span><span><b>${escapeHtml(u.name)}</b><small>${escapeHtml(u.customStatus || STATUS_LABEL[u.status || 'offline'] || 'Offline')}</small></span><span>${actions}</span></div>`;
+    openModal(`<div class="simple-modal-head"><h2>Amigos</h2><p>Gerencie amizades, solicitações e bloqueios.</p></div><div class="v1-social-section"><h3>Amigos (${f.length})</h3>${f.map(u => row(u, `<button data-dm="${u.id}">💬</button><button data-remove="${u.id}">Remover</button>`)).join('') || '<small>Nenhum amigo adicionado ainda.</small>'}</div><div class="v1-social-section"><h3>Solicitações recebidas (${incoming.length})</h3>${incoming.map(u => row(u, `<button data-accept="${u.id}">Aceitar</button><button data-reject="${u.id}">Recusar</button>`)).join('') || '<small>Nenhuma solicitação pendente.</small>'}</div><div class="v1-social-section"><h3>Enviadas (${outgoing.length})</h3>${outgoing.map(u => row(u, '<small>Aguardando resposta</small>')).join('') || '<small>Nenhuma.</small>'}</div><div class="v1-social-section"><h3>Bloqueados (${blocked.length})</h3>${blocked.map(u => row(u, `<button data-unblock="${u.id}">Desbloquear</button>`)).join('') || '<small>Ninguém bloqueado.</small>'}</div>`);
+    for (const av of document.querySelectorAll('.v1-social-avatar')) avatarStyle(av, currentPeer(av.dataset.user));
+    for (const b of document.querySelectorAll('[data-dm]')) b.onclick = () => { const id = b.dataset.dm, u = currentPeer(id); closeModal(); startDm(id, u); };
+    for (const b of document.querySelectorAll('[data-remove]')) b.onclick = () => state.socket.emit('friend:remove', { userId: b.dataset.remove });
+    for (const b of document.querySelectorAll('[data-accept]')) b.onclick = () => state.socket.emit('friend:accept', { userId: b.dataset.accept });
+    for (const b of document.querySelectorAll('[data-reject]')) b.onclick = () => state.socket.emit('friend:reject', { userId: b.dataset.reject });
+    for (const b of document.querySelectorAll('[data-unblock]')) b.onclick = () => state.socket.emit('friend:unblock', { userId: b.dataset.unblock });
+  }
+
+  const startDmBase = startDm;
+  startDm = function startDmV1(userId, user = null) { if (isBlocked(userId)) return toast('Desbloqueie essa pessoa antes de abrir a conversa.'); startDmBase(userId, user); };
+  function dmSort(conversations) { return [...conversations].sort((a, b) => Number(v1.pinnedDms.has(b.user?.id)) - Number(v1.pinnedDms.has(a.user?.id)) || Number(b.lastMessage?.at || 0) - Number(a.lastMessage?.at || 0)); }
+  renderDmSidebar = function renderDmSidebarV1() {
+    if (state.viewMode !== 'dm') return; els.channels.innerHTML = '';
+    const top = document.createElement('div'); top.className = 'dm-sidebar';
+    top.innerHTML = `<div class="channel-section-title"><span>MENSAGENS PRIVADAS</span></div><div class="v1-dm-tools"><button id="v1FriendsBtn">👥 Amigos${v1.social.incoming.length ? ` <span class="v1-small-badge">${v1.social.incoming.length}</span>` : ''}</button><button id="newDmBtn">＋ Nova mensagem</button></div><div id="v1FriendQuick" class="v1-friend-quick"></div><div class="channel-section-title v1-recent-title"><span>RECENTES</span></div><div id="dmConversationList" class="dm-conversation-list"></div>`;
+    els.channels.appendChild(top); $('v1FriendsBtn').onclick = openFriendsPanel; $('newDmBtn').onclick = openNewDmModal;
+    const fq = $('v1FriendQuick');
+    for (const u of v1.social.friends.slice(0, 8)) {
+      const b = document.createElement('button'); b.className = 'v1-friend-quick-row'; const av = document.createElement('div'); av.className = 'avatar'; avatarStyle(av, u); b.innerHTML = `<span><b>${escapeHtml(u.name)}</b><small>${escapeHtml(u.customStatus || STATUS_LABEL[u.status || 'offline'] || 'Offline')}</small></span>`; b.prepend(av); b.onclick = () => startDm(u.id, u); b.oncontextmenu = e => { e.preventDefault(); openMemberMenu(e.clientX, e.clientY, u.id); }; fq.appendChild(b);
+    }
+    const list = $('dmConversationList');
+    for (const c of dmSort(state.dmConversations).filter(c => !isBlocked(c.user?.id))) {
+      const u = c.user; if (!u?.id) continue; const row = document.createElement('button'); row.className = `dm-row${state.activeDmUserId === u.id ? ' active' : ''}`;
+      const av = document.createElement('div'); av.className = 'avatar'; avatarStyle(av, u); const txt = document.createElement('div'); txt.className = 'dm-row-text'; txt.innerHTML = `<b>${v1.pinnedDms.has(u.id) ? '📌 ' : ''}${escapeHtml(u.name || 'Amigo')}</b><small>${escapeHtml(c.lastMessage?.text || 'Iniciar conversa')}</small>`;
+      const meta = document.createElement('div'); meta.className = 'dm-row-meta'; meta.innerHTML = `<span class="status-dot status-${escapeHtml(u.status || 'offline')}"></span>${state.dmUnread.has(u.id) ? '<span class="dm-unread-dot"></span>' : ''}`;
+      row.append(av, txt, meta); row.onclick = () => startDm(u.id, u); row.oncontextmenu = e => { e.preventDefault(); openDmMenu(e.clientX, e.clientY, u); }; list.appendChild(row);
+    }
+    if (!list.children.length) list.innerHTML = '<div class="dm-empty-list">Nenhuma conversa recente.</div>';
+  };
+  function openDmM

@@ -6,28 +6,57 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const VERSION = '0.10.0';
+const VERSION = '1.0.0';
 const ROLE_RANK = { member: 0, moderator: 1, admin: 2, owner: 3 };
 const VALID_ROLES = new Set(Object.keys(ROLE_RANK));
+const QUICK_REACTIONS = new Set(['👍', '❤️', '😂', '👎']);
 
 function uid(prefix = '') { return prefix + crypto.randomBytes(8).toString('hex'); }
 function inviteCode() { return crypto.randomBytes(4).toString('hex').toUpperCase(); }
 function now() { return Date.now(); }
 function safeRole(v) { return VALID_ROLES.has(v) ? v : 'member'; }
+function uniqueStrings(values) { return [...new Set((Array.isArray(values) ? values : []).map(String).filter(Boolean))]; }
 
 async function startBananaServer({ port = 3210, dataFile }) {
   const DATA_FILE = dataFile || path.join(__dirname, 'data.json');
   fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
 
+  function normalizeUser(user, id = '') {
+    const u = user && typeof user === 'object' ? user : {};
+    u.id = String(u.id || id);
+    u.name = String(u.name || 'Amigo').slice(0, 32);
+    u.avatar = String(u.avatar || '').slice(0, 1_500_000);
+    u.status = ['online', 'busy', 'away', 'offline'].includes(u.status) ? u.status : 'offline';
+    u.customStatus = String(u.customStatus || '').trim().slice(0, 80);
+    u.friends = uniqueStrings(u.friends);
+    u.blocked = uniqueStrings(u.blocked);
+    u.friendIncoming = uniqueStrings(u.friendIncoming);
+    u.friendOutgoing = uniqueStrings(u.friendOutgoing);
+    return u;
+  }
+
+  function normalizeChannel(ch) {
+    const c = ch && typeof ch === 'object' ? ch : {};
+    c.id = String(c.id || uid('ch_'));
+    c.type = c.type === 'voice' ? 'voice' : 'text';
+    c.name = String(c.name || (c.type === 'voice' ? 'Geral' : 'geral')).slice(0, 32);
+    c.categoryId = c.categoryId ? String(c.categoryId) : null;
+    c.allowedRoles = uniqueStrings(c.allowedRoles).filter(r => VALID_ROLES.has(r) && r !== 'owner');
+    return c;
+  }
+
   function normalizeServer(s) {
-    s.members = Array.isArray(s.members) ? [...new Set(s.members)] : [];
-    s.channels = Array.isArray(s.channels) ? s.channels : [];
+    s.members = uniqueStrings(s.members);
+    s.channels = Array.isArray(s.channels) ? s.channels.map(normalizeChannel) : [];
+    s.categories = Array.isArray(s.categories) ? s.categories.map(c => ({ id: String(c.id || uid('cat_')), name: String(c.name || 'Categoria').trim().slice(0, 32) || 'Categoria' })) : [];
     s.memberRoles = s.memberRoles && typeof s.memberRoles === 'object' ? s.memberRoles : {};
+    s.icon = String(s.icon || '').slice(0, 900_000);
     for (const id of s.members) s.memberRoles[id] = safeRole(s.memberRoles[id]);
     if (s.ownerId) {
       if (!s.members.includes(s.ownerId)) s.members.unshift(s.ownerId);
       s.memberRoles[s.ownerId] = 'owner';
     }
+    for (const ch of s.channels) if (ch.categoryId && !s.categories.some(c => c.id === ch.categoryId)) ch.categoryId = null;
     return s;
   }
 
@@ -35,6 +64,7 @@ async function startBananaServer({ port = 3210, dataFile }) {
     try {
       const parsed = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
       const next = { users: parsed.users || {}, servers: parsed.servers || {}, messages: parsed.messages || {}, dms: parsed.dms || {} };
+      for (const [id, u] of Object.entries(next.users)) next.users[id] = normalizeUser(u, id);
       for (const s of Object.values(next.servers)) normalizeServer(s);
       return next;
     } catch {
@@ -59,36 +89,49 @@ async function startBananaServer({ port = 3210, dataFile }) {
       name: user.name,
       avatar: user.avatar || '',
       status: user.status || 'offline',
+      customStatus: user.customStatus || '',
       lastSeen: user.lastSeen || null
     };
-  }
-
-  function publicServer(s) {
-    normalizeServer(s);
-    return {
-      id: s.id,
-      name: s.name,
-      ownerId: s.ownerId,
-      inviteCode: s.inviteCode,
-      members: s.members,
-      memberRoles: s.memberRoles,
-      channels: s.channels
-    };
-  }
-
-  function getUserServers(userId) {
-    return Object.values(db.servers).filter(s => s.members.includes(userId)).map(publicServer);
-  }
-
-  function membership(socket, serverId) {
-    const s = db.servers[serverId];
-    return !!(s && socket.data.userId && s.members.includes(socket.data.userId));
   }
 
   function roleFor(s, userId) {
     if (!s || !userId) return 'member';
     if (s.ownerId === userId) return 'owner';
     return safeRole(s.memberRoles?.[userId]);
+  }
+
+  function canAccessChannel(s, ch, userId) {
+    if (!s || !ch || !userId || !s.members.includes(userId)) return false;
+    if (s.ownerId === userId || ROLE_RANK[roleFor(s, userId)] >= ROLE_RANK.admin) return true;
+    const roles = Array.isArray(ch.allowedRoles) ? ch.allowedRoles : [];
+    return !roles.length || roles.includes(roleFor(s, userId));
+  }
+
+  function publicServer(s, userId = '') {
+    normalizeServer(s);
+    const visibleChannels = userId ? s.channels.filter(ch => canAccessChannel(s, ch, userId)) : s.channels;
+    const visibleCategoryIds = new Set(visibleChannels.map(ch => ch.categoryId).filter(Boolean));
+    const canManage = ROLE_RANK[roleFor(s, userId)] >= ROLE_RANK.moderator;
+    return {
+      id: s.id,
+      name: s.name,
+      icon: s.icon || '',
+      ownerId: s.ownerId,
+      inviteCode: s.inviteCode,
+      members: s.members,
+      memberRoles: s.memberRoles,
+      channels: visibleChannels,
+      categories: canManage ? s.categories : s.categories.filter(c => visibleCategoryIds.has(c.id))
+    };
+  }
+
+  function getUserServers(userId) {
+    return Object.values(db.servers).filter(s => s.members.includes(userId)).map(s => publicServer(s, userId));
+  }
+
+  function membership(socket, serverId) {
+    const s = db.servers[serverId];
+    return !!(s && socket.data.userId && s.members.includes(socket.data.userId));
   }
 
   function hasRole(socket, serverId, minimum) {
@@ -101,30 +144,69 @@ async function startBananaServer({ port = 3210, dataFile }) {
   function canManageChannels(socket, serverId) { return hasRole(socket, serverId, 'moderator'); }
   function canManageServer(socket, serverId) { return hasRole(socket, serverId, 'admin'); }
 
+  function emitServerToUser(serverId, userId) {
+    const s = db.servers[serverId];
+    if (!s || !s.members.includes(userId)) return;
+    io.to(`user:${userId}`).emit('server:updated', publicServer(s, userId));
+  }
+
   function broadcastServer(serverId) {
     const s = db.servers[serverId];
-    if (s) io.to(`server:${serverId}`).emit('server:updated', publicServer(s));
+    if (!s) return;
+    for (const userId of s.members) emitServerToUser(serverId, userId);
   }
 
   function broadcastMembers(serverId) {
     const s = db.servers[serverId];
     if (!s) return;
     const members = s.members.map(id => ({
-      ...publicUser(db.users[id] || { id, name: 'Usuário', status: 'offline' }),
+      ...publicUser(db.users[id] || normalizeUser({ id, name: 'Usuário', status: 'offline' }, id)),
       role: roleFor(s, id)
     }));
     io.to(`server:${serverId}`).emit('members:list', { serverId, members });
   }
 
-  function voiceRoom(serverId, channelId) { return `voice:${serverId}:${channelId}`; }
-
-  function dmKey(a, b) {
-    return [String(a || ''), String(b || '')].sort().join('::');
+  function emitChannelEvent(serverId, channelId, eventName, payload) {
+    const s = db.servers[serverId];
+    const ch = s?.channels.find(c => c.id === channelId);
+    if (!s || !ch) return;
+    for (const userId of s.members) if (canAccessChannel(s, ch, userId)) io.to(`user:${userId}`).emit(eventName, payload);
   }
+
+  function voiceRoom(serverId, channelId) { return `voice:${serverId}:${channelId}`; }
+  function dmKey(a, b) { return [String(a || ''), String(b || '')].sort().join('::'); }
 
   function usersShareServer(a, b) {
     if (!a || !b || a === b) return false;
     return Object.values(db.servers).some(s => s.members.includes(a) && s.members.includes(b));
+  }
+
+  function areFriends(a, b) {
+    return !!(db.users[a]?.friends?.includes(b) && db.users[b]?.friends?.includes(a));
+  }
+
+  function isBlockedBetween(a, b) {
+    return !!(db.users[a]?.blocked?.includes(b) || db.users[b]?.blocked?.includes(a));
+  }
+
+  function canDm(a, b) {
+    return !!(a && b && a !== b && db.users[b] && !isBlockedBetween(a, b) && (areFriends(a, b) || usersShareServer(a, b)));
+  }
+
+  function socialState(userId) {
+    const u = db.users[userId];
+    if (!u) return { friends: [], incoming: [], outgoing: [], blocked: [] };
+    const mapUsers = ids => uniqueStrings(ids).map(id => publicUser(db.users[id])).filter(Boolean);
+    return {
+      friends: mapUsers(u.friends),
+      incoming: mapUsers(u.friendIncoming),
+      outgoing: mapUsers(u.friendOutgoing),
+      blocked: mapUsers(u.blocked)
+    };
+  }
+
+  function emitSocial(userId) {
+    io.to(`user:${userId}`).emit('social:state', socialState(userId));
   }
 
   function dmConversations(userId) {
@@ -133,7 +215,7 @@ async function startBananaServer({ port = 3210, dataFile }) {
       const ids = key.split('::');
       if (!ids.includes(userId) || !Array.isArray(messages) || !messages.length) continue;
       const peerId = ids.find(id => id !== userId);
-      if (!peerId || !db.users[peerId] || !usersShareServer(userId, peerId)) continue;
+      if (!peerId || !db.users[peerId] || !canDm(userId, peerId)) continue;
       const last = messages[messages.length - 1];
       rows.push({ user: publicUser(db.users[peerId]), lastMessage: last });
     }
@@ -143,6 +225,22 @@ async function startBananaServer({ port = 3210, dataFile }) {
 
   function emitDmConversations(userId) {
     io.to(`user:${userId}`).emit('dm:conversations', { conversations: dmConversations(userId) });
+  }
+
+  function findMessage(channelId, messageId) {
+    return (db.messages[channelId] || []).find(m => m.id === messageId) || null;
+  }
+
+  function findDmMessage(a, b, messageId) {
+    return (db.dms[dmKey(a, b)] || []).find(m => m.id === messageId) || null;
+  }
+
+  function mentionIdsFor(s, text) {
+    const lower = String(text || '').toLocaleLowerCase('pt-BR');
+    return s.members.filter(id => {
+      const name = String(db.users[id]?.name || '').trim();
+      return !!name && lower.includes(`@${name.toLocaleLowerCase('pt-BR')}`);
+    });
   }
 
   const app = express();
@@ -160,9 +258,13 @@ async function startBananaServer({ port = 3210, dataFile }) {
   });
 
   function emitVoiceSnapshot(serverId) {
+    const s = db.servers[serverId];
+    if (!s) return;
     const entries = [];
     for (const sx of io.sockets.sockets.values()) {
       if (sx.data.voiceServerId === serverId && sx.data.voiceChannelId && sx.data.userId) {
+        const ch = s.channels.find(c => c.id === sx.data.voiceChannelId);
+        if (!ch || !canAccessChannel(s, ch, sx.data.userId)) continue;
         entries.push({
           channelId: sx.data.voiceChannelId,
           socketId: sx.id,
@@ -172,42 +274,5 @@ async function startBananaServer({ port = 3210, dataFile }) {
         });
       }
     }
-    io.to(`server:${serverId}`).emit('voice:snapshot', { serverId, entries });
-  }
-
-  async function leaveVoice(socket) {
-    const room = socket.data.voiceRoom;
-    const serverId = socket.data.voiceServerId;
-    const channelId = socket.data.voiceChannelId;
-    if (!room) return;
-    socket.to(room).emit('voice:user-left', { socketId: socket.id, userId: socket.data.userId });
-    socket.leave(room);
-    socket.data.voiceRoom = null;
-    socket.data.voiceServerId = null;
-    socket.data.voiceChannelId = null;
-    socket.data.mediaState = { muted: false, camera: false, screen: false };
-    socket.data.speaking = false;
-    if (serverId) {
-      io.to(`server:${serverId}`).emit('voice:presence-event', { type: 'leave', userId: socket.data.userId, channelId });
-      emitVoiceSnapshot(serverId);
-    }
-  }
-
-  io.on('connection', socket => {
-    socket.on('auth:hello', payload => {
-      const id = String(payload?.deviceId || '').trim().slice(0, 128);
-      if (!id) return socket.emit('app:error', 'Identidade inválida.');
-      const name = String(payload?.name || 'Amigo').trim().slice(0, 32) || 'Amigo';
-      const avatar = String(payload?.avatar || '').slice(0, 1_500_000);
-      const requestedStatus = ['online', 'busy', 'away'].includes(payload?.status) ? payload.status : 'online';
-      db.users[id] = { ...(db.users[id] || {}), id, name, avatar, status: requestedStatus, lastSeen: now() };
-      socket.data.userId = id;
-      socket.join(`user:${id}`);
-      getUserServers(id).forEach(s => socket.join(`server:${s.id}`));
-      saveSoon();
-      socket.emit('auth:ready', { user: publicUser(db.users[id]), servers: getUserServers(id) });
-      socket.emit('dm:conversations', { conversations: dmConversations(id) });
-      for (const s of getUserServers(id)) emitVoiceSnapshot(s.id);
-      io.emit('presence:update', publicUser(db.users[id]));
-    });
-
+    for (const userId of s.members) {
+      const visible = entries.filter(e => { const ch = s.cha

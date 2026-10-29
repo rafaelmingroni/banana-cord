@@ -1,0 +1,120 @@
+; toast('Convite copiado.');
+  }
+  function renameServer(s) {
+    openModal(`<h2>Renomear servidor</h2><label>Novo nome</label><input id="v1ServerName" maxlength="40" value="${escapeHtml(s.name)}"><button id="v1RenameServer" class="action">Salvar</button>`);
+    $('v1RenameServer').onclick = () => { const name = $('v1ServerName').value.trim(); if (name) state.socket.emit('server:update', { serverId: s.id, name }); closeModal(); };
+  }
+  function chooseServerPhoto(s) {
+    const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/png,image/jpeg,image/webp';
+    input.onchange = () => {
+      const file = input.files?.[0]; if (!file) return;
+      if (file.size > 550000) return toast('Use uma foto de servidor menor que 550 KB.', 4000);
+      const r = new FileReader(); r.onload = () => state.socket.emit('server:update', { serverId: s.id, icon: r.result }); r.readAsDataURL(file);
+    };
+    input.click();
+  }
+  function openServerMenu(x, y, s) {
+    const role = roleFor(state.user?.id, s); const own = role === 'owner'; const admin = ROLE_RANK[role] >= ROLE_RANK.admin;
+    openContextMenu(x, y, [
+      { icon: '🔗', label: 'Copiar convite', action: () => copyInviteFor(s) },
+      admin && { icon: '🖼️', label: s.icon ? 'Trocar foto do servidor' : 'Colocar foto no servidor', action: () => chooseServerPhoto(s) },
+      admin && s.icon && { icon: '🧹', label: 'Remover foto do servidor', action: () => state.socket.emit('server:update', { serverId: s.id, icon: '' }) },
+      admin && { icon: '✏️', label: 'Renomear servidor', action: () => renameServer(s) },
+      admin && { icon: '⚙️', label: 'Configurações', action: () => { selectServer(s.id); openServerSettings(); } },
+      { separator: true },
+      own ? { icon: '🗑️', label: 'Excluir servidor', danger: true, action: () => {
+        const typed = prompt(`Para excluir definitivamente “${s.name}”, digite o nome do servidor:`);
+        if (typed === s.name) state.socket.emit('server:delete', { serverId: s.id }); else if (typed != null) toast('Nome diferente. O servidor não foi excluído.');
+      } } : { icon: '↪', label: 'Sair do servidor', danger: true, action: () => { if (confirm(`Sair de ${s.name}?`)) state.socket.emit('server:leave', { serverId: s.id }); } },
+    ]);
+  }
+
+  // ---------- Canais/categorias ----------
+  const selectChannelBase = selectChannel;
+  selectChannel = function selectChannelV1(id) {
+    const key = channelKey(state.selectedServer?.id, id); v1.unreadChannels.delete(key); v1.mentionCounts.delete(key);
+    selectChannelBase(id); renderChannels();
+  };
+
+  function channelBadges(c) {
+    const key = channelKey(state.selectedServer?.id, c.id), mentions = v1.mentionCounts.get(key) || 0;
+    return `${Array.isArray(c.allowedRoles) && c.allowedRoles.length ? '<span class="v1-lock" title="Canal privado">🔒</span>' : ''}${mentions ? `<span class="v1-mention-badge">${mentions > 9 ? '9+' : mentions}</span>` : v1.unreadChannels.has(key) ? '<span class="v1-unread-dot"></span>' : ''}`;
+  }
+  function makeChannelRow(c, manage) {
+    const row = document.createElement('div'); row.className = 'channel-row'; row.dataset.channelId = c.id; row.draggable = manage;
+    const b = document.createElement('button'); b.className = `channel${state.selectedChannel?.id === c.id ? ' active' : ''}`;
+    b.innerHTML = `<span class="symbol">${c.type === 'text' ? '#' : '🔊'}</span><span class="v1-channel-name">${escapeHtml(c.name)}</span><span class="v1-channel-badges">${channelBadges(c)}</span>`;
+    b.onclick = () => selectChannel(c.id);
+    row.appendChild(b);
+    if (manage) {
+      const actions = document.createElement('div'); actions.className = 'channel-actions';
+      const more = document.createElement('button'); more.className = 'channel-more'; more.textContent = '⋯'; more.title = 'Editar canal'; more.onclick = e => { e.stopPropagation(); openV1ChannelEditor(c); };
+      actions.appendChild(more); row.appendChild(actions); wireChannelDrag(row, c);
+    }
+    row.oncontextmenu = e => { if (!manage) return; e.preventDefault(); openContextMenu(e.clientX, e.clientY, [{ icon: '✏️', label: 'Editar canal', action: () => openV1ChannelEditor(c) }, { icon: '🗑️', label: 'Excluir canal', danger: true, action: () => { if (confirm(`Excluir ${c.name}?`)) state.socket.emit('channel:update', { serverId: state.selectedServer.id, channelId: c.id, action: 'delete' }); } }]); };
+    return row;
+  }
+  function appendChannel(container, c, manage) {
+    const row = makeChannelRow(c, manage); container.appendChild(row); if (c.type === 'voice') renderVoiceUsers(container, c.id);
+  }
+  function categorySection(category, channels, manage) {
+    const wrap = document.createElement('div'); wrap.className = 'channel-section v1-category';
+    const collapsed = category && v1.collapsedCategories.has(category.id);
+    const title = document.createElement('div'); title.className = 'channel-section-title';
+    const name = category?.name || 'GERAL'; title.innerHTML = `<button class="v1-category-toggle">${category ? (collapsed ? '▸' : '▾') : ''}</button><span>${escapeHtml(name)}</span>`;
+    if (category) title.querySelector('.v1-category-toggle').onclick = () => { collapsed ? v1.collapsedCategories.delete(category.id) : v1.collapsedCategories.add(category.id); writeJson('collapsedCategories', [...v1.collapsedCategories]); renderChannels(); };
+    if (manage && category) {
+      const more = document.createElement('button'); more.className = 'channel-add'; more.textContent = '⋯'; more.onclick = e => { e.stopPropagation(); openCategoryMenu(e.clientX, e.clientY, category); }; title.appendChild(more);
+    }
+    wrap.appendChild(title);
+    if (!collapsed) for (const c of channels) appendChannel(wrap, c, manage);
+    return wrap;
+  }
+
+  renderChannels = function renderChannelsV1() {
+    const s = state.selectedServer; els.channels.innerHTML = ''; if (!s) return;
+    const manage = can('moderator');
+    if (manage) {
+      const tools = document.createElement('div'); tools.className = 'v1-channel-tools';
+      tools.innerHTML = '<button id="v1AddText">＋ Texto</button><button id="v1AddVoice">＋ Voz</button><button id="v1AddCategory">＋ Categoria</button>';
+      els.channels.appendChild(tools);
+      $('v1AddText').onclick = () => openV1ChannelCreate('text'); $('v1AddVoice').onclick = () => openV1ChannelCreate('voice'); $('v1AddCategory').onclick = openCategoryCreate;
+    }
+    const categories = Array.isArray(s.categories) ? s.categories : [];
+    if (!categories.length) {
+      for (const type of ['text', 'voice']) {
+        const channels = s.channels.filter(c => c.type === type); if (!channels.length) continue;
+        const wrap = document.createElement('div'); wrap.className = 'channel-section'; const title = document.createElement('div'); title.className = 'channel-section-title'; title.innerHTML = `<span>${type === 'text' ? 'CANAIS DE TEXTO' : 'CANAIS DE VOZ'}</span>`; wrap.appendChild(title);
+        for (const c of channels) appendChannel(wrap, c, manage); els.channels.appendChild(wrap);
+      }
+      return;
+    }
+    const loose = s.channels.filter(c => !c.categoryId); if (loose.length) els.channels.appendChild(categorySection(null, loose, manage));
+    for (const cat of categories) els.channels.appendChild(categorySection(cat, s.channels.filter(c => c.categoryId === cat.id), manage));
+  };
+
+  function roleChecks(selected = []) {
+    const labels = [['member', 'Membro'], ['moderator', 'Moderador'], ['admin', 'Administrador']];
+    return labels.map(([r, label]) => `<label class="switch-line"><input type="checkbox" class="v1-role-access" value="${r}" ${selected.includes(r) ? 'checked' : ''}> ${label}</label>`).join('');
+  }
+  function categoryOptions(current = null) {
+    return `<option value="">Sem categoria</option>${(state.selectedServer?.categories || []).map(c => `<option value="${escapeHtml(c.id)}" ${current === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}`;
+  }
+  function selectedRoles() { return [...document.querySelectorAll('.v1-role-access:checked')].map(x => x.value); }
+  function openV1ChannelCreate(type) {
+    openModal(`<h2>Novo canal ${type === 'voice' ? 'de voz' : 'de texto'}</h2><label>Nome</label><input id="v1ChannelName" maxlength="32" placeholder="${type === 'voice' ? 'Jogando' : 'jogos'}"><label>Categoria</label><select id="v1ChannelCategory">${categoryOptions()}</select><div class="v1-permission-box"><b>Canal privado por cargo</b><small>Deixe tudo desmarcado para permitir todos. O dono sempre tem acesso.</small><div class="switch-grid">${roleChecks([])}</div></div><button id="v1CreateChannel" class="action">Criar canal</button>`);
+    $('v1CreateChannel').onclick = () => { const name = $('v1ChannelName').value.trim(); if (!name) return; state.socket.emit('channel:create', { serverId: state.selectedServer.id, type, name, categoryId: $('v1ChannelCategory').value || null, allowedRoles: selectedRoles() }); closeModal(); };
+  }
+  function openV1ChannelEditor(c) {
+    openModal(`<h2>Editar canal</h2><label>Nome</label><input id="v1ChannelEditName" maxlength="32" value="${escapeHtml(c.name)}"><label>Categoria</label><select id="v1ChannelEditCategory">${categoryOptions(c.categoryId || null)}</select><div class="v1-permission-box"><b>Quem pode acessar</b><small>Sem seleção = todos. O dono sempre tem acesso.</small><div class="switch-grid">${roleChecks(c.allowedRoles || [])}</div></div><button id="v1SaveChannel" class="action">Salvar</button><hr class="settings-sep"><button id="v1DeleteChannel" class="danger-action">Excluir canal</button>`);
+    $('v1SaveChannel').onclick = () => { state.socket.emit('channel:update', { serverId: state.selectedServer.id, channelId: c.id, name: $('v1ChannelEditName').value, categoryId: $('v1ChannelEditCategory').value || null, allowedRoles: selectedRoles() }); closeModal(); };
+    $('v1DeleteChannel').onclick = () => { if (confirm(`Excluir ${c.name}?`)) state.socket.emit('channel:update', { serverId: state.selectedServer.id, channelId: c.id, action: 'delete' }); closeModal(); };
+  }
+  function openCategoryCreate() {
+    openModal('<h2>Nova categoria</h2><label>Nome</label><input id="v1CategoryName" maxlength="32" placeholder="JOGOS"><button id="v1CreateCategory" class="action">Criar categoria</button>');
+    $('v1CreateCategory').onclick = () => { const name = $('v1CategoryName').value.trim(); if (name) state.socket.emit('category:create', { serverId: state.selectedServer.id, name }); closeModal(); };
+  }
+  function openCategoryMenu(x, y, category) {
+    openContextMenu(x, y, [
+      { icon: '✏️', label: 'Renomear categoria', action: () => { const name = prompt('Novo nome da categoria:', category.name); if (name?.trim()) state.socket.emit('category:update', { serverId: state.selectedServer.id, categoryId: category.id, name }); } },
+      { icon: '🗑️', label: 'Excluir categoria', danger: true, action: () => { if (confirm(`Excluir a categoria ${category.name}? Os canais ficarão sem categor

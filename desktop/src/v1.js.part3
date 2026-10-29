@@ -1,0 +1,126 @@
+ia.`)) state.socket.emit('category:update', { serverId: state.selectedServer.id, categoryId: category.id, action: 'delete' }); } },
+    ]);
+  }
+
+  // ---------- Mensagens ----------
+  function formatMessageText(text) {
+    let html = escapeHtml(text || '');
+    const me = state.user?.name ? `@${escapeHtml(state.user.name)}` : '';
+    if (me) html = html.replace(new RegExp(me.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<span class="v1-mention">${m}</span>`);
+    return html.replace(/\n/g, '<br>');
+  }
+  function messageArray(isDm) { return isDm ? (state.dmMessages.get(state.activeDmUserId) || []) : (state.messagesByChannel.get(state.selectedChannel?.id) || []); }
+  function authorForMessage(m, isDm) {
+    if (isDm) return m.fromId === state.user?.id ? state.user : (currentPeer(state.activeDmUserId) || { id: state.activeDmUserId, name: 'Amigo' });
+    return state.members.get(m.authorId) || { id: m.authorId, name: 'Usuário', status: 'offline' };
+  }
+  function reactionHtml(m) {
+    const rows = Object.entries(m.reactions || {}).filter(([, ids]) => Array.isArray(ids) && ids.length);
+    return rows.length ? `<div class="v1-reactions">${rows.map(([emoji, ids]) => `<button data-reaction="${emoji}" class="${ids.includes(state.user?.id) ? 'mine' : ''}">${emoji} <span>${ids.length}</span></button>`).join('')}</div>` : '';
+  }
+  function buildMessageRow(m, isDm = false) {
+    const u = authorForMessage(m, isDm), mine = isDm ? m.fromId === state.user?.id : m.authorId === state.user?.id;
+    const role = isDm ? 'member' : (u.role || roleFor(isDm ? '' : m.authorId));
+    const row = document.createElement('div'); row.className = `message v1-message${Array.isArray(m.mentionIds) && m.mentionIds.includes(state.user?.id) ? ' mention-me' : ''}`; row.dataset.messageId = m.id;
+    const av = document.createElement('div'); av.className = 'avatar'; avatarStyle(av, u); av.oncontextmenu = e => { if (isDm) return; e.preventDefault(); openMemberMenu(e.clientX, e.clientY, u.id); };
+    const body = document.createElement('div'); body.className = 'v1-message-body';
+    const arr = messageArray(isDm), reply = m.replyToId ? arr.find(x => x.id === m.replyToId) : null;
+    body.innerHTML = `${reply ? `<div class="v1-reply-preview"><span>↪</span><b>${escapeHtml(authorForMessage(reply, isDm)?.name || 'Usuário')}</b><small>${escapeHtml(String(reply.text || '').slice(0, 100))}</small></div>` : ''}<div class="msg-head"><b class="${isDm ? '' : `role-color-${role}`}">${escapeHtml(isDm && mine ? 'Você' : u.name)}</b><small>${fmtTime(m.at)}${m.editedAt ? ' · editado' : ''}</small></div><div class="msg-text">${formatMessageText(m.text)}</div>${reactionHtml(m)}<div class="v1-message-actions"><button data-action="reply" title="Responder">↩</button><button data-action="react" title="Reagir">☺</button>${mine ? '<button data-action="edit" title="Editar">✎</button>' : ''}<button data-action="more" title="Mais">⋯</button></div>`;
+    for (const b of body.querySelectorAll('[data-reaction]')) b.onclick = () => reactToMessage(m, b.dataset.reaction, isDm);
+    body.querySelector('[data-action="reply"]').onclick = () => setReply(m, isDm);
+    body.querySelector('[data-action="react"]').onclick = e => openReactionMenu(e.clientX, e.clientY, m, isDm);
+    body.querySelector('[data-action="edit"]')?.addEventListener('click', () => beginEdit(m, isDm));
+    body.querySelector('[data-action="more"]').onclick = e => openMessageMenu(e.clientX, e.clientY, m, isDm);
+    row.oncontextmenu = e => { e.preventDefault(); openMessageMenu(e.clientX, e.clientY, m, isDm); };
+    row.append(av, body); return row;
+  }
+
+  renderMessages = function renderMessagesV1(forceBottom = false) {
+    if (!state.selectedChannel || state.selectedChannel.type !== 'text') return;
+    const wasBottom = els.messages.scrollHeight - els.messages.scrollTop - els.messages.clientHeight < 90; els.messages.innerHTML = '';
+    for (const m of state.messagesByChannel.get(state.selectedChannel.id) || []) els.messages.appendChild(buildMessageRow(m, false));
+    if (forceBottom || wasBottom) els.messages.scrollTop = els.messages.scrollHeight;
+  };
+  renderDmMessages = function renderDmMessagesV1(forceBottom = false) {
+    if (state.viewMode !== 'dm' || !state.activeDmUserId) return;
+    const wasBottom = els.messages.scrollHeight - els.messages.scrollTop - els.messages.clientHeight < 90; els.messages.innerHTML = '';
+    const arr = state.dmMessages.get(state.activeDmUserId) || [];
+    for (const m of arr) els.messages.appendChild(buildMessageRow(m, true));
+    if (!arr.length) els.messages.innerHTML = '<div class="dm-conversation-empty"><b>Comece a conversa 👋</b><span>As mensagens ficam armazenadas no Banana Cord do host.</span></div>';
+    if (forceBottom || wasBottom) els.messages.scrollTop = els.messages.scrollHeight;
+  };
+
+  function openReactionMenu(x, y, m, isDm) { openContextMenu(x, y, [{ reactions: REACTIONS, onPick: emoji => reactToMessage(m, emoji, isDm) }]); }
+  function reactToMessage(m, emoji, isDm) {
+    if (isDm) state.socket.emit('dm:react', { userId: state.activeDmUserId, messageId: m.id, emoji });
+    else state.socket.emit('message:react', { serverId: state.selectedServer.id, channelId: state.selectedChannel.id, messageId: m.id, emoji });
+  }
+  function canDeleteServerMessage(m) { return m.authorId === state.user?.id || can('moderator'); }
+  function openMessageMenu(x, y, m, isDm) {
+    const mine = isDm ? m.fromId === state.user?.id : m.authorId === state.user?.id;
+    openContextMenu(x, y, [
+      { icon: '↩', label: 'Responder', action: () => setReply(m, isDm) },
+      { reactions: REACTIONS, onPick: emoji => reactToMessage(m, emoji, isDm) },
+      mine && { icon: '✎', label: 'Editar mensagem', action: () => beginEdit(m, isDm) },
+      (mine || (!isDm && canDeleteServerMessage(m))) && { separator: true },
+      (mine || (!isDm && canDeleteServerMessage(m))) && { icon: '🗑️', label: 'Apagar mensagem', danger: true, action: () => deleteMessage(m, isDm) },
+    ]);
+  }
+  function setReply(m, isDm) { v1.reply = { messageId: m.id, isDm, text: m.text, author: authorForMessage(m, isDm)?.name || 'Usuário' }; v1.editing = null; updateComposerBar(); els.messageInput.focus(); }
+  function beginEdit(m, isDm) { v1.editing = { messageId: m.id, isDm }; v1.reply = null; els.messageInput.value = m.text || ''; updateComposerBar(); els.messageInput.focus(); els.messageInput.select(); }
+  function deleteMessage(m, isDm) {
+    if (!confirm('Apagar esta mensagem?')) return;
+    if (isDm) state.socket.emit('dm:delete', { userId: state.activeDmUserId, messageId: m.id });
+    else state.socket.emit('message:delete', { serverId: state.selectedServer.id, channelId: state.selectedChannel.id, messageId: m.id });
+  }
+  function ensureComposerBar() {
+    let bar = $('v1ComposerBar'); if (bar) return bar;
+    bar = document.createElement('div'); bar.id = 'v1ComposerBar'; bar.className = 'v1-composer-bar hidden';
+    els.messageForm.parentElement.insertBefore(bar, els.messageForm); return bar;
+  }
+  function updateComposerBar() {
+    const bar = ensureComposerBar();
+    if (v1.editing) bar.innerHTML = `<span>✎ Editando mensagem</span><button id="v1CancelCompose" type="button">×</button>`;
+    else if (v1.reply) bar.innerHTML = `<span>↩ Respondendo a <b>${escapeHtml(v1.reply.author)}</b>: ${escapeHtml(String(v1.reply.text || '').slice(0, 90))}</span><button id="v1CancelCompose" type="button">×</button>`;
+    else { bar.classList.add('hidden'); bar.innerHTML = ''; return; }
+    bar.classList.remove('hidden'); $('v1CancelCompose').onclick = clearComposerMode;
+  }
+  function clearComposerMode() { v1.reply = null; v1.editing = null; els.messageInput.value = ''; updateComposerBar(); }
+  els.messageInput.addEventListener('keydown', e => { if (e.key === 'Escape' && (v1.reply || v1.editing)) { e.preventDefault(); clearComposerMode(); } });
+  els.messageForm.addEventListener('submit', e => {
+    e.preventDefault(); e.stopImmediatePropagation();
+    const text = els.messageInput.value.trim(); if (!text) return;
+    const isDm = state.viewMode === 'dm' && !!state.activeDmUserId;
+    if (v1.editing) {
+      if (isDm) state.socket.emit('dm:edit', { userId: state.activeDmUserId, messageId: v1.editing.messageId, text });
+      else state.socket.emit('message:edit', { serverId: state.selectedServer.id, channelId: state.selectedChannel.id, messageId: v1.editing.messageId, text });
+    } else if (isDm) state.socket.emit('dm:send', { userId: state.activeDmUserId, text, replyToId: v1.reply?.messageId || null });
+    else if (state.selectedServer && state.selectedChannel?.type === 'text') state.socket.emit('message:send', { serverId: state.selectedServer.id, channelId: state.selectedChannel.id, text, replyToId: v1.reply?.messageId || null });
+    els.messageInput.value = ''; v1.reply = null; v1.editing = null; updateComposerBar();
+  }, true);
+
+
+  // Sugestões leves de @menção (somente no canal de texto do servidor).
+  function closeMentionSuggest(){ $('v1MentionSuggest')?.remove(); }
+  function updateMentionSuggest(){
+    closeMentionSuggest();
+    if(state.viewMode!=='server'||state.selectedChannel?.type!=='text')return;
+    const value=els.messageInput.value,match=value.match(/@([^@\n]{0,32})$/);if(!match)return;
+    const query=match[1].toLocaleLowerCase('pt-BR').trim();
+    const candidates=[...state.members.values()].filter(u=>u.id!==state.user?.id&&(!query||u.name.toLocaleLowerCase('pt-BR').includes(query))).slice(0,6);if(!candidates.length)return;
+    const box=document.createElement('div');box.id='v1MentionSuggest';box.className='v1-mention-suggest';
+    for(const u of candidates){const b=document.createElement('button');const av=document.createElement('span');av.className='avatar';avatarStyle(av,u);const tx=document.createElement('span');tx.innerHTML=`<b>${escapeHtml(u.name)}</b><small>${escapeHtml(u.customStatus||STATUS_LABEL[u.status||'offline']||'Offline')}</small>`;b.append(av,tx);b.onclick=e=>{e.preventDefault();const start=value.slice(0,value.length-match[0].length);els.messageInput.value=`${start}@${u.name} `;closeMentionSuggest();els.messageInput.focus()};box.appendChild(b)}
+    els.messageForm.appendChild(box);
+  }
+  els.messageInput.addEventListener('input',updateMentionSuggest);
+  els.messageInput.addEventListener('blur',()=>setTimeout(closeMentionSuggest,180));
+
+  // ---------- Amigos / membros / DMs ----------
+  function relationLabel(id) {
+    if (isBlocked(id)) return 'Bloqueado'; if (isFriend(id)) return 'Amigo'; if (isIncoming(id)) return 'Solicitação recebida'; if (isOutgoing(id)) return 'Solicitação enviada'; return '';
+  }
+  function memberActions(userId) {
+    const u = currentPeer(userId); if (!u || userId === state.user?.id) return [];
+    const blocked = isBlocked(userId), friend = isFriend(userId), incoming = isIncoming(userId), outgoing = isOutgoing(userId);
+    const items = [];
+    if (!blocked) items.push({ icon: '💬', label: 'Mensagem privada', action: () => startDm(userId, u) })

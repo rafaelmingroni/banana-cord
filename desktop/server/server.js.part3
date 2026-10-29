@@ -1,5 +1,131 @@
-      if (!s.channels.some(c => c.id === channelId && c.type === 'text')) return;
-      socket.emit('messages:list', { channelId, messages: (db.messages[channelId] || []).slice(-150) });
+embers(serverId);
+    });
+
+    socket.on('server:regenerate-invite', payload => {
+      const serverId = payload?.serverId;
+      if (!canManageServer(socket, serverId)) return socket.emit('app:error', 'Você não tem permissão para renovar o convite.');
+      db.servers[serverId].inviteCode = inviteCode(); saveSoon(); broadcastServer(serverId);
+    });
+
+    socket.on('member:set-role', payload => {
+      const serverId = payload?.serverId;
+      const targetUserId = String(payload?.userId || '');
+      const nextRole = safeRole(payload?.role);
+      const s = db.servers[serverId];
+      if (!owner(socket, serverId)) return socket.emit('app:error', 'Só o dono pode alterar cargos.');
+      if (!s?.members.includes(targetUserId)) return;
+      if (targetUserId === s.ownerId) return socket.emit('app:error', 'O cargo do dono não pode ser alterado.');
+      if (nextRole === 'owner') return socket.emit('app:error', 'Transferência de propriedade ainda não está disponível.');
+      s.memberRoles[targetUserId] = nextRole;
+      for (const sx of io.sockets.sockets.values()) {
+        if (sx.data.userId === targetUserId && sx.data.voiceServerId === serverId) {
+          const voiceCh = s.channels.find(c => c.id === sx.data.voiceChannelId);
+          if (voiceCh && !canAccessChannel(s, voiceCh, targetUserId)) leaveVoice(sx).catch(() => {});
+        }
+      }
+      saveSoon(); broadcastServer(serverId); broadcastMembers(serverId); emitVoiceSnapshot(serverId);
+    });
+
+    socket.on('member:kick', async payload => {
+      const serverId = payload?.serverId;
+      const targetUserId = String(payload?.userId || '');
+      const s = db.servers[serverId];
+      if (!owner(socket, serverId)) return socket.emit('app:error', 'Só o dono pode remover membros.');
+      if (!s || targetUserId === s.ownerId) return;
+      s.members = s.members.filter(id => id !== targetUserId); delete s.memberRoles[targetUserId];
+      for (const sx of io.sockets.sockets.values()) {
+        if (sx.data.userId === targetUserId) {
+          if (sx.data.voiceServerId === serverId) await leaveVoice(sx);
+          sx.leave(`server:${serverId}`); sx.emit('server:removed', { serverId, kicked: true });
+        }
+      }
+      saveSoon(); broadcastServer(serverId); broadcastMembers(serverId);
+    });
+
+    socket.on('category:create', payload => {
+      const serverId = payload?.serverId;
+      if (!canManageChannels(socket, serverId)) return socket.emit('app:error', 'Seu cargo não permite criar categorias.');
+      const s = db.servers[serverId];
+      if (s.categories.length >= 20) return socket.emit('app:error', 'Limite de categorias atingido.');
+      const name = String(payload?.name || 'Categoria').trim().slice(0, 32) || 'Categoria';
+      s.categories.push({ id: uid('cat_'), name }); saveSoon(); broadcastServer(serverId);
+    });
+
+    socket.on('category:update', payload => {
+      const serverId = payload?.serverId;
+      if (!canManageChannels(socket, serverId)) return socket.emit('app:error', 'Seu cargo não permite editar categorias.');
+      const s = db.servers[serverId];
+      const c = s?.categories.find(x => x.id === payload?.categoryId);
+      if (!c) return;
+      if (payload?.action === 'delete') {
+        s.categories = s.categories.filter(x => x.id !== c.id);
+        for (const ch of s.channels) if (ch.categoryId === c.id) ch.categoryId = null;
+      } else if (payload?.name != null) c.name = String(payload.name).trim().slice(0, 32) || c.name;
+      saveSoon(); broadcastServer(serverId);
+    });
+
+    socket.on('channel:create', payload => {
+      const serverId = payload?.serverId;
+      if (!canManageChannels(socket, serverId)) return socket.emit('app:error', 'Seu cargo não permite criar canais.');
+      const s = db.servers[serverId];
+      if (s.channels.length >= 40) return socket.emit('app:error', 'Limite de canais atingido.');
+      const type = payload?.type === 'voice' ? 'voice' : 'text';
+      const raw = String(payload?.name || (type === 'voice' ? 'Nova sala' : 'novo-canal')).trim().slice(0, 32);
+      const name = type === 'text' ? raw.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9à-ú_-]/gi, '') || 'novo-canal' : raw || 'Nova sala';
+      const categoryId = s.categories.some(c => c.id === payload?.categoryId) ? payload.categoryId : null;
+      const allowedRoles = uniqueStrings(payload?.allowedRoles).filter(r => VALID_ROLES.has(r) && r !== 'owner');
+      const ch = { id: uid(type === 'voice' ? 'vc_' : 'txt_'), type, name, categoryId, allowedRoles };
+      s.channels.push(ch); if (type === 'text') db.messages[ch.id] = []; saveSoon(); broadcastServer(serverId);
+    });
+
+    socket.on('channel:update', async payload => {
+      const serverId = payload?.serverId;
+      const channelId = payload?.channelId;
+      if (!canManageChannels(socket, serverId)) return socket.emit('app:error', 'Seu cargo não permite editar canais.');
+      const s = db.servers[serverId];
+      const ch = s?.channels.find(c => c.id === channelId);
+      if (!ch) return;
+      if (payload?.action === 'delete') {
+        if (s.channels.filter(c => c.type === ch.type).length <= 1) return socket.emit('app:error', `Mantenha pelo menos um canal de ${ch.type === 'voice' ? 'voz' : 'texto'}.`);
+        if (ch.type === 'voice') for (const sx of io.sockets.sockets.values()) if (sx.data.voiceServerId === serverId && sx.data.voiceChannelId === channelId) await leaveVoice(sx);
+        s.channels = s.channels.filter(c => c.id !== channelId); delete db.messages[channelId];
+      } else {
+        if (payload?.name != null) {
+          const raw = String(payload.name).trim().slice(0, 32);
+          ch.name = ch.type === 'text' ? raw.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9à-ú_-]/gi, '') || ch.name : raw || ch.name;
+        }
+        if (payload?.categoryId !== undefined) ch.categoryId = s.categories.some(c => c.id === payload.categoryId) ? payload.categoryId : null;
+        if (payload?.allowedRoles !== undefined) ch.allowedRoles = uniqueStrings(payload.allowedRoles).filter(r => VALID_ROLES.has(r) && r !== 'owner');
+        if (ch.type === 'voice') {
+          for (const sx of io.sockets.sockets.values()) {
+            if (sx.data.voiceServerId === serverId && sx.data.voiceChannelId === ch.id && !canAccessChannel(s, ch, sx.data.userId)) await leaveVoice(sx);
+          }
+        }
+      }
+      saveSoon(); broadcastServer(serverId); emitVoiceSnapshot(serverId);
+    });
+
+    socket.on('channel:reorder', payload => {
+      const serverId = payload?.serverId;
+      const channelId = payload?.channelId;
+      const beforeId = payload?.beforeId || null;
+      if (!canManageChannels(socket, serverId)) return;
+      const s = db.servers[serverId];
+      const from = s?.channels.findIndex(c => c.id === channelId) ?? -1;
+      if (from < 0) return;
+      const [moved] = s.channels.splice(from, 1);
+      let to = beforeId ? s.channels.findIndex(c => c.id === beforeId) : -1;
+      if (to < 0) to = s.channels.length;
+      s.channels.splice(to, 0, moved); saveSoon(); broadcastServer(serverId);
+    });
+
+    socket.on('messages:load', payload => {
+      const { serverId, channelId } = payload || {};
+      if (!membership(socket, serverId)) return;
+      const s = db.servers[serverId];
+      const ch = s?.channels.find(c => c.id === channelId && c.type === 'text');
+      if (!ch || !canAccessChannel(s, ch, socket.data.userId)) return;
+      socket.emit('messages:list', { channelId, messages: (db.messages[channelId] || []).slice(-200) });
     });
 
     socket.on('message:send', payload => {
@@ -8,156 +134,47 @@
       const text = String(payload?.text || '').trim().slice(0, 2000);
       if (!text) return;
       const s = db.servers[serverId];
-      if (!s.channels.some(c => c.id === channelId && c.type === 'text')) return;
-      const m = { id: uid('msg_'), channelId, authorId: socket.data.userId, text, at: now() };
+      const ch = s?.channels.find(c => c.id === channelId && c.type === 'text');
+      if (!ch || !canAccessChannel(s, ch, socket.data.userId)) return;
+      const replyToId = payload?.replyToId && findMessage(channelId, String(payload.replyToId)) ? String(payload.replyToId) : null;
+      const m = { id: uid('msg_'), serverId, channelId, authorId: socket.data.userId, text, at: now(), editedAt: null, replyToId, reactions: {}, mentionIds: mentionIdsFor(s, text) };
       db.messages[channelId] = db.messages[channelId] || [];
       db.messages[channelId].push(m);
       if (db.messages[channelId].length > 2000) db.messages[channelId] = db.messages[channelId].slice(-2000);
-      saveSoon();
-      io.to(`server:${serverId}`).emit('message:new', m);
+      saveSoon(); emitChannelEvent(serverId, channelId, 'message:new', m);
+      for (const userId of m.mentionIds) if (userId !== socket.data.userId) io.to(`user:${userId}`).emit('mention:new', { serverId, channelId, messageId: m.id, from: publicUser(db.users[socket.data.userId]) });
     });
 
-    socket.on('members:get', payload => {
-      const serverId = payload?.serverId;
+    socket.on('message:edit', payload => {
+      const { serverId, channelId, messageId } = payload || {};
       if (!membership(socket, serverId)) return;
-      broadcastMembers(serverId);
-      emitVoiceSnapshot(serverId);
-    });
-
-
-    socket.on('dm:conversations:get', () => {
-      const userId = socket.data.userId;
-      if (!userId) return;
-      socket.emit('dm:conversations', { conversations: dmConversations(userId) });
-    });
-
-    socket.on('dm:load', payload => {
-      const userId = socket.data.userId;
-      const peerId = String(payload?.userId || '').trim();
-      if (!userId || !peerId || peerId === userId || !usersShareServer(userId, peerId)) {
-        return socket.emit('app:error', 'Só é possível conversar no privado com alguém de um servidor em comum.');
-      }
-      const messages = Array.isArray(db.dms[dmKey(userId, peerId)]) ? db.dms[dmKey(userId, peerId)] : [];
-      socket.emit('dm:list', { user: publicUser(db.users[peerId]), messages: messages.slice(-200) });
-    });
-
-    socket.on('dm:send', payload => {
-      const fromId = socket.data.userId;
-      const toId = String(payload?.userId || '').trim();
+      const s = db.servers[serverId], ch = s?.channels.find(c => c.id === channelId && c.type === 'text');
+      if (!ch || !canAccessChannel(s, ch, socket.data.userId)) return;
+      const m = findMessage(channelId, String(messageId || ''));
+      if (!m || m.authorId !== socket.data.userId) return socket.emit('app:error', 'Você só pode editar suas próprias mensagens.');
       const text = String(payload?.text || '').trim().slice(0, 2000);
-      if (!fromId || !toId || toId === fromId || !text) return;
-      if (!usersShareServer(fromId, toId) || !db.users[toId]) {
-        return socket.emit('app:error', 'Só é possível conversar no privado com alguém de um servidor em comum.');
-      }
-      const key = dmKey(fromId, toId);
-      const message = { id: uid('dm_'), fromId, toId, text, at: now() };
-      db.dms[key] = Array.isArray(db.dms[key]) ? db.dms[key] : [];
-      db.dms[key].push(message);
-      if (db.dms[key].length > 1000) db.dms[key] = db.dms[key].slice(-1000);
-      saveSoon();
-      const payloadOut = { message, from: publicUser(db.users[fromId]), to: publicUser(db.users[toId]) };
-      io.to(`user:${fromId}`).emit('dm:new', payloadOut);
-      io.to(`user:${toId}`).emit('dm:new', payloadOut);
-      emitDmConversations(fromId);
-      emitDmConversations(toId);
+      if (!text) return;
+      m.text = text; m.editedAt = now(); m.mentionIds = mentionIdsFor(s, text); saveSoon(); emitChannelEvent(serverId, channelId, 'message:updated', m);
     });
 
-    socket.on('voice:join', async payload => {
-      const { serverId, channelId } = payload || {};
+    socket.on('message:delete', payload => {
+      const { serverId, channelId, messageId } = payload || {};
       if (!membership(socket, serverId)) return;
-      const s = db.servers[serverId];
-      if (!s.channels.some(c => c.id === channelId && c.type === 'voice')) return;
-      if (socket.data.voiceRoom) await leaveVoice(socket);
-      const room = voiceRoom(serverId, channelId);
-      const sockets = await io.in(room).fetchSockets();
-      if (sockets.length >= 5) return socket.emit('voice:full', { channelId });
-      socket.data.voiceRoom = room;
-      socket.data.voiceServerId = serverId;
-      socket.data.voiceChannelId = channelId;
-      socket.data.speaking = false;
-      socket.join(room);
-      socket.data.mediaState = socket.data.mediaState || { muted: false, camera: false, screen: false };
-      const peers = sockets.map(sx => ({
-        socketId: sx.id,
-        user: publicUser(db.users[sx.data.userId]),
-        mediaState: sx.data.mediaState || { muted: false, camera: false, screen: false }
-      }));
-      socket.emit('voice:peers', { channelId, peers });
-      socket.to(room).emit('voice:user-joined', { socketId: socket.id, user: publicUser(db.users[socket.data.userId]), mediaState: socket.data.mediaState });
-      io.to(`server:${serverId}`).emit('voice:presence-event', { type: 'join', userId: socket.data.userId, channelId });
-      emitVoiceSnapshot(serverId);
+      const s = db.servers[serverId], ch = s?.channels.find(c => c.id === channelId && c.type === 'text');
+      if (!ch || !canAccessChannel(s, ch, socket.data.userId)) return;
+      const arr = db.messages[channelId] || [], m = arr.find(x => x.id === messageId);
+      if (!m) return;
+      if (m.authorId !== socket.data.userId && !hasRole(socket, serverId, 'moderator')) return socket.emit('app:error', 'Você não pode apagar essa mensagem.');
+      db.messages[channelId] = arr.filter(x => x.id !== messageId); saveSoon(); emitChannelEvent(serverId, channelId, 'message:deleted', { channelId, messageId });
     });
 
-    socket.on('voice:leave', () => leaveVoice(socket));
-
-    socket.on('voice:media-state', payload => {
-      if (!socket.data.voiceRoom) return;
-      const mediaState = { muted: !!payload?.muted, camera: !!payload?.camera, screen: !!payload?.screen };
-      socket.data.mediaState = mediaState;
-      socket.to(socket.data.voiceRoom).emit('voice:media-state', { socketId: socket.id, mediaState });
-      if (socket.data.voiceServerId) {
-        io.to(`server:${socket.data.voiceServerId}`).emit('voice:media-state-global', {
-          socketId: socket.id,
-          userId: socket.data.userId,
-          channelId: socket.data.voiceChannelId,
-          mediaState
-        });
-      }
-    });
-
-    socket.on('voice:speaking', payload => {
-      if (!socket.data.voiceRoom) return;
-      socket.data.speaking = !!payload?.speaking;
-      socket.to(socket.data.voiceRoom).emit('voice:speaking', { socketId: socket.id, speaking: socket.data.speaking });
-      if (socket.data.voiceServerId) {
-        io.to(`server:${socket.data.voiceServerId}`).emit('voice:speaking-global', {
-          socketId: socket.id,
-          userId: socket.data.userId,
-          channelId: socket.data.voiceChannelId,
-          speaking: socket.data.speaking
-        });
-      }
-    });
-
-    socket.on('webrtc:signal', payload => {
-      const { targetSocketId, data } = payload || {};
-      if (!targetSocketId || !socket.data.voiceRoom) return;
-      const target = io.sockets.sockets.get(targetSocketId);
-      if (!target || target.data.voiceRoom !== socket.data.voiceRoom) return;
-      io.to(targetSocketId).emit('webrtc:signal', { fromSocketId: socket.id, fromUser: publicUser(db.users[socket.data.userId]), data });
-    });
-
-    socket.on('latency:ping', (stamp, cb) => cb?.(stamp));
-
-    socket.on('disconnect', async () => {
-      await leaveVoice(socket);
-      const id = socket.data.userId;
-      if (id && db.users[id]) {
-        const remaining = [...io.sockets.sockets.values()].some(s => s.data.userId === id && s.connected);
-        if (!remaining) {
-          db.users[id].status = 'offline';
-          db.users[id].lastSeen = now();
-          saveSoon();
-          io.emit('presence:update', publicUser(db.users[id]));
-          for (const s of getUserServers(id)) broadcastMembers(s.id);
-        }
-      }
-    });
-  });
-
-  return await new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(port, '127.0.0.1', () => {
-      server.off('error', reject);
-      console.log(`Banana Cord ${VERSION} server listening on 127.0.0.1:${port}`);
-      resolve({ server, io, port, close: () => new Promise(r => io.close(() => server.close(() => r()))) });
-    });
-  });
-}
-
-module.exports = { startBananaServer };
-
-if (require.main === module) {
-  const dataFile = process.env.BANANA_DATA || path.join(__dirname, 'data.json');
-  startBananaServer({ port: Number(process.env.PORT || 3210), dataFile }).catch(err => { console.error(err); process.exit(1); });
-}
+    socket.on('message:react', payload => {
+      const { serverId, channelId, messageId } = payload || {};
+      const emoji = String(payload?.emoji || '');
+      if (!QUICK_REACTIONS.has(emoji) || !membership(socket, serverId)) return;
+      const s = db.servers[serverId], ch = s?.channels.find(c => c.id === channelId && c.type === 'text');
+      if (!ch || !canAccessChannel(s, ch, socket.data.userId)) return;
+      const m = findMessage(channelId, String(messageId || '')); if (!m) return;
+      m.reactions = m.reactions && typeof m.reactions === 'object' ? m.reactions : {};
+      const ids = uniqueStrings(m.reactions[emoji]);
+      m.reactions[emoji] = 
