@@ -9,6 +9,8 @@ let closeHintShown = false;
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) app.quit();
 
+const isCloudV2 = () => /^2\.0\.0-cloud\./.test(String(app.getVersion() || ''));
+
 function mainWindow() {
   return BrowserWindow.getAllWindows().find(w => !w.isDestroyed()) || null;
 }
@@ -23,21 +25,22 @@ function showWindow() {
 
 function rebuildMenu() {
   if (!tray) return;
-  tray.setContextMenu(Menu.buildFromTemplate([
+  const template = [
     { label: 'Abrir Banana Cord', click: showWindow },
     { label: `Versão ${app.getVersion()}`, enabled: false },
+    { label: isCloudV2() ? 'Modo: Banana Cloud' : `Hospedando: ${hostActive ? 'ativo' : 'inativo'}`, enabled: false },
     { type: 'separator' },
     {
       label: 'Mutar / Desmutar',
       click: () => { const win = mainWindow(); if (win) win.webContents.send('shortcut:mute'); }
     },
-    { label: `Hospedando: ${hostActive ? 'ativo' : 'inativo'}`, enabled: false },
     { type: 'separator' },
     {
       label: 'Sair do Banana Cord',
       click: () => { quitting = true; app.quit(); }
     }
-  ]));
+  ];
+  tray.setContextMenu(Menu.buildFromTemplate(template));
 }
 
 app.on('banana:host-status', data => {
@@ -57,7 +60,9 @@ app.on('browser-window-created', (_event, win) => {
       try {
         tray.displayBalloon({
           title: 'Banana Cord continua aberto',
-          content: 'A janela foi escondida. O app continua rodando na bandeja — inclusive o servidor, se você estiver hospedando.',
+          content: isCloudV2()
+            ? 'A janela foi escondida. O Banana Cord continua rodando na bandeja para manter presença, chamadas e notificações.'
+            : 'A janela foi escondida. O app continua rodando na bandeja — inclusive o servidor, se você estiver hospedando.',
           iconType: 'info',
           largeIcon: true
         });
