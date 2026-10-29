@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   export:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout exact Cloud 3 source
         uses: actions/checkout@v4
@@ -21,10 +21,9 @@ jobs:
           fetch-depth: 1
 
       - name: Create source ZIP
-        shell: pwsh
         run: |
-          if (Test-Path .git) { Remove-Item .git -Recurse -Force }
-          Compress-Archive -Path * -DestinationPath Banana-Cord-Cloud-3-Source.zip -CompressionLevel Optimal
+          rm -rf .git
+          zip -qr Banana-Cord-Cloud-3-Source.zip . -x 'Banana-Cord-Cloud-3-Source.zip'
 
       - name: Upload source snapshot
         uses: actions/upload-artifact@v4
