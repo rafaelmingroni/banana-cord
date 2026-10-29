@@ -11,7 +11,7 @@
 <body>
 <div id="setup" class="setup">
   <div class="setup-card">
-    <div class="brand"><div class="logo">🍌</div><div><h1>Banana Cord</h1><p>Seu Discord privado, só que mais leve. <b>v1.0 · pós-beta</b></p></div></div>
+    <div class="brand"><div class="logo">🍌</div><div><h1>Banana Cord</h1><p>Seu Discord privado, só que mais leve. <b>v1.0.1</b></p></div></div>
     <label>Seu nome</label>
     <input id="setupName" maxlength="32" placeholder="Rafael" />
     <div class="setup-actions">
@@ -23,7 +23,7 @@
     </div>
     <div id="hostProgress" class="host-progress hidden"></div>
     <details><summary>Conexão manual</summary><input id="setupUrl" value="http://localhost:3210" /><small>Útil apenas para testes ou rede local.</small></details>
-    <small class="hint">O host precisa manter o Banana Cord aberto para o grupo ficar online.</small>
+    <small class="hint">O host precisa manter o Banana Cord em execução para o grupo ficar online. Pode fechar a janela: ele continua na bandeja.</small>
   </div>
 </div>
 
@@ -68,6 +68,7 @@
 <div id="modal" class="modal hidden"><div class="modal-card"><button id="modalClose" class="modal-close">×</button><div id="modalBody"></div></div></div>
 <div id="toast" class="toast hidden"></div>
 <script src="app.js"></script>
+<script src="v101-fix.js"></script>
 <script src="v1.js"></script>
 </body>
 </html>
