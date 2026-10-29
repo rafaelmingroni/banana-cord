@@ -14,7 +14,8 @@ fs.mkdirSync(outdir, { recursive: true });
         "require('./cloud-v2.js');",
         "require('./cloud-v2-auth-fix.js');",
         "require('./cloud-v2-ui-fix.js');",
-        "require('./cloud-v2-socket.js');"
+        "require('./cloud-v2-socket.js');",
+        "require('./cloud-v2-webrtc-fix.js');"
       ].join('\n'),
       resolveDir: path.join(root, 'src'),
       sourcefile: 'cloud-v2-browser-entry.js'
