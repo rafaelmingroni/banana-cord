@@ -30,7 +30,8 @@ assert(index.indexOf('cloud-v2-mode.js') < index.indexOf('app.js'), 'cloud mode 
 assert(mode.includes('BananaCloudMode = true') && mode.includes('BananaCloudNative = true'), 'V2 native cloud flags missing');
 
 assert(index.includes('cloud-v2-legacy-bridge.js'), 'stable UI cloud bridge must be loaded');
-assert(index.includes('cloud-browser/cloud-v2-socket.browser.js'), 'cloud socket bundle must be loaded');
+assert(index.includes('cloud-browser/cloud-v2-all.browser.js'), 'single cloud runtime bundle must be loaded');
+assert(!index.includes('cloud-browser/cloud-v2-socket.browser.js'), 'legacy split socket bundle must not be loaded');
 assert(!index.includes('cloud-v2-home.js'), 'simplified cloud home must not replace the stable app UI');
 assert(index.indexOf('v1.js') < index.indexOf('cloud-v2-legacy-bridge.js'), 'bridge must load after stable v1 renderer');
 assert(index.indexOf('cloud-v2-legacy-bridge.js') < index.indexOf('v110.js'), 'cloud mode must exist before invite enhancements');
