@@ -9,7 +9,8 @@ fs.mkdirSync(outdir, { recursive: true });
 
 const builds = [
   ['cloud-v2.js', 'cloud-v2.browser.js'],
-  ['cloud-v2-auth-fix.js', 'cloud-v2-auth-fix.browser.js']
+  ['cloud-v2-auth-fix.js', 'cloud-v2-auth-fix.browser.js'],
+  ['cloud-v2-socket.js', 'cloud-v2-socket.browser.js']
 ];
 
 (async () => {
