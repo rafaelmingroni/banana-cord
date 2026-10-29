@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+- Criptografa o registro de rendezvous dos convites curtos com AES-256-GCM.
+- O endereço do host, código interno e nome do servidor deixam de ficar em texto aberto nos relays.
+- O índice público do convite passa a usar somente um hash derivado do código curto.
+- Mantém o código fixo simples e os convites temporários da v1.1.0.
+
 ## 1.1.0
 - Nova identidade visual com banana reconhecível, fundo transparente e ícone multi-resolução para Windows.
 - Ícone dedicado para a bandeja do Windows, sem o fundo preto que fazia a banana desaparecer.

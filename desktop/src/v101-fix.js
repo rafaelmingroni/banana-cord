@@ -1,6 +1,6 @@
-/* Banana Cord v1.1.0 — guard de estabilidade do renderer. */
+/* Banana Cord v1.1.1 — guard de estabilidade do renderer. */
 (() => {
-  const VERSION = '1.1.0';
+  const VERSION = '1.1.1';
   const descriptor = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent');
 
   if (descriptor?.get && descriptor?.set && descriptor.configurable !== false) {

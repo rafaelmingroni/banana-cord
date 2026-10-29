@@ -1,7 +1,7 @@
-/* Banana Cord v1.1.0 — convites curtos e acabamento premium leve. */
+/* Banana Cord v1.1.1 — convites curtos e acabamento premium leve. */
 (() => {
   const { ipcRenderer } = require('electron');
-  const VERSION = '1.1.0';
+  const VERSION = '1.1.1';
   const CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
   const normalizeShort = value => String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');

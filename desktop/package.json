@@ -1,7 +1,7 @@
 {
   "name": "banana-cord",
-  "version": "1.1.0",
-  "description": "Banana Cord v1.1.0 - identidade premium, convites curtos e rendezvous leve",
+  "version": "1.1.1",
+  "description": "Banana Cord v1.1.1 - identidade premium e convites curtos com rendezvous criptografado",
   "private": true,
   "main": "main-v110.js",
   "author": "Rafael Mingroni",

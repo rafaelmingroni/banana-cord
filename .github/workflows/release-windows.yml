@@ -2,7 +2,7 @@ name: Build and publish Banana Cord for Windows
 
 on:
   push:
-    branches: [main, v1-post-beta, v1.0.1-stability, v1.1-premium]
+    branches: [main, v1-post-beta, v1.0.1-stability, v1.1-premium, v1.1.1-private-rendezvous]
     paths:
       - "desktop/**"
       - ".github/workflows/release-windows.yml"

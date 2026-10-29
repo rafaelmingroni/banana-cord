@@ -2,13 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const WebSocket = require('ws');
-const { generateSecretKey, getPublicKey, finalizeEvent, verifyEvent } = require('nostr-tools/pure');
+const { generateSecretKey, finalizeEvent, verifyEvent } = require('nostr-tools/pure');
 const { SimplePool, useWebSocketImplementation } = require('nostr-tools/pool');
 
 useWebSocketImplementation(WebSocket);
 
 const KIND = 30078;
 const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+const AAD = Buffer.from('banana-cord-rendezvous-v1', 'utf8');
 const DEFAULT_RELAYS = [
   'wss://relay.primal.net',
   'wss://relay.snort.social',
@@ -48,9 +49,37 @@ function isValidShortCode(value) {
   return [...raw].every(ch => ALPHABET.includes(ch));
 }
 
-function codeFromPubkey(pubkey) {
-  const digest = crypto.createHash('sha256').update(Buffer.from(String(pubkey || ''), 'hex')).digest();
-  return encodeBase32(digest, 8);
+function randomCode(chars = 8) {
+  return encodeBase32(crypto.randomBytes(Math.ceil(chars * 5 / 8) + 2), chars);
+}
+
+function lookupTag(code) {
+  const raw = normalizeCode(code);
+  return crypto.createHash('sha256').update(`banana-cord-index:${raw}`, 'utf8').digest('hex');
+}
+
+function keyForCode(code) {
+  const raw = normalizeCode(code);
+  return crypto.createHash('sha256').update(`banana-cord-key:${raw}`, 'utf8').digest();
+}
+
+function encryptPayload(code, payload) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', keyForCode(code), iv);
+  cipher.setAAD(AAD);
+  const encrypted = Buffer.concat([cipher.update(JSON.stringify(payload), 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `${iv.toString('base64url')}.${tag.toString('base64url')}.${encrypted.toString('base64url')}`;
+}
+
+function decryptPayload(code, packed) {
+  const [ivText, tagText, dataText] = String(packed || '').split('.');
+  if (!ivText || !tagText || !dataText) throw new Error('payload inválido');
+  const decipher = crypto.createDecipheriv('aes-256-gcm', keyForCode(code), Buffer.from(ivText, 'base64url'));
+  decipher.setAAD(AAD);
+  decipher.setAuthTag(Buffer.from(tagText, 'base64url'));
+  const plain = Buffer.concat([decipher.update(Buffer.from(dataText, 'base64url')), decipher.final()]);
+  return JSON.parse(plain.toString('utf8'));
 }
 
 function readJson(file, fallback) {
@@ -88,21 +117,32 @@ function createRendezvous({ storageDir, relays = DEFAULT_RELAYS } = {}) {
 
   function persist() { writeJson(stateFile, state); }
 
-  function secretFor(serverId) {
+  function credentialsFor(serverId) {
     const key = String(serverId || '');
     if (!key) throw new Error('Servidor inválido.');
-    let row = state.servers[key];
-    if (!row?.secret || !/^[0-9a-f]{64}$/i.test(row.secret)) {
-      row = { ...(row || {}), secret: Buffer.from(generateSecretKey()).toString('hex'), createdAt: Date.now() };
+    let row = state.servers[key] || {};
+    let changed = false;
+    if (!row.secret || !/^[0-9a-f]{64}$/i.test(row.secret)) {
+      row.secret = Buffer.from(generateSecretKey()).toString('hex');
+      changed = true;
+    }
+    if (!isValidShortCode(row.code) || normalizeCode(row.code).length !== 8) {
+      row.code = randomCode(8);
+      changed = true;
+    }
+    if (!row.createdAt) { row.createdAt = Date.now(); changed = true; }
+    if (changed) {
       state.servers[key] = row;
       persist();
     }
-    return Uint8Array.from(Buffer.from(row.secret, 'hex'));
+    return {
+      secret: Uint8Array.from(Buffer.from(row.secret, 'hex')),
+      code: normalizeCode(row.code)
+    };
   }
 
   function permanentCodeFor(serverId) {
-    const sk = secretFor(serverId);
-    return codeFromPubkey(getPublicKey(sk));
+    return credentialsFor(serverId).code;
   }
 
   function serverRecord(serverId, dataFile) {
@@ -123,23 +163,28 @@ function createRendezvous({ storageDir, relays = DEFAULT_RELAYS } = {}) {
     return { raw, code: formatCode(raw), serverId: server.id, serverName: server.name };
   }
 
-  async function publishEvent({ server, url, dTag, secret, expiresAt, shortCode, temporary = false }) {
+  async function publishEvent({ server, url, secret, expiresAt, shortCode, temporary = false, parentCode = '' }) {
     if (!relays.length) return { ok: false, relays: 0 };
     const nowSec = Math.floor(Date.now() / 1000);
+    const payload = {
+      v: 2,
+      code: shortCode,
+      parentCode: parentCode || shortCode.slice(0, 8),
+      url,
+      joinCode: server.joinCode,
+      serverId: server.id,
+      serverName: server.name,
+      expiresAt,
+      temporary
+    };
     const event = finalizeEvent({
       kind: KIND,
       created_at: nowSec,
-      tags: [['d', dTag], ['t', 'banana-cord-rendezvous'], ['expiration', String(Math.floor(expiresAt / 1000))]],
-      content: JSON.stringify({
-        v: 1,
-        code: shortCode,
-        url,
-        joinCode: server.joinCode,
-        serverId: server.id,
-        serverName: server.name,
-        expiresAt,
-        temporary
-      })
+      tags: [
+        ['d', `bc:${lookupTag(shortCode)}`],
+        ['expiration', String(Math.floor(expiresAt / 1000))]
+      ],
+      content: encryptPayload(shortCode, payload)
     }, secret);
     const jobs = pool.publish(relays, event);
     try {
@@ -151,15 +196,14 @@ function createRendezvous({ storageDir, relays = DEFAULT_RELAYS } = {}) {
   }
 
   async function publishPermanent(server, url) {
-    const secret = secretFor(server.id);
-    const code = codeFromPubkey(getPublicKey(secret));
+    const credentials = credentialsFor(server.id);
     return publishEvent({
       server, url,
-      dTag: `bananacord:${code}`,
-      secret,
+      secret: credentials.secret,
       expiresAt: Date.now() + 3 * 60 * 1000,
-      shortCode: code,
-      temporary: false
+      shortCode: credentials.code,
+      temporary: false,
+      parentCode: credentials.code
     });
   }
 
@@ -178,17 +222,16 @@ function createRendezvous({ storageDir, relays = DEFAULT_RELAYS } = {}) {
   async function publishTemporary(row, url, dataFile) {
     const server = serverRecord(row.serverId, dataFile);
     if (!server || !server.joinCode || row.expiresAt <= Date.now()) return { ok: false };
-    const secret = secretFor(server.id);
-    const permanent = codeFromPubkey(getPublicKey(secret));
+    const credentials = credentialsFor(server.id);
     const raw = normalizeCode(row.token);
-    if (!raw.startsWith(permanent) || raw.length !== 12) return { ok: false };
+    if (!raw.startsWith(credentials.code) || raw.length !== 12) return { ok: false };
     return publishEvent({
       server, url,
-      dTag: `bananacord-temp:${raw}`,
-      secret,
+      secret: credentials.secret,
       expiresAt: row.expiresAt,
       shortCode: raw,
-      temporary: true
+      temporary: true,
+      parentCode: credentials.code
     });
   }
 
@@ -198,7 +241,11 @@ function createRendezvous({ storageDir, relays = DEFAULT_RELAYS } = {}) {
     const servers = Object.values(readServers(dataFile)).filter(s => s?.id && s?.inviteCode);
     let okCount = 0;
     for (const s of servers) {
-      const result = await publishPermanent({ id: String(s.id), name: String(s.name || 'Banana Cord'), joinCode: String(s.inviteCode) }, url);
+      const result = await publishPermanent({
+        id: String(s.id),
+        name: String(s.name || 'Banana Cord'),
+        joinCode: String(s.inviteCode)
+      }, url);
       if (result.ok) okCount++;
     }
     for (const row of Object.values(state.temporary)) {
@@ -212,8 +259,8 @@ function createRendezvous({ storageDir, relays = DEFAULT_RELAYS } = {}) {
     const server = serverRecord(serverId, dataFile);
     if (!server || !server.joinCode) throw new Error('Servidor local não encontrado.');
     const permanent = permanentCodeFor(server.id);
-    const suffix = encodeBase32(crypto.randomBytes(4), 4);
-    const raw = `${permanent}${suffix}`;
+    let raw;
+    do { raw = `${permanent}${randomCode(4)}`; } while (state.temporary[raw]);
     const safeDuration = Math.max(5 * 60 * 1000, Math.min(Number(durationMs || 3600000), 7 * 24 * 60 * 60 * 1000));
     const row = { token: raw, serverId: server.id, createdAt: Date.now(), expiresAt: Date.now() + safeDuration };
     state.temporary[raw] = row;
@@ -227,27 +274,26 @@ function createRendezvous({ storageDir, relays = DEFAULT_RELAYS } = {}) {
     const raw = normalizeCode(value);
     if (!isValidShortCode(raw)) return { ok: false, reason: 'invalid' };
     const temporary = raw.length === 12;
-    const permanentPrefix = raw.slice(0, 8);
-    const dTag = temporary ? `bananacord-temp:${raw}` : `bananacord:${raw}`;
     let events = [];
     try {
       events = await pool.querySync(relays, {
         kinds: [KIND],
-        '#d': [dTag],
+        '#d': [`bc:${lookupTag(raw)}`],
         since: Math.floor(Date.now() / 1000) - 8 * 24 * 60 * 60,
         limit: 20
       }, { maxWait: 3500 });
     } catch {
       return { ok: false, reason: 'network' };
     }
+
     const valid = [];
     for (const event of events || []) {
       if (!verifyEvent(event)) continue;
-      if (codeFromPubkey(event.pubkey) !== permanentPrefix) continue;
       let content;
-      try { content = JSON.parse(event.content); } catch { continue; }
+      try { content = decryptPayload(raw, event.content); } catch { continue; }
       if (!content || normalizeCode(content.code) !== raw) continue;
       if (Number(content.expiresAt || 0) <= Date.now()) continue;
+      if (temporary && normalizeCode(content.parentCode) !== raw.slice(0, 8)) continue;
       try {
         const u = new URL(String(content.url || ''));
         if (!['https:', 'http:'].includes(u.protocol)) continue;
@@ -256,6 +302,7 @@ function createRendezvous({ storageDir, relays = DEFAULT_RELAYS } = {}) {
       if (!content.joinCode || !content.serverId) continue;
       valid.push({ event, content });
     }
+
     valid.sort((a,b) => b.event.created_at - a.event.created_at);
     const best = valid[0];
     if (!best) return { ok: false, reason: 'offline' };
@@ -281,7 +328,6 @@ function createRendezvous({ storageDir, relays = DEFAULT_RELAYS } = {}) {
     normalizeCode,
     formatCode,
     isValidShortCode,
-    codeFromPubkey,
     getCodeForServer,
     createTemporaryInvite,
     publishAll,
@@ -295,6 +341,8 @@ module.exports = {
   normalizeCode,
   formatCode,
   isValidShortCode,
-  codeFromPubkey,
+  lookupTag,
+  encryptPayload,
+  decryptPayload,
   createRendezvous
 };

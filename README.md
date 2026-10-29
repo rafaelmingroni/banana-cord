@@ -4,7 +4,7 @@
 
 Banana Cord é um aplicativo leve e privado de comunicação para grupos pequenos de amigos. Reúne servidores, canais de texto e voz, webcam, compartilhamento de tela e mensagens privadas, com prioridade para **baixo consumo durante jogos**, visual limpo e uso simples.
 
-> **Versão atual: v1.1.0**
+> **Versão atual: v1.1.1**
 
 ## ✨ Destaques
 
@@ -96,7 +96,7 @@ O host precisa manter o Banana Cord em execução, mas pode fechar a janela: ele
 - Node.js + Express + Socket.IO embutidos no aplicativo
 - WebRTC para voz, webcam e compartilhamento
 - Cloudflare Quick Tunnel para acesso do host
-- Rendezvous descentralizado e assinado para localizar códigos curtos
+- Rendezvous descentralizado, assinado e criptografado para localizar códigos curtos sem expor o endereço ou código interno do servidor em texto aberto
 - GitHub Releases + `electron-updater` para atualização
 
 ## ⚠️ Limitações atuais
