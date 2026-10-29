@@ -36,6 +36,10 @@ assert(buildCloudBrowser.includes('cloud-v2-all.browser.js'), 'build must emit a
 assert(buildCloudBrowser.includes("require('./cloud-v2.js')") && buildCloudBrowser.includes("require('./cloud-v2-socket.js')"), 'auth and socket must share one bundled Firebase runtime');
 assert(cloud.includes('createUserWithEmailAndPassword') && cloud.includes('sendEmailVerification'), 'account creation / verification missing');
 assert(authFix.includes('stopImmediatePropagation') && authFix.includes('sendEmailVerification'), 'verified-email registration guard missing');
+assert(cloud.includes('showVerificationState') && authFix.includes('showVerificationState'), 'registration must force a visible verification state');
+assert(cloud.includes('cloudVerifyError') && authFix.includes('cloudVerifyError'), 'verification errors must remain visible after account creation');
+assert(cloud.includes("gate.classList.remove('hidden')"), 'auth gate must remain visible until verified shell is ready');
+assert(!cloud.includes("await setDoc(doc(db, 'users', credential.user.uid)"), 'registration must not write Firestore profile before e-mail verification');
 assert(cloud.includes('browserLocalPersistence'), 'persistent auth session missing');
 assert(cloud.includes('persistentLocalCache'), 'Firestore offline cache missing');
 assert(cloud.includes('onDisconnect'), 'presence disconnect handling missing');

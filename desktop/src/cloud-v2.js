@@ -37,6 +37,7 @@
       <div id="cloudVerify" class="cloud-panel hidden">
         <h2>Verifique seu e-mail</h2>
         <p>Enviamos um link para <b id="cloudVerifyEmail"></b>. Depois de clicar no e-mail, volte aqui.</p>
+        <div id="cloudVerifyError" class="cloud-error hidden"></div>
         <div class="cloud-actions"><button id="cloudVerified" class="primary">Já verifiquei</button><button id="cloudResend">Reenviar e-mail</button></div>
         <button id="cloudVerifyLogout" class="link-button">Usar outra conta</button>
       </div>
@@ -90,6 +91,17 @@
     el.textContent = msg;
     el.classList.remove('hidden');
   };
+  const setVerifyError = msg => {
+    const el = $('cloudVerifyError');
+    if (!el) return;
+    el.textContent = String(msg || '');
+    el.classList.toggle('hidden', !msg);
+  };
+  const showVerificationState = email => {
+    gate.classList.remove('hidden');
+    hide('cloudAuth'); hide('cloudLoading'); show('cloudVerify');
+    if ($('cloudVerifyEmail')) $('cloudVerifyEmail').textContent = String(email || '');
+  };
   const friendlyError = err => {
     const code = String(err?.code || '');
     const map = {
@@ -112,18 +124,32 @@
   document.querySelectorAll('[data-cloud-tab]').forEach(b => b.addEventListener('click', () => selectTab(b.dataset.cloudTab)));
 
   $('cloudRegisterForm')?.addEventListener('submit', async e => {
-    e.preventDefault(); setError('');
+    e.preventDefault(); setError(''); setVerifyError('');
     const name = $('cloudRegisterName').value.trim();
     const email = $('cloudRegisterEmail').value.trim();
     const password = $('cloudRegisterPassword').value;
+    let createdUser = null;
     try {
+      window.BananaCloudRegistrationInProgress = true;
       const credential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(credential.user, { displayName: name });
-      await setDoc(doc(db, 'users', credential.user.uid), {
-        displayName: name, email: credential.user.email, createdAt: serverTimestamp(), updatedAt: serverTimestamp()
-      }, { merge: true });
-      await sendEmailVerification(credential.user);
-    } catch (err) { setError(friendlyError(err)); }
+      createdUser = credential.user;
+      showVerificationState(createdUser.email || email);
+      await updateProfile(createdUser, { displayName: name });
+      await sendEmailVerification(createdUser);
+      showVerificationState(createdUser.email || email);
+      // Firestore profile writes happen only after the e-mail is verified.
+    } catch (err) {
+      const message = friendlyError(err);
+      if (createdUser || auth.currentUser) {
+        const user = createdUser || auth.currentUser;
+        showVerificationState(user?.email || email);
+        setVerifyError(`A conta foi criada, mas houve um problema ao concluir o cadastro: ${message}`);
+      } else {
+        setError(message);
+      }
+    } finally {
+      window.BananaCloudRegistrationInProgress = false;
+    }
   });
 
   $('cloudLoginForm')?.addEventListener('submit', async e => {
@@ -140,12 +166,17 @@
     catch (err) { setError(friendlyError(err)); }
   });
   $('cloudResend')?.addEventListener('click', async () => {
-    try { if (auth.currentUser) await sendEmailVerification(auth.currentUser); }
-    catch (err) { setError(friendlyError(err)); }
+    try {
+      setVerifyError('');
+      if (auth.currentUser) await sendEmailVerification(auth.currentUser);
+    } catch (err) { setVerifyError(friendlyError(err)); }
   });
   $('cloudVerified')?.addEventListener('click', async () => {
-    await auth.currentUser?.reload();
-    handleUser(auth.currentUser);
+    try {
+      setVerifyError('');
+      await auth.currentUser?.reload();
+      handleUser(auth.currentUser);
+    } catch (err) { setVerifyError(friendlyError(err)); }
   });
   $('cloudVerifyLogout')?.addEventListener('click', () => signOut(auth));
 
@@ -172,13 +203,20 @@
   }
 
   async function handleUser(user) {
-    hide('cloudAuth'); hide('cloudVerify'); hide('cloudLoading');
-    if (!user) { show('cloudAuth'); gate.classList.remove('hidden'); window.BananaCloud.ready = false; return; }
-    if (!user.emailVerified) {
-      $('cloudVerifyEmail').textContent = user.email || '';
-      show('cloudVerify'); gate.classList.remove('hidden'); window.BananaCloud.ready = false; return;
+    // Always keep one visible auth state until the verified app shell is ready.
+    gate.classList.remove('hidden');
+    if (!user) {
+      hide('cloudVerify'); hide('cloudLoading'); show('cloudAuth');
+      window.BananaCloud.ready = false;
+      return;
     }
-    show('cloudLoading');
+    if (!user.emailVerified) {
+      hide('cloudAuth'); hide('cloudLoading');
+      showVerificationState(user.email || '');
+      window.BananaCloud.ready = false;
+      return;
+    }
+    hide('cloudAuth'); hide('cloudVerify'); show('cloudLoading');
     try { await ensureProfile(user); attachPresence(user); }
     catch (err) { console.error('Banana Cloud profile:', err); }
     hide('cloudLoading'); gate.classList.add('hidden');
