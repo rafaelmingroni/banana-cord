@@ -1,0 +1,24 @@
+{
+  "files": [
+    {"path":".github/workflows/release-windows.yml","sha":"9bddcc6d294486a7e5d9adbb9295a2b028de972b"},
+    {"path":"desktop/package.json","sha":"549244a218f3b8e16fd81632f46e98bfe8db02b5"},
+    {"path":"desktop/updater-prompt.js","sha":"ca935cd8330a82069a3ec7dd19b19d64c9abe476"},
+    {"path":"desktop/tray.js","sha":"70c237e41ec180d1ae20de44b770d48516d9cc7c"},
+    {"path":"desktop/main.js","sha":"58bf3cb40e4646929a4d8dbed11cd985cfac900d"},
+    {"path":"desktop/scripts/merge-source.js","sha":"ff9bc5a7ef3f1352b7f5bfc80dfab54aa52ed032"},
+    {"path":"desktop/scripts/smoke-v1.js","sha":"517ae2384e788d6aa4dbffe90805843837258fb8"},
+    {"path":"desktop/server/server.js","delete":true},
+    {"path":"desktop/server/server.js.part1","sha":"5ff73f4e2a068242fa9c225e0d14db0af01ce3b0"},
+    {"path":"desktop/server/server.js.part2","sha":"57cbf582a3c9334571332858f5d09140d620d0b1"},
+    {"path":"desktop/server/server.js.part3","sha":"2d6785b183428cc9429c0b7af7c3701e41f1d0aa"},
+    {"path":"desktop/server/server.js.part4","sha":"a3129ea359fc4f784147cc73c790ed6701417942"},
+    {"path":"desktop/src/v1.js","delete":true},
+    {"path":"desktop/src/v1.js.part1","sha":"e7fe37c96f478ca2a6a8f4289fd8fc76bb6b2351"},
+    {"path":"desktop/src/v1.js.part2","sha":"33036c8e2e1ef821902ee9e3c7cda86e5f0d592b"},
+    {"path":"desktop/src/v1.js.part3","sha":"f9d3ffcff7d7b5a11c5bd0e2b04dbbe2f2b639b8"},
+    {"path":"desktop/src/v1.js.part4","sha":"2a62c224cfb99d0793cad80ecb762c580a0aef8b"},
+    {"path":"desktop/src/v1.js.part5","sha":"4a6070e4081863d9db28becbeb53975da31e89bd"},
+    {"path":"desktop/src/index.html","sha":"2556aa93038adc6b904916a5f0da9c1d71ea3184"},
+    {"path":"desktop/src/v1.css","sha":"38f9552d34d639f79b1b8a54e831fa0e9109ab2a"}
+  ]
+}
