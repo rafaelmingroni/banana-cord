@@ -7,6 +7,10 @@ const nav = fs.readFileSync(path.join(root, 'src', 'v205-navigation-fix.js'), 'u
 const del = fs.readFileSync(path.join(root, 'src', 'v205-server-delete-fix.js'), 'utf8');
 const index = fs.readFileSync(path.join(root, 'src', 'index.html'), 'utf8');
 
+// Compile the runtime patches without executing browser globals.
+new Function(nav);
+new Function(del);
+
 assert(nav.includes('selectServerV205'), 'V2.0.5 must override server navigation.');
 assert(!nav.includes('leaveVoice()'), 'Browsing servers must not leave the active voice call.');
 assert(nav.includes("state.socket.emit('members:get'"), 'Navigation must still load the selected server members.');
