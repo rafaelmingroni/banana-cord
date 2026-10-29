@@ -40,26 +40,32 @@ jobs:
           node --check desktop/server/server.js
           node --check desktop/src/app.js
 
-      - name: Ensure version tag points to this commit
+      - name: Prepare version tag
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
           $tag = "v$version"
           git fetch --tags --force
+
+          gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" *> $null
+          $releaseExists = ($LASTEXITCODE -eq 0)
+
           $existing = git tag -l $tag
-          if ($existing) {
+          if ($releaseExists) {
             $tagCommit = (git rev-list -n 1 $tag).Trim()
             if ($tagCommit -ne $env:GITHUB_SHA) {
-              Write-Error "A versão $version já está marcada em outro commit. Aumente desktop/package.json antes de publicar uma nova versão."
+              Write-Error "A versão $version já foi publicada. Aumente desktop/package.json antes de publicar mudanças novas."
               exit 1
             }
-            Write-Host "Tag $tag já aponta para este commit."
+            Write-Host "Release $tag já existe e aponta para este commit."
           } else {
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git tag $tag $env:GITHUB_SHA
-            git push origin $tag
-            Write-Host "Tag $tag criada e publicada."
+            git tag -f $tag $env:GITHUB_SHA
+            git push origin "refs/tags/$tag" --force
+            Write-Host "Tag $tag preparada para a primeira publicação."
           }
 
       - name: Build and publish GitHub Release
