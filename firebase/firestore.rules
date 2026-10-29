@@ -1,30 +1,15 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function verified() {
-      return request.auth != null && request.auth.token.email_verified == true;
-    }
-    function member(serverId) {
-      return verified() && exists(/databases/$(database)/documents/servers/$(serverId)/members/$(request.auth.uid));
-    }
-    function role(serverId) {
-      return get(/databases/$(database)/documents/servers/$(serverId)/members/$(request.auth.uid)).data.role;
-    }
-    function owner(serverId) {
-      return verified() && get(/databases/$(database)/documents/servers/$(serverId)).data.ownerId == request.auth.uid;
-    }
-    function ownerAfter(serverId) {
-      return verified() && getAfter(/databases/$(database)/documents/servers/$(serverId)).data.ownerId == request.auth.uid;
-    }
-    function admin(serverId) {
-      return member(serverId) && (owner(serverId) || role(serverId) == 'owner' || role(serverId) == 'admin');
-    }
-    function moderator(serverId) {
-      return member(serverId) && (owner(serverId) || role(serverId) == 'owner' || role(serverId) == 'admin' || role(serverId) == 'moderator');
-    }
+    function verified() { return request.auth != null && request.auth.token.email_verified == true; }
+    function member(serverId) { return verified() && exists(/databases/$(database)/documents/servers/$(serverId)/members/$(request.auth.uid)); }
+    function role(serverId) { return get(/databases/$(database)/documents/servers/$(serverId)/members/$(request.auth.uid)).data.role; }
+    function owner(serverId) { return verified() && get(/databases/$(database)/documents/servers/$(serverId)).data.ownerId == request.auth.uid; }
+    function ownerAfter(serverId) { return verified() && getAfter(/databases/$(database)/documents/servers/$(serverId)).data.ownerId == request.auth.uid; }
+    function admin(serverId) { return member(serverId) && (owner(serverId) || role(serverId) == 'owner' || role(serverId) == 'admin'); }
+    function moderator(serverId) { return member(serverId) && (owner(serverId) || role(serverId) == 'owner' || role(serverId) == 'admin' || role(serverId) == 'moderator'); }
     function validInvite(serverId, code) {
-      return verified()
-        && code is string
+      return verified() && code is string
         && exists(/databases/$(database)/documents/invites/$(code))
         && get(/databases/$(database)/documents/invites/$(code)).data.serverId == serverId
         && (!('expiresAt' in get(/databases/$(database)/documents/invites/$(code)).data)
@@ -33,12 +18,10 @@ service cloud.firestore {
     function channelAccess(serverId, channelId) {
       let ch = get(/databases/$(database)/documents/servers/$(serverId)/channels/$(channelId)).data;
       let r = role(serverId);
-      return member(serverId)
-        && (!('allowedRoles' in ch)
-            || ch.allowedRoles.size() == 0
-            || r == 'owner' || r == 'admin'
-            || r in ch.allowedRoles);
+      return member(serverId) && (!('allowedRoles' in ch) || ch.allowedRoles.size() == 0 || r == 'owner' || r == 'admin' || r in ch.allowedRoles);
     }
+    function dmMember(threadId) { return verified() && request.auth.uid in get(/databases/$(database)/documents/dmThreads/$(threadId)).data.participants; }
+    function dmMemberAfter(threadId) { return verified() && request.auth.uid in getAfter(/databases/$(database)/documents/dmThreads/$(threadId)).data.participants; }
 
     match /users/{uid} {
       allow read, create, update: if verified() && request.auth.uid == uid;
@@ -56,13 +39,10 @@ service cloud.firestore {
     }
 
     match /servers/{serverId} {
-      // get é permitido para conta verificada porque o ID vem de um convite
-      // criptograficamente aleatório; list continua restrito aos membros.
       allow get: if verified();
-      allow list: if member(serverId);
+      allow list: if false;
       allow create: if verified() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if admin(serverId)
-        && request.resource.data.ownerId == resource.data.ownerId;
+      allow update: if admin(serverId) && request.resource.data.ownerId == resource.data.ownerId;
       allow update: if moderator(serverId)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['categories', 'updatedAt'])
         && request.resource.data.ownerId == resource.data.ownerId;
@@ -71,10 +51,7 @@ service cloud.firestore {
       match /members/{uid} {
         allow read: if member(serverId) || (verified() && uid == request.auth.uid);
         allow create: if ownerAfter(serverId)
-          || (verified()
-              && uid == request.auth.uid
-              && request.resource.data.role == 'member'
-              && validInvite(serverId, request.resource.data.joinedVia));
+          || (verified() && uid == request.auth.uid && request.resource.data.role == 'member' && validInvite(serverId, request.resource.data.joinedVia));
         allow update: if owner(serverId);
         allow update: if verified() && uid == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'avatar', 'customStatus']);
@@ -113,9 +90,9 @@ service cloud.firestore {
       allow update: if verified() && request.auth.uid in resource.data.participants && request.resource.data.participants == resource.data.participants;
       allow delete: if false;
       match /messages/{messageId} {
-        allow read: if verified() && request.auth.uid in get(/databases/$(database)/documents/dmThreads/$(threadId)).data.participants;
-        allow create: if verified() && request.auth.uid in get(/databases/$(database)/documents/dmThreads/$(threadId)).data.participants && request.resource.data.fromId == request.auth.uid;
-        allow update, delete: if verified() && resource.data.fromId == request.auth.uid && request.auth.uid in get(/databases/$(database)/documents/dmThreads/$(threadId)).data.participants;
+        allow read: if dmMember(threadId);
+        allow create: if dmMemberAfter(threadId) && request.resource.data.fromId == request.auth.uid;
+        allow update, delete: if dmMember(threadId) && resource.data.fromId == request.auth.uid;
       }
     }
   }
