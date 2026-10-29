@@ -2,7 +2,7 @@ name: Build and publish Banana Cord for Windows
 
 on:
   push:
-    branches: [main]
+    branches: [main, v1-post-beta, v1.0.1-stability]
     paths:
       - "desktop/**"
       - ".github/workflows/release-windows.yml"
@@ -29,18 +29,43 @@ jobs:
         working-directory: desktop
         run: npm install
 
-      - name: Assemble split source files
+      - name: Prepare source
         working-directory: desktop
         run: npm run prepare:source
 
       - name: Validate JavaScript
         shell: pwsh
         run: |
+          node --check desktop/updater-prompt.js
+          node --check desktop/tray.js
           node --check desktop/main.js
           node --check desktop/server/server.js
           node --check desktop/src/app.js
+          node --check desktop/src/v1.js
+          node --check desktop/src/v101-fix.js
+          node --check desktop/scripts/smoke-v1.js
+          node --check desktop/scripts/smoke-ui.js
+
+      - name: Smoke test v1 protocol
+        working-directory: desktop
+        run: npm run smoke:v1
+
+      - name: Smoke test renderer regressions
+        working-directory: desktop
+        run: npm run smoke:ui
+
+      - name: Validate v1 assets
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "desktop/assets/banana-cord.png")) { Write-Error "Logo da banana ausente."; exit 1 }
+          if (-not (Test-Path "desktop/src/v1.css")) { Write-Error "CSS da v1 ausente."; exit 1 }
+          $html = Get-Content "desktop/src/index.html" -Raw
+          if ($html -notmatch 'v1\.js') { Write-Error "index.html não carrega v1.js"; exit 1 }
+          if ($html -notmatch 'v101-fix\.js') { Write-Error "index.html não carrega v101-fix.js"; exit 1 }
+          if ($html -notmatch 'v1\.css') { Write-Error "index.html não carrega v1.css"; exit 1 }
 
       - name: Prepare version tag and release
+        if: github.ref == 'refs/heads/main'
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -64,9 +89,7 @@ jobs:
 
             if (-not $releaseComplete) {
               Write-Host "Release $tag existe, mas está incompleta. Limpando assets para republicar."
-              foreach ($asset in $release.assets) {
-                gh api -X DELETE "repos/$repo/releases/assets/$($asset.id)"
-              }
+              foreach ($asset in $release.assets) { gh api -X DELETE "repos/$repo/releases/assets/$($asset.id)" }
             }
           }
 
@@ -85,13 +108,30 @@ jobs:
             Write-Host "Tag $tag preparada para publicação/reparo."
           }
 
+      - name: Build Windows installer (validation branch)
+        if: github.ref != 'refs/heads/main'
+        working-directory: desktop
+        run: npm run dist:win -- --publish never
+
       - name: Build Windows installer and updater metadata
+        if: github.ref == 'refs/heads/main'
         working-directory: desktop
         run: npm run dist:win -- --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Verify validation installer
+        if: github.ref != 'refs/heads/main'
+        shell: pwsh
+        run: |
+          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
+          $exe = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe" | Select-Object -First 1
+          if (-not $exe) { Write-Error "Instalador de validação não foi gerado."; exit 1 }
+          if ($exe.Length -lt 50000000) { Write-Error "Instalador de validação parece pequeno demais."; exit 1 }
+          Write-Host "Instalador de validação OK: $($exe.Name) - $($exe.Length) bytes"
+
       - name: Verify and complete release assets
+        if: github.ref == 'refs/heads/main'
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -107,10 +147,7 @@ jobs:
           if (-not $latest) { Write-Error "latest.yml não foi gerado."; exit 1 }
 
           gh release view $tag *> $null
-          if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --title $version --target $env:GITHUB_SHA
-          }
-
+          if ($LASTEXITCODE -ne 0) { gh release create $tag --title $version --target $env:GITHUB_SHA }
           gh release upload $tag $exe.FullName $blockmap.FullName $latest.FullName --clobber
 
           $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" | ConvertFrom-Json
