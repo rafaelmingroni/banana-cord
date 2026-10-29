@@ -10,6 +10,9 @@ service cloud.firestore {
     function owner(serverId) {
       return verified() && get(/databases/$(database)/documents/servers/$(serverId)).data.ownerId == request.auth.uid;
     }
+    function ownerAfter(serverId) {
+      return verified() && getAfter(/databases/$(database)/documents/servers/$(serverId)).data.ownerId == request.auth.uid;
+    }
 
     match /users/{uid} {
       allow read, create, update: if verified() && request.auth.uid == uid;
@@ -26,13 +29,14 @@ service cloud.firestore {
 
       match /members/{uid} {
         allow read: if member(serverId);
-        allow create: if verified() && owner(serverId);
+        allow create: if verified() && ownerAfter(serverId);
         allow update, delete: if owner(serverId);
       }
 
       match /channels/{channelId} {
         allow read: if member(serverId);
-        allow create, update, delete: if owner(serverId);
+        allow create: if ownerAfter(serverId);
+        allow update, delete: if owner(serverId);
 
         match /messages/{messageId} {
           allow read: if member(serverId);
