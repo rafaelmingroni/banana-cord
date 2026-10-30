@@ -11,6 +11,7 @@
   let ringStopTimer = null;
   let ringContext = null;
   let directCallStartedAt = 0;
+  let remoteEndInFlight = false;
 
   function peerFor(userId) {
     if (!userId) return null;
@@ -235,11 +236,26 @@
     if (incomingPeerId) hideIncomingCall();
   }
 
+  async function endLocalDirectCallFromRemote(peerId) {
+    if (remoteEndInFlight) return;
+    if (state.voice?.channelId !== 'direct' || state.voice?.directPeerId !== peerId) return;
+    remoteEndInFlight = true;
+    try {
+      if (typeof leaveVoice === 'function') await leaveVoice();
+      if (typeof toast === 'function') toast('Chamada encerrada.', 2200);
+    } catch {}
+    finally { remoteEndInFlight = false; }
+  }
+
   function bindV218Socket(socket) {
     if (!socket || socket.__bananaV218Bound) return;
     socket.__bananaV218Bound = true;
     socket.on('dm:call-state', ({ calls }) => {
-      const incoming = (calls || []).find(row => row?.peerId && row?.activeCall?.startedBy && row.activeCall.startedBy !== state.user?.id);
+      const list = calls || [];
+      const incoming = list.find(row => row?.peerId && row?.activeCall?.startedBy && row.activeCall.startedBy !== state.user?.id);
+      const activePeer = state.voice?.channelId === 'direct' ? state.voice?.directPeerId : '';
+      const activeStillExists = activePeer && list.some(row => row?.peerId === activePeer && row?.activeCall);
+      if (activePeer && !activeStillExists) queueMicrotask(() => endLocalDirectCallFromRemote(activePeer));
       if (incoming && state.voice?.channelId !== 'direct') showIncomingCall(incoming);
       else if (!incoming) hideIncomingCall();
       updateActiveCallBar();
