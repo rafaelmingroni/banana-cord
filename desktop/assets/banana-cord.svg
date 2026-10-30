@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#171717"/><stop offset="1" stop-color="#060606"/>
+    </linearGradient>
+    <linearGradient id="banana" x1="0.15" y1="0.1" x2="0.8" y2="0.9">
+      <stop offset="0" stop-color="#fff36a"/><stop offset="0.4" stop-color="#ffd91a"/><stop offset="1" stop-color="#f2a900"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff35a"/><stop offset="1" stop-color="#ffb000"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="52" y="52" width="920" height="920" rx="190" fill="url(#bg)" stroke="#ffd521" stroke-width="28"/>
+  <rect x="67" y="67" width="890" height="890" rx="176" fill="none" stroke="#ffc400" stroke-opacity=".23" stroke-width="32" filter="url(#glow)"/>
+  <path d="M245 530 C250 292 410 168 593 188 C700 199 783 259 824 345" fill="none" stroke="#090909" stroke-width="86" stroke-linecap="round"/>
+  <path d="M245 530 C250 292 410 168 593 188 C700 199 783 259 824 345" fill="none" stroke="#3b3b3b" stroke-width="27" stroke-linecap="round"/>
+  <path d="M515 164 C583 241 602 341 620 445 C638 552 683 653 784 708 C837 737 884 743 917 733 C889 821 817 875 715 887 C545 907 365 835 281 709 C216 612 211 497 263 410 C311 331 388 289 476 285 C488 236 498 194 515 164 Z" fill="url(#banana)" stroke="#ffbc00" stroke-width="12"/>
+  <path d="M477 285 C405 315 356 365 331 436 C294 543 331 666 423 743 C499 807 604 838 709 829 C611 835 514 807 444 749 C350 672 311 551 348 445 C371 377 416 325 477 285Z" fill="#ffb20b" opacity=".45"/>
+  <path d="M527 176 C540 158 558 146 579 148 C598 150 613 163 620 179 C607 202 586 217 560 217 C541 214 530 199 527 176Z" fill="#4b2207" stroke="#ffb20b" stroke-width="8"/>
+  <path d="M902 725 C925 716 946 727 953 747 C958 764 951 783 933 794 C914 805 893 798 883 781 C891 762 897 743 902 725Z" fill="#4b2207" stroke="#ffb20b" stroke-width="8"/>
+  <g>
+    <rect x="184" y="428" width="158" height="244" rx="72" fill="#101010" stroke="#242424" stroke-width="15" transform="rotate(-8 263 550)"/>
+    <ellipse cx="266" cy="552" rx="69" ry="89" fill="#151515" stroke="url(#gold)" stroke-width="22"/>
+    <path d="M238 574 Q266 610 296 566" fill="none" stroke="#ffd91a" stroke-width="17" stroke-linecap="round"/>
+    <path d="M243 578 Q267 598 291 572" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <g>
+    <rect x="737" y="383" width="105" height="225" rx="50" fill="#101010" stroke="#282828" stroke-width="14" transform="rotate(11 790 495)"/>
+    <ellipse cx="794" cy="500" rx="48" ry="76" fill="#141414" stroke="#f3ae00" stroke-width="15"/>
+  </g>
+  <path d="M433 512 Q467 470 501 512" fill="none" stroke="#111" stroke-width="24" stroke-linecap="round"/>
+  <path d="M562 512 Q594 472 626 512" fill="none" stroke="#111" stroke-width="24" stroke-linecap="round"/>
+  <path d="M458 585 Q531 647 607 584 Q599 686 528 691 Q467 685 458 585Z" fill="#17100d"/>
+  <path d="M498 660 Q531 632 568 660 Q550 684 528 687 Q508 684 498 660Z" fill="#ff6641"/>
+  <path d="M315 622 C365 674 424 706 481 711" fill="none" stroke="#1a1a1a" stroke-width="28" stroke-linecap="round"/>
+  <rect x="465" y="682" width="126" height="69" rx="32" fill="#151515" stroke="#292929" stroke-width="8" transform="rotate(10 528 716)"/>
+  <rect x="508" y="706" width="51" height="16" rx="8" fill="#ffd31a" filter="url(#glow)"/>
+  <g filter="url(#glow)">
+    <path d="M715 301 C822 277 923 327 936 412 C948 492 889 552 793 555 L727 596 L742 535 C682 510 651 462 660 407 C669 357 688 324 715 301Z" fill="#121212" stroke="#ffd521" stroke-width="24" stroke-linejoin="round"/>
+    <circle cx="747" cy="416" r="18" fill="#ffd521"/><circle cx="803" cy="416" r="18" fill="#ffd521"/><circle cx="859" cy="416" r="18" fill="#ffd521"/>
+  </g>
+</svg>
