@@ -162,5 +162,13 @@
     });
   };
 
+  // app.js registered the legacy handler before this patch loaded. Capture the click
+  // first so the polished hierarchy screen is the one the user actually sees.
+  els.serverSettingsBtn?.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    openServerSettings();
+  }, true);
+
   renderMembers();
 })();
