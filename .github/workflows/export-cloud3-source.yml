@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact Cloud 3 source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: 093ef7c2678ff05657ef5730f79ce8c6aa179c5c
           fetch-depth: 1
