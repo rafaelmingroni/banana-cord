@@ -1,4 +1,4 @@
-const { app, BrowserWindow, session, desktopCapturer, ipcMain, clipboard, globalShortcut } = require('electron');
+const { app, BrowserWindow, session, desktopCapturer, ipcMain, clipboard, globalShortcut, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
@@ -11,6 +11,8 @@ let localServerHandle = null;
 let tunnelProc = null;
 let tunnelUrl = '';
 const DEFAULT_UPDATE_REPO = 'https://github.com/rafaelmingroni/banana-cord';
+const OFFICIAL_UPDATE_OWNER = 'rafaelmingroni';
+const OFFICIAL_UPDATE_NAME = 'banana-cord';
 let updateConfig = { repoUrl: DEFAULT_UPDATE_REPO, autoCheck: true, autoDownload: true };
 let updateState = { status: 'idle', currentVersion: '', latestVersion: '', progress: 0, message: '' };
 let updaterEventsBound = false;
@@ -40,19 +42,15 @@ function normalizeGithubRepoUrl(value) {
   }
 }
 
-function repoParts(repoUrl) {
-  const clean = normalizeGithubRepoUrl(repoUrl);
-  if (!clean) return null;
-  const u = new URL(clean);
-  const [owner, repo] = u.pathname.split('/').filter(Boolean);
-  return owner && repo ? { owner, repo } : null;
+function isOfficialUpdateRepo(value) {
+  return normalizeGithubRepoUrl(value).toLowerCase() === DEFAULT_UPDATE_REPO.toLowerCase();
 }
 
 function loadUpdateConfig() {
   try {
     const parsed = JSON.parse(fs.readFileSync(updateConfigFile(), 'utf8'));
     updateConfig = {
-      repoUrl: normalizeGithubRepoUrl(parsed.repoUrl) || DEFAULT_UPDATE_REPO,
+      repoUrl: DEFAULT_UPDATE_REPO,
       autoCheck: parsed.autoCheck !== false,
       autoDownload: parsed.autoDownload !== false
     };
@@ -63,12 +61,13 @@ function loadUpdateConfig() {
 }
 
 function persistUpdateConfig(next = {}) {
-  const merged = {
-    repoUrl: normalizeGithubRepoUrl(next.repoUrl ?? updateConfig.repoUrl),
+  updateConfig = {
+    repoUrl: DEFAULT_UPDATE_REPO,
     autoCheck: next.autoCheck ?? updateConfig.autoCheck,
     autoDownload: next.autoDownload ?? updateConfig.autoDownload
   };
-  updateConfig = { repoUrl: merged.repoUrl, autoCheck: !!merged.autoCheck, autoDownload: !!merged.autoDownload };
+  updateConfig.autoCheck = !!updateConfig.autoCheck;
+  updateConfig.autoDownload = !!updateConfig.autoDownload;
   fs.mkdirSync(path.dirname(updateConfigFile()), { recursive: true });
   fs.writeFileSync(updateConfigFile(), JSON.stringify(updateConfig, null, 2));
   configureUpdater();
@@ -79,8 +78,8 @@ function emitUpdateState(patch = {}) {
   updateState = {
     ...updateState,
     currentVersion: app.getVersion(),
-    configured: !!repoParts(updateConfig.repoUrl),
-    repoUrl: updateConfig.repoUrl,
+    configured: true,
+    repoUrl: DEFAULT_UPDATE_REPO,
     autoCheck: updateConfig.autoCheck,
     autoDownload: updateConfig.autoDownload,
     ...patch
@@ -106,19 +105,15 @@ function bindUpdaterEvents() {
 function configureUpdater() {
   bindUpdaterEvents();
   autoUpdater.autoDownload = !!updateConfig.autoDownload;
-  const parts = repoParts(updateConfig.repoUrl);
-  if (!parts) return emitUpdateState({ status: 'not-configured', message: 'Fonte de atualizações não configurada.' });
   try {
-    autoUpdater.setFeedURL({ provider: 'github', owner: parts.owner, repo: parts.repo, private: false });
-    return emitUpdateState({ status: updateState.status === 'not-configured' ? 'idle' : updateState.status, message: updateState.status === 'not-configured' ? 'Atualizações configuradas.' : updateState.message });
+    autoUpdater.setFeedURL({ provider: 'github', owner: OFFICIAL_UPDATE_OWNER, repo: OFFICIAL_UPDATE_NAME, private: false });
+    return emitUpdateState({ status: updateState.status === 'not-configured' ? 'idle' : updateState.status, message: updateState.status === 'not-configured' ? 'Atualizações oficiais configuradas.' : updateState.message });
   } catch (err) {
     return emitUpdateState({ status: 'error', message: `Não consegui configurar atualizações: ${err?.message || err}` });
   }
 }
 
 async function checkForUpdates(manual = false) {
-  const parts = repoParts(updateConfig.repoUrl);
-  if (!parts) return emitUpdateState({ status: 'not-configured', message: 'Configure um repositório público do GitHub para receber atualizações.' });
   if (!app.isPackaged) return emitUpdateState({ status: 'dev', message: 'A verificação automática funciona no Banana Cord instalado (.exe).' });
   try {
     configureUpdater();
@@ -132,8 +127,41 @@ async function checkForUpdates(manual = false) {
 
 function scheduleAutomaticUpdateCheck() {
   clearTimeout(updateCheckTimer);
-  if (!updateConfig.autoCheck || !repoParts(updateConfig.repoUrl)) return;
+  if (!updateConfig.autoCheck) return;
   updateCheckTimer = setTimeout(() => checkForUpdates(false), 6500);
+}
+
+function safeExternalUrl(value) {
+  try {
+    const url = new URL(String(value || ''));
+    return ['https:', 'http:'].includes(url.protocol) ? url.toString() : '';
+  } catch {
+    return '';
+  }
+}
+
+function isTrustedRenderer(webContents) {
+  try {
+    const current = new URL(webContents?.getURL?.() || '');
+    return current.protocol === 'file:' && current.pathname.endsWith('/src/index.html');
+  } catch {
+    return false;
+  }
+}
+
+function hardenWindow(win) {
+  const wc = win.webContents;
+  wc.setWindowOpenHandler(({ url }) => {
+    const safe = safeExternalUrl(url);
+    if (safe) shell.openExternal(safe).catch(() => {});
+    return { action: 'deny' };
+  });
+  wc.on('will-navigate', (event, url) => {
+    event.preventDefault();
+    const safe = safeExternalUrl(url);
+    if (safe) shell.openExternal(safe).catch(() => {});
+  });
+  wc.on('will-attach-webview', event => event.preventDefault());
 }
 
 function createWindow() {
@@ -147,23 +175,48 @@ function createWindow() {
     autoHideMenuBar: true,
     icon: path.join(__dirname, 'assets', 'banana-cord.png'),
     webPreferences: {
+      // Legacy renderer still needs Node in 2.0.x. The dangerous expansion paths
+      // (workers, subframes, webviews, navigation and popup windows) are disabled.
       nodeIntegration: true,
+      nodeIntegrationInWorker: false,
+      nodeIntegrationInSubFrames: false,
       contextIsolation: false,
+      webviewTag: false,
       webSecurity: true,
+      allowRunningInsecureContent: false,
+      devTools: !app.isPackaged,
       autoplayPolicy: 'no-user-gesture-required',
       backgroundThrottling: false
     }
   });
+  hardenWindow(mainWindow);
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
+}
+
+function isAllowedDownloadUrl(value) {
+  try {
+    const url = new URL(String(value || ''));
+    if (url.protocol !== 'https:') return false;
+    return new Set([
+      'github.com',
+      'www.github.com',
+      'release-assets.githubusercontent.com',
+      'objects.githubusercontent.com'
+    ]).has(url.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
 }
 
 function download(url, destination, redirects = 0) {
   return new Promise((resolve, reject) => {
     if (redirects > 8) return reject(new Error('Muitos redirecionamentos.'));
-    const request = https.get(url, { headers: { 'User-Agent': 'BananaCord/0.10' } }, response => {
+    if (!isAllowedDownloadUrl(url)) return reject(new Error('Origem de download bloqueada por segurança.'));
+    const request = https.get(url, { headers: { 'User-Agent': 'BananaCord/2.0.15' } }, response => {
       if ([301,302,303,307,308].includes(response.statusCode)) {
         const next = new URL(response.headers.location, url).toString();
         response.resume();
+        if (!isAllowedDownloadUrl(next)) return reject(new Error('Redirecionamento de download bloqueado por segurança.'));
         return resolve(download(next, destination, redirects + 1));
       }
       if (response.statusCode !== 200) {
@@ -271,9 +324,11 @@ app.whenReady().then(() => {
   loadUpdateConfig();
   configureUpdater();
   const allowedPermissions = new Set(['media', 'display-capture', 'fullscreen', 'speaker-selection']);
-  session.defaultSession.setPermissionCheckHandler((_wc, permission) => allowedPermissions.has(permission));
-  session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) => {
-    callback(allowedPermissions.has(permission));
+  session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
+    return allowedPermissions.has(permission) && isTrustedRenderer(webContents);
+  });
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    callback(allowedPermissions.has(permission) && isTrustedRenderer(webContents));
   });
 
   if (session.defaultSession.setDisplayMediaRequestHandler) {
@@ -291,15 +346,21 @@ app.whenReady().then(() => {
   ipcMain.handle('host:start', startHosting);
   ipcMain.handle('host:stop', stopHosting);
   ipcMain.handle('host:status', () => ({ running: !!localServerHandle, url: tunnelUrl, localUrl: localServerHandle ? 'http://127.0.0.1:3210' : '' }));
-  ipcMain.handle('clipboard:write', (_e, text) => { clipboard.writeText(String(text || '')); return true; });
+  ipcMain.handle('clipboard:write', (_e, text) => { clipboard.writeText(String(text || '').slice(0, 20000)); return true; });
+  ipcMain.handle('external:open', async (_e, raw) => {
+    const url = safeExternalUrl(raw);
+    if (!url) throw new Error('Link externo bloqueado por segurança.');
+    await shell.openExternal(url);
+    return true;
+  });
   ipcMain.handle('update:get-state', () => emitUpdateState());
-  ipcMain.handle('update:get-config', () => ({ ...updateConfig, currentVersion: app.getVersion() }));
+  ipcMain.handle('update:get-config', () => ({ ...updateConfig, repoUrl: DEFAULT_UPDATE_REPO, currentVersion: app.getVersion() }));
   ipcMain.handle('update:save-config', (_e, cfg) => {
     const requested = String(cfg?.repoUrl || '').trim();
-    if (requested && !normalizeGithubRepoUrl(requested)) throw new Error('Use um endereço público no formato https://github.com/usuario/repositorio');
-    const saved = persistUpdateConfig(cfg || {});
+    if (requested && !isOfficialUpdateRepo(requested)) throw new Error('Por segurança, o Banana Cord só aceita atualizações do repositório oficial.');
+    const saved = persistUpdateConfig({ autoCheck: cfg?.autoCheck, autoDownload: cfg?.autoDownload });
     scheduleAutomaticUpdateCheck();
-    return { ...saved, currentVersion: app.getVersion() };
+    return { ...saved, repoUrl: DEFAULT_UPDATE_REPO, currentVersion: app.getVersion() };
   });
   ipcMain.handle('update:check', async () => { await checkForUpdates(true); return emitUpdateState(); });
   ipcMain.handle('update:download', async () => {
