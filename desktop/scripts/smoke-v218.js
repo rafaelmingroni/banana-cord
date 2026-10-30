@@ -38,9 +38,9 @@ expect(ui.includes("ipcRenderer.send('banana-call:attention', true)"), 'Windows 
 expect(!e2eeUi.includes('O Firebase recebe somente conteúdo cifrado'), 'technical Firebase wording leaked into user-facing E2EE banner');
 expect(e2eeUi.includes('Só você e seu contato conseguem ler'), 'plain-language E2EE explanation missing');
 expect(updater.includes('autoUpdater.autoInstallOnAppQuit = false'), 'automatic install on quit must stay disabled');
-expect(updater.includes('isSilent: true') && updater.includes('isForceRunAfter: true'), 'explicit silent updater options missing');
-expect(!updater.includes('quitAndInstall(true, true)'), 'legacy quitAndInstall boolean call must not return');
-expect(shutdown.includes("typeof options === 'object'"), 'graceful updater wrapper must preserve object options');
+expect(updater.includes('autoUpdater.autoRunAppAfterInstall = true'), 'updater must prefer reopening after install');
+expect(updater.includes('autoUpdater.quitAndInstall(true, true)'), 'electron-updater 6 silent install + forced relaunch missing');
+expect(shutdown.includes('originalQuitAndInstall(options, legacyIsForceRunAfter)'), 'graceful updater wrapper must preserve positional relaunch arguments');
 expect(!updater.includes('showMessageBox'), 'native installer/update prompts must not return');
 
 console.log('Banana Cord V2.0.18+ polish/updater regression checks: OK');
