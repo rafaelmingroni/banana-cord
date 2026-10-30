@@ -96,7 +96,7 @@ jobs:
           Write-Host "Banana Cord V2 preview installer OK: $($exe.Name)"
 
       - name: Upload V2 preview installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Banana-Cord-V2-Cloud-Preview
           path: desktop/dist/Banana-Cord-Setup-*.exe
