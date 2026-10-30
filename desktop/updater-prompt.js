@@ -6,6 +6,7 @@ patchAutoUpdater(autoUpdater);
 
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = false;
+autoUpdater.autoRunAppAfterInstall = true;
 
 autoUpdater.setFeedURL({
   provider: 'github',
@@ -153,12 +154,10 @@ ipcMain.handle('banana-updater:check', async () => {
 ipcMain.on('banana-updater:install', () => {
   if (updaterState.phase !== 'ready') return;
   broadcast({ phase: 'installing', percent: 100, error: '' });
-  // Use the options-object API explicitly so the updater cannot fall back to
-  // the assisted NSIS UI. The app is relaunched after the silent replacement.
-  setTimeout(() => autoUpdater.quitAndInstall({
-    isSilent: true,
-    isForceRunAfter: true
-  }), 350);
+  // electron-updater 6.8.11 uses the positional signature
+  // quitAndInstall(isSilent, isForceRunAfter). Passing the v7 options object
+  // makes isForceRunAfter fall back to false, so Windows may not reopen the app.
+  setTimeout(() => autoUpdater.quitAndInstall(true, true), 350);
 });
 
 function extraCheck() {
