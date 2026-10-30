@@ -60,6 +60,28 @@ function setTaskbarProgress(percent) {
   }
 }
 
+function sourceWindow(event) {
+  try { return BrowserWindow.fromWebContents(event.sender) || BrowserWindow.getAllWindows()[0] || null; }
+  catch { return BrowserWindow.getAllWindows()[0] || null; }
+}
+
+ipcMain.on('banana-call:attention', (event, active) => {
+  const win = sourceWindow(event);
+  if (!win || win.isDestroyed()) return;
+  try { win.flashFrame(!!active); } catch {}
+});
+
+ipcMain.on('banana-call:focus', event => {
+  const win = sourceWindow(event);
+  if (!win || win.isDestroyed()) return;
+  try {
+    win.flashFrame(false);
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  } catch {}
+});
+
 autoUpdater.on('checking-for-update', () => {
   if (updaterState.phase === 'error') broadcast({ phase: 'checking', error: '' });
 });
@@ -131,9 +153,12 @@ ipcMain.handle('banana-updater:check', async () => {
 ipcMain.on('banana-updater:install', () => {
   if (updaterState.phase !== 'ready') return;
   broadcast({ phase: 'installing', percent: 100, error: '' });
-  // NSIS continues to be used under the hood, but the update itself is silent.
-  // The first/manual install remains the normal wizard from the downloaded EXE.
-  setTimeout(() => autoUpdater.quitAndInstall(true, true), 350);
+  // Use the options-object API explicitly so the updater cannot fall back to
+  // the assisted NSIS UI. The app is relaunched after the silent replacement.
+  setTimeout(() => autoUpdater.quitAndInstall({
+    isSilent: true,
+    isForceRunAfter: true
+  }), 350);
 });
 
 function extraCheck() {
