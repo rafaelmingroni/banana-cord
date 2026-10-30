@@ -59,6 +59,7 @@ jobs:
           node --check desktop/main-v120.js
           node --check desktop/main-v110.js
           node --check desktop/main.js
+          node --check desktop/e2ee-main.js
           node --check desktop/updater-prompt.js
           node --check desktop/tray.js
           node --check desktop/src/app.js
@@ -76,17 +77,23 @@ jobs:
           node --check desktop/src/cloud-v2-release-fixes.js
           node --check desktop/src/cloud-v2-v212-fix.js
           node --check desktop/src/cloud-v2-v215-security-fix.js
+          node --check desktop/src/cloud-v2-v216-e2ee.js
           node --check desktop/src/v212-ui-fix.js
           node --check desktop/src/v214-private-ui-fix.js
           node --check desktop/src/v215-security-ui-fix.js
+          node --check desktop/src/v216-e2ee-client.js
+          node --check desktop/src/v216-e2ee-ui.js
           node --check desktop/scripts/inject-firebase-config.js
           node --check desktop/scripts/smoke-cloud.js
           node --check desktop/scripts/smoke-cloud-parity.js
           node --check desktop/scripts/smoke-firebase-rules.js
+          node --check desktop/scripts/smoke-v216-firebase-rules.js
           node --check desktop/scripts/smoke-ui.js
           node --check desktop/scripts/smoke-v212.js
           node --check desktop/scripts/smoke-v214.js
           node --check desktop/scripts/smoke-v215.js
+          node --check desktop/scripts/smoke-v216.js
+          node --check desktop/scripts/e2e-v216-e2ee.js
           node --check desktop/scripts/e2e-v2-release.js
 
       - name: Cloud foundation and parity tests
@@ -207,7 +214,7 @@ jobs:
           @(
             "# Banana Cord V$version"
             ""
-            "Nova versão oficial do Banana Cord V2, com foco em segurança, autorização e proteção do cliente desktop."
+            "Nova versão oficial do Banana Cord V2, com foco em privacidade, segurança e comunicação criptografada."
             ""
             "## O que mudou"
           ) + $body | Set-Content release-notes.md -Encoding UTF8
