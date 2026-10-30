@@ -11,7 +11,7 @@ ipcMain.handle('clipboard:write', async () => true);
 const hardTimeout = setTimeout(() => {
   console.error('V2 release E2E failed: hard timeout');
   app.exit(1);
-}, 20000);
+}, 26000);
 
 function finish(code, message) {
   clearTimeout(hardTimeout);
@@ -53,6 +53,10 @@ app.whenReady().then(async () => {
                 { id: 'voice-general', type: 'voice', name: 'Geral', categoryId: null, allowedRoles: [] }
               ]};
               queueMicrotask(() => this.trigger('server:created', server));
+            }
+            if (event === 'private-call:start') {
+              ack?.({ ok: true, inviteId: 'pv-e2e', roomId: 'pv-e2e', peer: { id: payload.userId, name: 'Amigo E2E', avatar: '' } });
+              return this;
             }
             ack?.({ ok: true });
             return this;
@@ -128,17 +132,92 @@ app.whenReady().then(async () => {
         const input = document.getElementById('newServerName');
         const create = document.getElementById('createServerNow');
         if (!input || !create) return { ok: false, reason: 'create server modal missing' };
-        input.value = 'Servidor E2E'; create.click(); await sleep(70);
+        input.value = 'Servidor E2E'; create.click(); await sleep(90);
         if (!emitted.some(x => x.event === 'server:create' && x.payload?.name === 'Servidor E2E')) return { ok: false, reason: 'server:create was not emitted' };
 
-        return { ok: true, versionFoot, tabs, played, settingsScrollRange: range, selfShareSafe: true };
+        const server = state.servers.find(s => s.id === 'srv-e2e');
+        if (!server) return { ok: false, reason: 'E2E server was not selected/created' };
+
+        // V2.0.12: URLs rendered as messages must become real clickable links.
+        selectServer('srv-e2e');
+        selectChannel('general');
+        fake.trigger('messages:list', {
+          serverId: 'srv-e2e', channelId: 'general',
+          messages: [{ id: 'link-e2e', authorId: 'u-e2e', authorName: 'E2E User', text: 'Veja https://example.com/teste', at: Date.now(), reactions: {} }]
+        });
+        await sleep(50);
+        const messageLink = document.querySelector('.msg-text a.v212-message-link');
+        if (!messageLink || messageLink.getAttribute('href') !== 'https://example.com/teste') return { ok: false, reason: 'V2.0.12 message linkification failed' };
+
+        // V2.0.12: private tab must survive late server updates without becoming a server sidebar.
+        document.getElementById('homeServer')?.click();
+        await sleep(50);
+        fake.trigger('server:updated', { ...server, name: 'Servidor E2E atualizado' });
+        await sleep(60);
+        if (state.viewMode !== 'dm' || document.getElementById('serverName')?.textContent !== 'Privado' || !document.querySelector('#channels .dm-sidebar')) {
+          return { ok: false, reason: 'V2.0.12 private tab was overwritten by a server update' };
+        }
+
+        // V2.0.12: a DM exposes the private-call action and starts a call request.
+        startDm('friend-e2e', { id: 'friend-e2e', name: 'Amigo E2E', avatar: '', status: 'online' });
+        await sleep(50);
+        const privateCallButton = document.getElementById('v212PrivateCallBtn');
+        if (!privateCallButton || privateCallButton.classList.contains('hidden')) return { ok: false, reason: 'private call button missing from DM' };
+        privateCallButton.click();
+        await sleep(50);
+        if (!emitted.some(x => x.event === 'private-call:start' && x.payload?.userId === 'friend-e2e')) return { ok: false, reason: 'private-call:start was not emitted' };
+        if (!document.getElementById('v212CallCard')) return { ok: false, reason: 'outgoing private call card did not render' };
+        document.querySelector('#v212CallCard .v212-call-cancel')?.click();
+        await sleep(20);
+
+        // V2.0.12: double-clicking a voice channel joins immediately.
+        selectServer('srv-e2e');
+        await sleep(40);
+        try {
+          Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: async () => new MediaStream() } });
+        } catch {}
+        const voiceRow = document.querySelector('.channel-row[data-channel-id="voice-general"]');
+        if (!voiceRow) return { ok: false, reason: 'voice channel row missing for double-click test' };
+        const joinsBefore = emitted.filter(x => x.event === 'voice:join').length;
+        voiceRow.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));
+        await sleep(120);
+        const joinsAfter = emitted.filter(x => x.event === 'voice:join').length;
+        if (joinsAfter !== joinsBefore + 1) return { ok: false, reason: 'double-click did not join voice immediately' };
+        await leaveVoice();
+
+        // V2.0.12: role hierarchy is enforced again inside joinVoice, not only in the UI.
+        server.ownerId = 'another-owner';
+        server.memberRoles['u-e2e'] = 'member';
+        const restricted = server.channels.find(c => c.id === 'voice-general');
+        restricted.allowedRoles = ['admin'];
+        state.selectedServer = server;
+        state.selectedChannel = restricted;
+        const deniedBefore = emitted.filter(x => x.event === 'voice:join').length;
+        await joinVoice(restricted);
+        await sleep(30);
+        const deniedAfter = emitted.filter(x => x.event === 'voice:join').length;
+        if (deniedAfter !== deniedBefore || state.voice.channelId) return { ok: false, reason: 'restricted voice channel bypassed hierarchical join guard' };
+
+        return {
+          ok: true,
+          versionFoot,
+          tabs,
+          played,
+          settingsScrollRange: range,
+          selfShareSafe: true,
+          clickableLinks: true,
+          privateTabStable: true,
+          privateCallAction: true,
+          voiceDoubleClick: true,
+          hierarchicalVoiceGuard: true
+        };
       })();
     `, true),
-    new Promise(resolve => setTimeout(() => resolve({ ok: false, reason: 'renderer interaction timeout' }), 12000))
+    new Promise(resolve => setTimeout(() => resolve({ ok: false, reason: 'renderer interaction timeout' }), 18000))
   ]);
 
   if (!result?.ok) return fail(result?.reason || 'unknown renderer failure');
-  console.log('Banana Cord V2.0.0 release Electron interaction test: OK');
+  console.log('Banana Cord V2 release Electron interaction test: OK');
   console.log(JSON.stringify(result));
   try { win.destroy(); } catch {}
   finish(0);
