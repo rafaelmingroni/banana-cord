@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.11
+- Corrige pedidos de amizade que ainda podiam falhar com `missing or insufficient permissions` mesmo entre contas verificadas.
+- Corrige abertura e envio da primeira mensagem privada que ainda podiam falhar por permissão.
+- Move toda a correção social/DM para dentro do bundle único do Banana Cloud, usando a mesma instância do Firestore do restante do aplicativo.
+- Desativa o patch social legado da V2.0.7 que carregava `firebase/firestore` fora do bundle e podia misturar runtimes Firebase diferentes.
+- Consulta relacionamentos existentes por `participants array-contains` em vez de tentar ler diretamente um documento inexistente, evitando a negativa das regras do Firestore.
+- Cria/mescla o documento pai da DM antes de escutar as mensagens, garantindo que o usuário já seja participante quando o listener protegido é aberto.
+- Mantém amizade independente de servidor em comum e preserva a busca de usuários pelo nome do perfil.
+- Mantém `searchName` normalizado nos perfis públicos para busca sem diferença de maiúsculas/minúsculas.
+- Adiciona regressão específica para impedir que o patch social externo volte a carregar uma segunda instância do Firestore.
+- Preserva as correções de exclusão de servidor da V2.0.10 e as correções de call/transmissão da V2.0.8.
+
 ## 2.0.10
 - Corrige o clique em `Excluir servidor` que podia não fazer nada no Electron porque a interface dependia do `prompt()` nativo.
 - Substitui a confirmação nativa por um modal próprio do Banana Cord, visível e consistente com o restante da interface.
