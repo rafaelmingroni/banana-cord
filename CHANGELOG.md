@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.0.12
+- Torna links `http://` e `https://` enviados em canais e mensagens privadas clicáveis, abrindo o endereço no navegador padrão do sistema.
+- Permite entrar diretamente em um canal de voz com duplo clique no canal, sem precisar abrir a sala e depois clicar em `Entrar na voz`.
+- Corrige a aba `Privado` que podia ser sobrescrita por atualizações tardias de servidor ou membros e voltar a mostrar canais do servidor enquanto o usuário ainda estava nas mensagens privadas.
+- Mantém a navegação de mensagens privadas estável, incluindo `Adicionar amigo`, conversas recentes e ações sociais, mesmo enquanto servidores continuam recebendo atualizações em segundo plano.
+- Troca a configuração de acesso de canais para o conceito de `cargo mínimo`: Membro < Moderador < Administrador < Dono.
+- Um Administrador passa a acessar canais de Administrador, Moderador e Membro; um Moderador acessa Moderador e Membro; cargos inferiores não acessam canais que exigem cargo superior; o Dono mantém acesso a todos.
+- Bloqueia a navegação e a tentativa de conexão a uma call restrita antes de iniciar microfone/WebRTC quando o cargo não é suficiente.
+- Encerra a call automaticamente se o usuário perder, durante a chamada, o cargo necessário para continuar naquele canal.
+- Adiciona ligação privada 1:1 a partir de uma conversa privada, reutilizando o mesmo motor WebRTC leve das calls de servidor.
+- Adiciona fluxo de ligação privada com `Ligar`, chamada recebida, `Atender`, `Recusar` e `Cancelar ligação`, além de tratamento de usuário offline e encerramento quando a outra pessoa sai.
+- Mantém microfone, mute, deafen, câmera, compartilhamento de tela, reconexão e métricas WebRTC também nas ligações privadas, sem criar um segundo motor de mídia.
+- Isola convites e salas de ligação privada no Realtime Database: somente chamador e destinatário podem ler a sala, e cada sessão de voz só pode ser escrita pela própria conta autenticada.
+- Sincroniza o cancelamento da ligação para remover automaticamente o cartão de chamada recebida no outro lado.
+- Adiciona regressões específicas para links clicáveis, duplo clique na voz, estabilidade da aba Privado, hierarquia de cargos, bloqueio final no `joinVoice`, ligação privada e regras de segurança contra terceiros.
+- Preserva as correções de amizade/DM da V2.0.11, exclusão de servidor da V2.0.10 e estabilidade de call/transmissão das versões anteriores.
+
 ## 2.0.11
 - Corrige pedidos de amizade que ainda podiam falhar com `missing or insufficient permissions` mesmo entre contas verificadas.
 - Corrige abertura e envio da primeira mensagem privada que ainda podiam falhar por permissão.
