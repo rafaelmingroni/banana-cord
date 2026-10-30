@@ -1,0 +1,251 @@
+.banana-updater {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  width: min(420px, calc(100vw - 44px));
+  z-index: 9998;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.banana-updater.hidden {
+  display: none;
+}
+
+.banana-updater-card {
+  background: rgba(14, 15, 19, .97);
+  border: 1px solid rgba(255, 216, 41, .28);
+  border-radius: 18px;
+  box-shadow: 0 18px 55px rgba(0, 0, 0, .48), 0 0 0 1px rgba(255,255,255,.025) inset;
+  padding: 16px;
+  color: #f5f6f7;
+}
+
+.banana-updater-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.banana-updater-logo,
+.banana-updater-install-logo {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: #090a0d;
+  border: 1px solid rgba(255, 216, 41, .2);
+  overflow: hidden;
+}
+
+.banana-updater-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+}
+
+.banana-updater-logo img,
+.banana-updater-install-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.banana-updater-title-wrap {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.banana-updater-kicker {
+  color: #ffd829;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: .13em;
+}
+
+.banana-updater-title-wrap strong {
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.banana-updater-title-wrap small {
+  color: #9ca2ad;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.banana-updater-close {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #858b96;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.banana-updater-close:hover {
+  background: rgba(255,255,255,.06);
+  color: #fff;
+}
+
+.banana-updater-progress-wrap {
+  margin-top: 15px;
+}
+
+.banana-updater-progress-wrap.hidden,
+.banana-updater-actions.hidden {
+  display: none;
+}
+
+.banana-updater-progress-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #24262d;
+}
+
+.banana-updater-progress {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #e7b800, #ffe45c);
+  box-shadow: 0 0 15px rgba(255, 216, 41, .2);
+  transition: width .22s ease;
+}
+
+.banana-updater-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 7px;
+  color: #8f96a2;
+  font-size: 11px;
+}
+
+.banana-updater-actions {
+  display: flex;
+  gap: 9px;
+  margin-top: 15px;
+}
+
+.banana-updater-primary,
+.banana-updater-secondary {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.banana-updater-primary {
+  flex: 1;
+  border: 1px solid #ffd829;
+  background: #ffd829;
+  color: #111217;
+  box-shadow: 0 8px 22px rgba(255, 216, 41, .16);
+}
+
+.banana-updater-primary:hover {
+  background: #ffe45c;
+}
+
+.banana-updater-primary:disabled {
+  opacity: .7;
+  cursor: default;
+}
+
+.banana-updater-secondary {
+  border: 1px solid #343740;
+  background: #1c1e24;
+  color: #e6e8ec;
+}
+
+.banana-updater-secondary:hover {
+  border-color: #4a4e59;
+  background: #24272e;
+}
+
+.update-badge.ready {
+  border-color: rgba(255, 216, 41, .65) !important;
+  color: #ffd829 !important;
+  background: rgba(255, 216, 41, .08) !important;
+}
+
+.banana-updater-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: grid;
+  place-items: center;
+  background: rgba(7, 8, 10, .94);
+}
+
+.banana-updater-overlay.hidden {
+  display: none;
+}
+
+.banana-updater-installing {
+  width: min(430px, calc(100vw - 48px));
+  text-align: center;
+  color: #fff;
+}
+
+.banana-updater-install-logo {
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 18px;
+  border-radius: 24px;
+  box-shadow: 0 0 38px rgba(255, 216, 41, .12);
+}
+
+.banana-updater-installing h2 {
+  margin: 8px 0 7px;
+  font-size: 23px;
+}
+
+.banana-updater-installing p {
+  margin: 0 auto;
+  max-width: 390px;
+  color: #9ca2ad;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.banana-updater-install-line {
+  position: relative;
+  height: 5px;
+  margin: 22px auto 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #22252b;
+}
+
+.banana-updater-install-line span {
+  position: absolute;
+  inset: 0;
+  width: 42%;
+  border-radius: inherit;
+  background: #ffd829;
+  animation: bananaUpdaterSlide 1.05s ease-in-out infinite alternate;
+}
+
+@keyframes bananaUpdaterSlide {
+  from { transform: translateX(-10%); }
+  to { transform: translateX(150%); }
+}
+
+@media (max-width: 640px) {
+  .banana-updater {
+    right: 12px;
+    bottom: 12px;
+    width: calc(100vw - 24px);
+  }
+}
