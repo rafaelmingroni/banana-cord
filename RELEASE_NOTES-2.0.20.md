@@ -6,4 +6,9 @@
 - Corrige a consulta de histórico para buscar as mensagens mais recentes primeiro (`createdAt desc`) em vez das mais antigas.
 - Aplica o mesmo histórico progressivo a canais de servidor e mensagens privadas E2EE.
 - Mantém o limite de histórico renderizado controlado para reduzir trabalho de DOM e travadinhas durante bursts de mensagens.
+- Adiciona anti-flood leve: permite uma pequena rajada de mensagens, depois limita novos envios até o ritmo normal voltar.
+- O anti-flood vale para canais de servidor e mensagens privadas criptografadas.
+- Corrige o atualizador no Windows para reabrir o Banana Cord automaticamente após a instalação silenciosa da nova versão.
+- Usa corretamente a assinatura do `electron-updater 6.8.11` (`quitAndInstall(true, true)`) e mantém `autoRunAppAfterInstall` habilitado.
 - Adiciona teste Electron real com 180 mensagens para garantir que sidebar, canais, chat e composer permaneçam dentro da janela e que o chat tenha scroll independente.
+- Adiciona teste Electron do fluxo de atualização para garantir que os flags de instalação silenciosa e reabertura sejam preservados.
