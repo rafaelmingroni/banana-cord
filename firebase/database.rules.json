@@ -12,7 +12,7 @@
     "sessionOwners": {
       ".read": "auth != null && auth.token.email_verified == true",
       "$sessionId": {
-        ".write": "auth != null && auth.token.email_verified == true && ((newData.exists() && newData.val() === auth.uid) || (!newData.exists() && data.val() === auth.uid))"
+        ".write": "auth != null && auth.uid === newData.val() && auth.token.email_verified == true || (auth != null && auth.token.email_verified == true && !newData.exists() && data.val() === auth.uid)"
       }
     },
     "voiceRooms": {
@@ -31,7 +31,7 @@
         ".read": "auth != null && auth.token.email_verified == true && auth.uid === $targetUid",
         "$inviteId": {
           ".read": "auth != null && auth.token.email_verified == true && (auth.uid === $targetUid || data.child('fromUserId').val() === auth.uid)",
-          ".write": "auth != null && auth.token.email_verified == true && ((!data.exists() && newData.exists() && newData.child('fromUserId').val() === auth.uid && newData.child('toUserId').val() === $targetUid && newData.child('status').val() === 'ringing') || (data.exists() && newData.exists() && auth.uid === $targetUid && newData.child('fromUserId').val() === data.child('fromUserId').val() && newData.child('toUserId').val() === data.child('toUserId').val() && (newData.child('status').val() === 'accepted' || newData.child('status').val() === 'declined')) || (data.exists() && newData.exists() && data.child('fromUserId').val() === auth.uid && newData.child('fromUserId').val() === data.child('fromUserId').val() && newData.child('toUserId').val() === data.child('toUserId').val() && newData.child('status').val() === 'cancelled') || (!newData.exists() && data.exists() && (auth.uid === $targetUid || data.child('fromUserId').val() === auth.uid)))",
+          ".write": "auth != null && auth.token.email_verified == true && ((!data.exists() && newData.exists() && newData.child('fromUserId').val() === auth.uid && newData.child('toUserId').val() === $targetUid && newData.child('status').val() === 'ringing') || (data.exists() && newData.exists() && auth.uid === $targetUid && newData.child('roomId').val() === data.child('roomId').val() && newData.child('fromUserId').val() === data.child('fromUserId').val() && newData.child('toUserId').val() === data.child('toUserId').val() && (newData.child('status').val() === 'accepted' || newData.child('status').val() === 'declined')) || (data.exists() && newData.exists() && data.child('fromUserId').val() === auth.uid && newData.child('roomId').val() === data.child('roomId').val() && newData.child('fromUserId').val() === data.child('fromUserId').val() && newData.child('toUserId').val() === data.child('toUserId').val() && newData.child('status').val() === 'cancelled') || (!newData.exists() && data.exists() && (auth.uid === $targetUid || data.child('fromUserId').val() === auth.uid)))",
           ".validate": "!newData.exists() || (newData.hasChildren(['roomId','fromUserId','toUserId','status']) && newData.child('roomId').isString() && newData.child('fromUserId').isString() && newData.child('toUserId').val() === $targetUid && (newData.child('status').val() === 'ringing' || newData.child('status').val() === 'accepted' || newData.child('status').val() === 'declined' || newData.child('status').val() === 'cancelled'))"
         }
       }
@@ -39,8 +39,14 @@
     "privateVoiceRooms": {
       "$roomId": {
         ".read": "auth != null && auth.token.email_verified == true && data.exists() && (data.child('callerId').val() === auth.uid || data.child('calleeId').val() === auth.uid)",
-        ".write": "auth != null && auth.token.email_verified == true && ((!data.exists() && newData.exists() && newData.child('callerId').val() === auth.uid && newData.child('calleeId').isString() && newData.child('calleeId').val() !== auth.uid) || (data.exists() && (data.child('callerId').val() === auth.uid || data.child('calleeId').val() === auth.uid) && (!newData.exists() || (newData.child('callerId').val() === data.child('callerId').val() && newData.child('calleeId').val() === data.child('calleeId').val()))))",
-        ".validate": "!newData.exists() || (newData.hasChildren(['callerId','calleeId']) && newData.child('callerId').isString() && newData.child('calleeId').isString() && newData.child('callerId').val() !== newData.child('calleeId').val())"
+        ".write": "auth != null && auth.token.email_verified == true && ((!data.exists() && newData.exists() && newData.child('callerId').val() === auth.uid && newData.child('calleeId').isString() && newData.child('calleeId').val() !== auth.uid) || (data.exists() && !newData.exists() && (data.child('callerId').val() === auth.uid || data.child('calleeId').val() === auth.uid)))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['callerId','calleeId']) && newData.child('callerId').isString() && newData.child('calleeId').isString() && newData.child('callerId').val() !== newData.child('calleeId').val())",
+        "sessions": {
+          "$sessionId": {
+            ".write": "auth != null && auth.token.email_verified == true && (root.child('privateVoiceRooms').child($roomId).child('callerId').val() === auth.uid || root.child('privateVoiceRooms').child($roomId).child('calleeId').val() === auth.uid) && ((newData.exists() && newData.child('userId').val() === auth.uid) || (!newData.exists() && data.child('userId').val() === auth.uid))",
+            ".validate": "!newData.exists() || (newData.hasChildren(['userId','user','mediaState','speaking']) && newData.child('userId').val() === auth.uid)"
+          }
+        }
       }
     },
     "signals": {
