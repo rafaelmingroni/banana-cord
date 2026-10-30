@@ -39,6 +39,10 @@ jobs:
         working-directory: desktop
         run: npm install --no-audit --no-fund
 
+      - name: Critical production dependency audit
+        working-directory: desktop
+        run: npm run security:audit
+
       - name: Inject production Firebase config
         working-directory: desktop
         env:
@@ -71,8 +75,10 @@ jobs:
           node --check desktop/src/cloud-v2-runtime-fixes.js
           node --check desktop/src/cloud-v2-release-fixes.js
           node --check desktop/src/cloud-v2-v212-fix.js
+          node --check desktop/src/cloud-v2-v215-security-fix.js
           node --check desktop/src/v212-ui-fix.js
           node --check desktop/src/v214-private-ui-fix.js
+          node --check desktop/src/v215-security-ui-fix.js
           node --check desktop/scripts/inject-firebase-config.js
           node --check desktop/scripts/smoke-cloud.js
           node --check desktop/scripts/smoke-cloud-parity.js
@@ -80,6 +86,7 @@ jobs:
           node --check desktop/scripts/smoke-ui.js
           node --check desktop/scripts/smoke-v212.js
           node --check desktop/scripts/smoke-v214.js
+          node --check desktop/scripts/smoke-v215.js
           node --check desktop/scripts/e2e-v2-release.js
 
       - name: Cloud foundation and parity tests
@@ -89,6 +96,18 @@ jobs:
       - name: Firebase security rules emulator tests
         working-directory: desktop
         run: npm run smoke:rules
+
+      - name: Deploy hardened Firebase rules when CI credential is configured
+        shell: pwsh
+        working-directory: desktop
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          if (-not $env:FIREBASE_TOKEN) {
+            Write-Host "::warning::FIREBASE_TOKEN is not configured; production Firebase rules were validated but not deployed by this workflow."
+            exit 0
+          }
+          npx firebase-tools deploy --project banana-cord --config ../firebase/firebase.json --only firestore:rules,database --token $env:FIREBASE_TOKEN --non-interactive
 
       - name: UI regression tests
         working-directory: desktop
@@ -188,7 +207,7 @@ jobs:
           @(
             "# Banana Cord V$version"
             ""
-            "Nova versão oficial do Banana Cord V2, com foco em usabilidade, permissões de voz, mensagens privadas e identidade visual."
+            "Nova versão oficial do Banana Cord V2, com foco em segurança, autorização e proteção do cliente desktop."
             ""
             "## O que mudou"
           ) + $body | Set-Content release-notes.md -Encoding UTF8
