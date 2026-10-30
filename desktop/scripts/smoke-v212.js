@@ -7,6 +7,7 @@ const cloud = fs.readFileSync(path.join(root, 'src', 'cloud-v2-v212.js'), 'utf8'
 const incomingStatus = fs.readFileSync(path.join(root, 'src', 'cloud-v2-v212-incoming-status.js'), 'utf8');
 const ui = fs.readFileSync(path.join(root, 'src', 'v212-ux-private-call.js'), 'utf8');
 const voiceGuard = fs.readFileSync(path.join(root, 'src', 'v212-voice-access-guard.js'), 'utf8');
+const linkRuntime = fs.readFileSync(path.join(root, 'src', 'v212-link-runtime-fix.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'src', 'v212.css'), 'utf8');
 const index = fs.readFileSync(path.join(root, 'src', 'index.html'), 'utf8');
 const builder = fs.readFileSync(path.join(root, 'scripts', 'build-cloud-browser.js'), 'utf8');
@@ -17,6 +18,7 @@ new Function(cloud);
 new Function(incomingStatus);
 new Function(ui);
 new Function(voiceGuard);
+new Function(linkRuntime);
 
 assert(builder.includes("require('./cloud-v2-v212.js')"), 'V2.0.12 Cloud patch must stay inside the single Firebase bundle.');
 assert(builder.includes("require('./cloud-v2-v212-incoming-status.js')"), 'Private call cancellation status must stay inside the single Firebase bundle.');
@@ -45,8 +47,12 @@ assert.strictEqual(fakeWindow.BananaV212CanAccessRole('owner', ['admin']), true,
 
 assert(index.includes('v212.css'), 'V2.0.12 stylesheet must load.');
 assert(index.includes('v212-ux-private-call.js'), 'V2.0.12 UX layer must load.');
-assert(index.includes('v212-voice-access-guard.js'), 'Final V2.0.12 voice access guard must load last.');
-assert(ui.includes('v212-message-link'), 'Message URLs must be linkified.');
+assert(index.includes('v212-voice-access-guard.js'), 'Final V2.0.12 voice access guard must load.');
+assert(index.includes('v212-link-runtime-fix.js'), 'Final rendered-link runtime must load after the message renderer.');
+assert(index.indexOf('v212-link-runtime-fix.js') > index.indexOf('v212-voice-access-guard.js'), 'Rendered-link runtime must load after the other V2.0.12 UI patches.');
+assert(linkRuntime.includes('createTreeWalker'), 'Rendered-link runtime must preserve message HTML and replace only text nodes.');
+assert(linkRuntime.includes('v212-message-link'), 'Rendered-link runtime must create clickable link anchors.');
+assert(linkRuntime.includes('openExternal'), 'Rendered links must open externally instead of navigating the Electron renderer.');
 assert(ui.includes("addEventListener('dblclick'"), 'Voice channels must support double-click join.');
 assert(ui.includes("state.viewMode === 'dm'"), 'DM shell stability guard must remain active.');
 assert(ui.includes('Cargo mínimo para acessar'), 'Channel permissions must explain minimum-role hierarchy.');
