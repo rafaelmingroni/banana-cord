@@ -1,0 +1,67 @@
+name: V2.0.16 E2EE validation
+
+on:
+  push:
+    branches: [v2.0.16-e2ee-dm]
+    paths:
+      - "desktop/**"
+      - "firebase/**"
+      - "RELEASE_NOTES-2.0.16.md"
+      - ".github/workflows/v216-e2ee-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2ee-validation:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Java for Firebase emulators
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Critical production dependency audit
+        working-directory: desktop
+        run: npm run security:audit
+
+      - name: Prepare source
+        working-directory: desktop
+        run: npm run prepare:source
+
+      - name: Validate V2.0.16 JavaScript
+        shell: pwsh
+        run: |
+          node --check desktop/e2ee-main.js
+          node --check desktop/src/v216-e2ee-client.js
+          node --check desktop/src/cloud-v2-v216-e2ee.js
+          node --check desktop/src/v216-e2ee-ui.js
+          node --check desktop/scripts/smoke-v216.js
+          node --check desktop/scripts/smoke-v216-firebase-rules.js
+          node --check desktop/scripts/e2e-v216-e2ee.js
+
+      - name: Cloud and E2EE regression tests
+        working-directory: desktop
+        run: npm run smoke:cloud
+
+      - name: Firebase E2EE rules emulator tests
+        working-directory: desktop
+        run: npm run smoke:rules
+
+      - name: Real Electron E2EE and UI tests
+        working-directory: desktop
+        run: npm run smoke:e2e-v2
