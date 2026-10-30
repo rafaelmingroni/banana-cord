@@ -23,10 +23,10 @@ app.whenReady().then(async () => {
     (() => {
       const now = Date.now();
       const day = 86400000;
-      state.user = { id:'me', name:'Rafael', status:'online', customStatus:'Jogando leve' };
+      state.user = { id:'me', name:'Rafael', status:'online', customStatus:'Jogando leve', role:'admin' };
       state.selectedServer = {
         id:'s1', name:'Banana Test', ownerId:'owner',
-        memberRoles:{ admin:'admin', mod:'moderator' },
+        memberRoles:{ me:'admin', admin:'admin', mod:'moderator' },
         roleColors:{ owner:'#ffaa00', admin:'#ff3366', moderator:'#33aaff', member:'#dddddd' },
         channels:[{id:'c1',name:'geral',type:'text'}]
       };
