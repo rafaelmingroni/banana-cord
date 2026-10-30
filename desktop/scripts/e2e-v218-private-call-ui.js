@@ -69,9 +69,13 @@ app.whenReady().then(async () => {
       renderDmMessages();
       await sleep(100);
 
-      const composerRect = els.messageForm.getBoundingClientRect();
-      const mainRect = els.main.getBoundingClientRect();
-      const inputRect = els.messageInput.getBoundingClientRect();
+      const composer = document.getElementById('messageForm');
+      const main = document.querySelector('.main');
+      const input = document.getElementById('messageInput');
+      if (!composer || !main || !input) return { ok:false, reason:'responsive DOM targets missing' };
+      const composerRect = composer.getBoundingClientRect();
+      const mainRect = main.getBoundingClientRect();
+      const inputRect = input.getBoundingClientRect();
       const responsive = {
         innerWidth,
         innerHeight,
