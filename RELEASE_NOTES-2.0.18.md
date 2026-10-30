@@ -1,0 +1,12 @@
+- Corrige o layout do Privado em modo janela para o chat e o campo de mensagem não saírem da área visível.
+- Corrige a grade responsiva do modo Privado ao esconder a coluna de membros em janelas menores.
+- Adiciona aviso de chamada privada recebida com nome/foto do contato e botões `Atender` e `Recusar`.
+- Adiciona toque de chamada repetido e destaque da janela na barra de tarefas enquanto a chamada está tocando.
+- Adiciona notificação do sistema para chamada recebida quando disponível.
+- Chamadas não atendidas deixam de tocar automaticamente após 45 segundos.
+- Adiciona barra clean durante chamada privada com contato, duração e estado `Você está falando` / `<contato> está falando`.
+- Mantém o botão de desligar acessível na própria barra de chamada.
+- Simplifica o texto de segurança das DMs: não menciona Firebase e explica que só os participantes conseguem ler as novas mensagens protegidas.
+- Reforça o atualizador silencioso usando a API explícita `isSilent: true` e preserva essas opções durante o encerramento seguro.
+- O instalador Windows passa a ser one-click/per-user, removendo a tela de escolha `todos os usuários / apenas para mim`.
+- Mantém download automático, EXE + blockmap + latest.yml, E2EE, voz, compartilhamento e segurança das versões anteriores.
