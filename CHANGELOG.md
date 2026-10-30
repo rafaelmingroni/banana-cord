@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.10
+- Corrige o clique em `Excluir servidor` que podia não fazer nada no Electron porque a interface dependia do `prompt()` nativo.
+- Substitui a confirmação nativa por um modal próprio do Banana Cord, visível e consistente com o restante da interface.
+- Exige digitar exatamente o nome do servidor e só então habilita `Excluir definitivamente`.
+- O modal confirmado envia `server:delete` diretamente para o Banana Cloud e bloqueia o handler legado antes que ele tente abrir o `prompt()` antigo.
+- Mantém intacta a correção de backend da V2.0.9, incluindo a ordem segura de exclusão no Firestore.
+- Preserva as correções de call, transmissão e social da V2.0.8.
+- Adiciona regressão específica garantindo que o fluxo de exclusão não dependa mais de `prompt()` e que continue emitindo `server:delete`.
+
 ## 2.0.9
 - Corrige exclusão de servidores próprios que ainda podia falhar com erro de permissão no Firebase.
 - Move a correção de exclusão para dentro do bundle único do Banana Cloud, usando a mesma instância do Firestore que criou o banco.
