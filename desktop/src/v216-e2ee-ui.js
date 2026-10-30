@@ -1,4 +1,4 @@
-/* Banana Cord V2.0.16 — private-message E2EE indicators. */
+/* Banana Cord V2.0.16+ — private-message E2EE indicators. */
 (() => {
   if (window.__bananaV216E2EEUi) return;
   window.__bananaV216E2EEUi = true;
@@ -10,7 +10,7 @@
     .v216-e2ee-banner{display:flex;align-items:center;gap:8px;margin:8px 10px 2px;padding:8px 10px;border:1px solid #36523f;border-radius:9px;background:#18231c;color:#a9e9ba;font-size:10px;font-weight:800}
     .v216-e2ee-banner.wait{border-color:#665b2a;background:#282313;color:#f4d86a}
     .v216-e2ee-banner.fail{border-color:#64363a;background:#2a181b;color:#ff9ea7}
-    .v216-e2ee-banner small{font-size:9px;font-weight:600;opacity:.75}
+    .v216-e2ee-banner small{font-size:9px;font-weight:600;opacity:.78}
     .v216-e2ee-failed .msg-text{color:#d7a2a7;font-style:italic}
   `;
   document.head.appendChild(style);
@@ -23,13 +23,13 @@
     if (state.viewMode !== 'dm' || !state.activeDmUserId) return;
     const status = statusFor(state.activeDmUserId);
     if (!status) {
-      els.channelDesc.textContent = '🔐 Preparando criptografia ponta a ponta…';
+      els.channelDesc.textContent = '🔐 Preparando proteção da conversa…';
       return;
     }
     if (status.available) {
-      els.channelDesc.textContent = '🔒 Criptografia ponta a ponta ativa';
+      els.channelDesc.textContent = '🔒 Conversa protegida';
     } else {
-      els.channelDesc.textContent = '⚠ Contato ainda sem chave E2EE';
+      els.channelDesc.textContent = '⚠ Proteção aguardando o contato';
     }
   }
 
@@ -43,10 +43,10 @@
       banner.classList.add('wait');
       banner.innerHTML = '<span>🔐 Preparando proteção da conversa…</span>';
     } else if (status.available) {
-      banner.innerHTML = '<span>🔒 Criptografia ponta a ponta ativa</span><small>O Firebase recebe somente conteúdo cifrado nas novas mensagens.</small>';
+      banner.innerHTML = '<span>🔒 Mensagens protegidas com criptografia ponta a ponta</span><small>Só você e seu contato conseguem ler as novas mensagens desta conversa.</small>';
     } else {
       banner.classList.add('wait');
-      banner.innerHTML = '<span>⚠ E2EE aguardando o contato</span><small>Seu amigo precisa abrir a V2.0.16 para publicar a chave.</small>';
+      banner.innerHTML = '<span>⚠ Proteção ainda não disponível</span><small>Seu contato precisa abrir uma versão atual do Banana Cord para ativar a proteção.</small>';
     }
     els.messages.prepend(banner);
 
@@ -60,7 +60,7 @@
 
     const empty = els.messages.querySelector('.dm-conversation-empty');
     if (empty && status?.available) {
-      empty.innerHTML = '<b>Comece a conversa 👋</b><span>🔒 Novas mensagens são criptografadas ponta a ponta antes de chegar ao Banana Cloud.</span>';
+      empty.innerHTML = '<b>Comece a conversa 👋</b><span>🔒 As novas mensagens desta conversa ficam protegidas de ponta a ponta.</span>';
     }
   }
 
@@ -76,7 +76,7 @@
   startDm = function startDmV216(userId, user = null) {
     const result = startDmBase(userId, user);
     if (state.viewMode === 'dm' && state.activeDmUserId === userId) {
-      els.channelDesc.textContent = '🔐 Preparando criptografia ponta a ponta…';
+      els.channelDesc.textContent = '🔐 Preparando proteção da conversa…';
       queueMicrotask(() => { decorateMessages(); applyHeaderStatus(); });
     }
     return result;
