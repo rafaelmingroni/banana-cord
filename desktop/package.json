@@ -1,7 +1,7 @@
 {
   "name": "banana-cord",
-  "version": "2.0.15",
-  "description": "Banana Cord V2 - contas, servidores persistentes e comunicação em nuvem com voz e tela via WebRTC",
+  "version": "2.0.16",
+  "description": "Banana Cord V2 - contas, servidores persistentes e comunicação em nuvem com DMs criptografadas ponta a ponta",
   "private": true,
   "main": "main-v120.js",
   "author": "Rafael Mingroni",
@@ -17,9 +17,9 @@
     "smoke:ui": "node scripts/smoke-ui.js",
     "smoke:rendezvous": "node scripts/smoke-rendezvous.js",
     "smoke:parity": "node scripts/smoke-cloud-parity.js",
-    "smoke:cloud": "node scripts/smoke-cloud.js && node scripts/smoke-cloud-ui.js && node scripts/smoke-cloud-parity.js && node scripts/smoke-webrtc-signal.js && node scripts/smoke-screen-share.js && node scripts/smoke-v205.js && node scripts/smoke-v206-call-update.js && node scripts/smoke-v208.js && node scripts/smoke-v210.js && node scripts/smoke-v211.js && node scripts/smoke-v212.js && node scripts/smoke-v214.js && node scripts/smoke-v215.js",
-    "smoke:rules": "firebase emulators:exec --project demo-banana-cord --config ../firebase/firebase.json --only firestore,database \"node scripts/smoke-firebase-rules.js\"",
-    "smoke:e2e-v2": "electron scripts/e2e-v2-release.js",
+    "smoke:cloud": "node scripts/smoke-cloud.js && node scripts/smoke-cloud-ui.js && node scripts/smoke-cloud-parity.js && node scripts/smoke-webrtc-signal.js && node scripts/smoke-screen-share.js && node scripts/smoke-v205.js && node scripts/smoke-v206-call-update.js && node scripts/smoke-v208.js && node scripts/smoke-v210.js && node scripts/smoke-v211.js && node scripts/smoke-v212.js && node scripts/smoke-v214.js && node scripts/smoke-v215.js && node scripts/smoke-v216.js",
+    "smoke:rules": "firebase emulators:exec --project demo-banana-cord --config ../firebase/firebase.json --only firestore,database \"node scripts/smoke-firebase-rules.js && node scripts/smoke-v216-firebase-rules.js\"",
+    "smoke:e2e-v2": "electron scripts/e2e-v216-e2ee.js && electron scripts/e2e-v2-release.js",
     "security:audit": "npm audit --omit=dev --audit-level=critical"
   },
   "dependencies": {
@@ -46,7 +46,7 @@
     "artifactName": "Banana-Cord-Setup-${version}-${arch}.${ext}",
     "protocols": [{ "name": "Banana Cord Invite", "schemes": ["bananacord"] }],
     "directories": { "output": "dist" },
-    "files": ["main-v120.js","main-v110.js","rendezvous.js","tray.js","updater-prompt.js","graceful-shutdown.js","main.js","screen-share-main-fix.js","src/**/*","server/**/*","cloud/**/*","assets/**/*","package.json","node_modules/**/*"],
+    "files": ["main-v120.js","main-v110.js","rendezvous.js","tray.js","updater-prompt.js","graceful-shutdown.js","e2ee-main.js","main.js","screen-share-main-fix.js","src/**/*","server/**/*","cloud/**/*","assets/**/*","package.json","node_modules/**/*"],
     "asar": true,
     "win": { "target": "nsis", "icon": "assets/banana-cord.ico" },
     "nsis": {
