@@ -1,0 +1,117 @@
+/* Banana Cord V2.0.18 — responsive private chat + clean direct-call UX */
+.app.dm-mode .main{
+  grid-column:3 / -1!important;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+}
+.app.dm-mode .main>header{flex:0 0 auto;min-width:0}
+.app.dm-mode .text-view{flex:1 1 auto;min-width:0;min-height:0;overflow:hidden}
+.app.dm-mode .messages{min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden}
+.app.dm-mode .composer{
+  flex:0 0 auto;
+  position:relative;
+  z-index:4;
+  background:#1d1f22;
+  border-top:1px solid #292b30;
+  padding:10px 16px 14px;
+}
+.app.dm-mode .composer input{min-width:0}
+.app.dm-mode .msg-text,.app.dm-mode .banana-external-link{overflow-wrap:anywhere;word-break:break-word}
+
+/* Incoming private call */
+.v218-incoming-call{
+  position:fixed;
+  z-index:120;
+  right:18px;
+  top:18px;
+  width:min(360px,calc(100vw - 36px));
+  border:1px solid #5d5123;
+  border-radius:16px;
+  background:linear-gradient(155deg,#23251f 0%,#191b1e 58%,#151619 100%);
+  box-shadow:0 22px 70px #000b,0 0 0 1px #f3c62312 inset;
+  padding:14px;
+  animation:v218CallIn .18s ease-out;
+}
+.v218-incoming-call.hidden{display:none!important}
+@keyframes v218CallIn{from{opacity:0;transform:translateY(-8px) scale(.985)}to{opacity:1;transform:none}}
+.v218-call-head{display:flex;align-items:center;gap:11px}
+.v218-call-avatar{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:none;background:#4d525a;background-size:cover;background-position:center;font-weight:900;color:#fff;border:2px solid #f3c62355}
+.v218-call-copy{min-width:0;flex:1}
+.v218-call-copy small{display:block;color:#f3c623;font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.v218-call-copy b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px;color:#fff}
+.v218-call-copy span{display:block;color:#9298a2;font-size:11px;margin-top:2px}
+.v218-ring-dot{width:10px;height:10px;border-radius:50%;background:#35d275;box-shadow:0 0 0 0 #35d27566;animation:v218RingPulse 1.25s infinite}
+@keyframes v218RingPulse{0%{box-shadow:0 0 0 0 #35d27566}70%{box-shadow:0 0 0 8px #35d27500}100%{box-shadow:0 0 0 0 #35d27500}}
+.v218-call-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+.v218-call-actions button{margin:0!important;border-radius:10px;padding:10px 12px;font-weight:900;color:#fff}
+.v218-call-decline{background:#4b252a;border:1px solid #70343b}
+.v218-call-decline:hover{background:#5b2c32}
+.v218-call-accept{background:#237b4a;border:1px solid #35a968}
+.v218-call-accept:hover{background:#2a8f57}
+
+/* Active private call bar */
+.v218-active-call{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:48px;
+  padding:7px 14px;
+  border-bottom:1px solid #284635;
+  background:linear-gradient(90deg,#15231b,#1a211e 55%,#1d1f22);
+  color:#e9fff0;
+}
+.v218-active-call.hidden{display:none!important}
+.v218-active-dot{width:9px;height:9px;border-radius:50%;background:#35d275;box-shadow:0 0 12px #35d27566;flex:none}
+.v218-active-dot.speaking{animation:v218Speaking .72s infinite alternate}
+@keyframes v218Speaking{from{transform:scale(.9);box-shadow:0 0 4px #35d27555}to{transform:scale(1.35);box-shadow:0 0 15px #35d275aa}}
+.v218-active-copy{min-width:0;display:flex;flex-direction:column;gap:1px;flex:1}
+.v218-active-copy b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v218-active-copy small{font-size:10px;color:#8fba9d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v218-call-time{font-variant-numeric:tabular-nums;font-size:10px;color:#9da5ae;background:#111815;border:1px solid #294535;border-radius:999px;padding:4px 7px}
+.v218-call-hangup{background:#4b252a!important;color:#ffd9dc!important;border:1px solid #70343b!important;border-radius:8px!important;padding:6px 9px!important;margin:0!important;width:auto!important;font-size:10px!important;font-weight:900!important}
+
+/* Keep the DM header usable in narrower windows. */
+.app.dm-mode .main header #channelName{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
+.app.dm-mode .v212-dm-call-btn{flex:none}
+
+@media(max-width:1050px){
+  .app.dm-mode{grid-template-columns:62px 220px minmax(0,1fr)!important}
+  .app.dm-mode .main{grid-column:3 / -1!important}
+  .app.dm-mode .members{display:none!important}
+  .app.dm-mode .main header #channelDesc{display:none!important}
+  .app.dm-mode .main header{padding:0 10px;gap:6px}
+  .app.dm-mode .v212-dm-call-btn{padding:6px 8px;font-size:11px}
+}
+@media(max-width:760px){
+  .app.dm-mode{grid-template-columns:56px 184px minmax(0,1fr)!important}
+  .app.dm-mode .servers{padding-left:5px;padding-right:5px}
+  .app.dm-mode .server-icon{width:44px;height:44px}
+  .app.dm-mode .sidebar{min-width:0}
+  .app.dm-mode .v214-private-intro{display:none}
+  .app.dm-mode .channels{padding:8px 6px}
+  .app.dm-mode .profile-text small{display:none}
+  .app.dm-mode .composer{padding:8px 9px 10px}
+  .app.dm-mode .messages{padding:12px 12px}
+  .app.dm-mode .main header #channelIcon{display:none}
+  .app.dm-mode .main header #channelName{max-width:30vw}
+  .v218-active-call{padding:6px 9px;gap:7px}
+}
+@media(max-width:620px){
+  .app.dm-mode{grid-template-columns:52px 154px minmax(0,1fr)!important}
+  .app.dm-mode .v214-private-sidebar .v1-dm-tools{grid-template-columns:1fr}
+  .app.dm-mode .v214-private-section-title{margin-top:0}
+  .app.dm-mode .profile-bar{padding:5px}
+  .app.dm-mode .profile-text{display:none}
+  .app.dm-mode .v212-dm-call-btn{font-size:0;padding:7px 9px}
+  .app.dm-mode .v212-dm-call-btn::before{content:'📞';font-size:14px}
+  .app.dm-mode .connection-badge{display:none}
+  .v218-call-time{display:none}
+}
+@media(max-height:650px){
+  .app.dm-mode .v214-private-intro{display:none}
+  .app.dm-mode .channels{padding-top:7px;padding-bottom:7px}
+  .app.dm-mode .v214-private-sidebar{gap:6px}
+  .app.dm-mode .composer{padding-bottom:8px}
+}
