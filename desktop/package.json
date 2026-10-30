@@ -10,7 +10,7 @@
     "prestart": "npm run prepare:source",
     "start": "electron .",
     "predist:win": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous && npm run smoke:cloud",
-    "dist:win": "electron-builder --win nsis && node scripts/verify-built-icon.js",
+    "dist:win": "electron-builder --win nsis --publish never && node scripts/verify-built-icon.js",
     "predist:portable": "npm run prepare:source && npm run smoke:ui && npm run smoke:rendezvous && npm run smoke:cloud",
     "dist:portable": "electron-builder --win portable",
     "smoke:v1": "node scripts/smoke-v1.js",
