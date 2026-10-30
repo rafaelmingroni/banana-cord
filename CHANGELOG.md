@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.8
+- Corrige regressão crítica da V2.0.7 que impedia duas pessoas de entrarem na mesma call e podia mostrar `childPathObj.split is not a function`.
+- Remove da rota ativa de voz os wrappers que carregavam uma segunda instância de `firebase/database`; a call volta a usar exclusivamente o Firebase já empacotado pelo Banana Cloud.
+- Mantém o `joinVoice`, `leaveVoice` e signaling originais do Cloud, evitando misturar referências de Realtime Database entre SDKs diferentes.
+- Filtra sessões antigas da própria conta sem alterar o transporte: o usuário local não pode aparecer como peer remoto ou duplicado.
+- Deduplica visualmente participantes remotos por UID e ignora eventos de sockets antigos quando já existe uma sessão autoritativa mais nova.
+- Restaura a presença correta abaixo do canal de voz, para que Mingrx, Gustavo e demais participantes apareçam em `Geral` quando realmente estiverem conectados.
+- O cartão local da call passa a usar nome e foto reais do perfil em vez de banana + `Você`.
+- Mantém `Assistir transmissão` diretamente no usuário que estiver compartilhando tela; o clique abre o canal de voz correto e foca o compartilhamento.
+- Mantém as correções sociais da V2.0.7 para amizade, busca de usuários, primeira DM e onboarding.
+- Adiciona teste de regressão específico para garantir que a camada V2.0.8 não importe `firebase/database` novamente e que os wrappers de voz 2.0.6/2.0.7 fiquem bloqueados.
+
 ## 2.0.7
 - Corrige identidade duplicada em calls quando uma sessão antiga da mesma conta ainda existe: o usuário local nunca pode reaparecer como peer remoto.
 - Deduplica a presença de voz por UID em todo o servidor, inclusive quando registros antigos ficaram em canais diferentes.
