@@ -4,6 +4,15 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const expect = (ok, message) => { if (!ok) throw new Error(message); };
+const versionAtLeast = (actual, minimum) => {
+  const a = String(actual).split('.').map(Number);
+  const b = String(minimum).split('.').map(Number);
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const av = a[i] || 0, bv = b[i] || 0;
+    if (av !== bv) return av > bv;
+  }
+  return true;
+};
 
 const pkg = JSON.parse(read('package.json'));
 const index = read('src/index.html');
@@ -13,9 +22,9 @@ const e2eeUi = read('src/v216-e2ee-ui.js');
 const updater = read('updater-prompt.js');
 const shutdown = read('graceful-shutdown.js');
 
-expect(pkg.version === '2.0.18', `expected package version 2.0.18, got ${pkg.version}`);
-expect(pkg.build?.nsis?.oneClick === true, 'NSIS must be one-click in V2.0.18');
-expect(pkg.build?.nsis?.perMachine === false, 'NSIS must remain per-user in V2.0.18');
+expect(versionAtLeast(pkg.version, '2.0.18'), `expected package version 2.0.18 or newer, got ${pkg.version}`);
+expect(pkg.build?.nsis?.oneClick === true, 'NSIS must be one-click in V2.0.18+');
+expect(pkg.build?.nsis?.perMachine === false, 'NSIS must remain per-user in V2.0.18+');
 expect(pkg.build?.nsis?.allowToChangeInstallationDirectory !== true, 'one-click installer must not expose directory wizard');
 expect(index.includes('v218-polish.css') && index.includes('v218-polish.js'), 'V2.0.18 assets are not loaded');
 expect(css.includes('grid-column:3 / -1!important'), 'DM responsive grid fix missing');
@@ -34,4 +43,4 @@ expect(!updater.includes('quitAndInstall(true, true)'), 'legacy quitAndInstall b
 expect(shutdown.includes("typeof options === 'object'"), 'graceful updater wrapper must preserve object options');
 expect(!updater.includes('showMessageBox'), 'native installer/update prompts must not return');
 
-console.log('Banana Cord V2.0.18 polish/updater regression checks: OK');
+console.log('Banana Cord V2.0.18+ polish/updater regression checks: OK');
