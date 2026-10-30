@@ -10,7 +10,7 @@ const {
   serverTimestamp, Timestamp
 } = require('firebase/firestore');
 const {
-  ref, set, get, remove
+  ref, set, get, remove, update
 } = require('firebase/database');
 
 const root = path.resolve(__dirname, '..');
@@ -187,6 +187,43 @@ async function main() {
     await assertFails(set(ref(outsiderRt, 'signals/does-not-exist/sig2'), {
       fromSocketId: 'outsider', fromUserId: 'outsider', data: { type: 'offer' }, at: Date.now()
     }));
+
+    // V2.0.12: convite de ligação privada só pode ser criado pelo chamador,
+    // respondido pelo destinatário e observado apenas pelos dois participantes.
+    const privateInvite = 'privateCallInvites/member/pv-test';
+    await assertSucceeds(set(ref(ownerRt, privateInvite), {
+      roomId: 'pv-test', fromUserId: 'owner', fromUser: { id: 'owner', name: 'Owner' },
+      toUserId: 'member', status: 'ringing', createdAt: Date.now()
+    }));
+    await assertSucceeds(get(ref(memberRt, 'privateCallInvites/member')));
+    await assertSucceeds(get(ref(ownerRt, privateInvite)));
+    await assertFails(get(ref(outsiderRt, privateInvite)));
+    await assertFails(update(ref(ownerRt, privateInvite), { status: 'accepted' }));
+    await assertSucceeds(update(ref(memberRt, privateInvite), { status: 'accepted', respondedAt: Date.now() }));
+
+    // Sala privada: apenas caller/callee leem e escrevem sessões; terceiro é bloqueado.
+    const privateRoom = 'privateVoiceRooms/pv-test';
+    await assertSucceeds(set(ref(ownerRt, privateRoom), {
+      callerId: 'owner', calleeId: 'member', createdAt: Date.now()
+    }));
+    await assertSucceeds(get(ref(memberRt, privateRoom)));
+    await assertFails(get(ref(outsiderRt, privateRoom)));
+    await assertSucceeds(set(ref(ownerRt, `${privateRoom}/sessions/session-owner`), {
+      userId: 'owner', user: { id: 'owner', name: 'Owner' },
+      mediaState: { muted: false, camera: false, screen: false }, speaking: false,
+      joinedAt: Date.now()
+    }));
+    await assertSucceeds(set(ref(memberRt, `${privateRoom}/sessions/session-member`), {
+      userId: 'member', user: { id: 'member', name: 'Member' },
+      mediaState: { muted: false, camera: false, screen: false }, speaking: false,
+      joinedAt: Date.now()
+    }));
+    await assertFails(set(ref(outsiderRt, `${privateRoom}/sessions/session-outsider`), {
+      userId: 'outsider', user: { id: 'outsider', name: 'Outsider' },
+      mediaState: { muted: false, camera: false, screen: false }, speaking: false,
+      joinedAt: Date.now()
+    }));
+    await assertSucceeds(remove(ref(memberRt, `${privateRoom}/sessions/session-member`)));
 
     console.log('Banana Cord V2 Firebase Security Rules emulator test: OK');
   } finally {
