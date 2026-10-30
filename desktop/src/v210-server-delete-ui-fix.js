@@ -1,5 +1,5 @@
 /* Banana Cord V2.0.10 server deletion UI fix.
- * Replaces the renderer-native prompt() path with an in-app confirmation modal.
+ * Replaces the renderer-native confirmation dialog with an in-app modal.
  */
 (() => {
   if (window.__bananaV210ServerDeleteUiFix) return;
