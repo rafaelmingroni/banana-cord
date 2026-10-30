@@ -141,6 +141,9 @@ app.whenReady().then(async () => {
         // V2.0.12: URLs rendered as messages must become real clickable links.
         selectServer('srv-e2e');
         selectChannel('general');
+        // Let the initial messages:load empty snapshot settle before injecting the
+        // message under test; otherwise the fake transport can erase it in a microtask.
+        await sleep(25);
         fake.trigger('messages:list', {
           serverId: 'srv-e2e', channelId: 'general',
           messages: [{ id: 'link-e2e', authorId: 'u-e2e', authorName: 'E2E User', text: 'Veja https://example.com/teste', at: Date.now(), reactions: {} }]
