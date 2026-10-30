@@ -1,0 +1,46 @@
+name: V2.0.20 Chat Stability Validation
+
+on:
+  push:
+    branches: [v2.0.20-chat-stability]
+    paths:
+      - "desktop/**"
+      - "RELEASE_NOTES-2.0.20.md"
+      - ".github/workflows/v220-chat-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+      - name: Critical production dependency audit
+        working-directory: desktop
+        run: npm run security:audit
+      - name: Prepare source
+        working-directory: desktop
+        run: npm run prepare:source
+      - name: Validate V2.0.20 JavaScript
+        shell: pwsh
+        run: |
+          node --check desktop/src/cloud-v2-v220-chat-stability.js
+          node --check desktop/src/v220-chat-stability.js
+          node --check desktop/scripts/smoke-v220.js
+          node --check desktop/scripts/e2e-v220-chat-ui.js
+      - name: Regression suite
+        working-directory: desktop
+        run: npm run smoke:cloud
+      - name: Real Electron chat stress suite
+        working-directory: desktop
+        run: npm run smoke:e2e-v2
