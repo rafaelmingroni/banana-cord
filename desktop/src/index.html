@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob: https: http:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src * ws: wss:; media-src 'self' blob: data:;" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss: http://127.0.0.1:* ws://127.0.0.1:* http://localhost:* ws://localhost:*; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none';" />
 <title>Banana Cord</title>
 <link rel="stylesheet" href="styles.css" />
 <link rel="stylesheet" href="v1.css" />
@@ -51,5 +51,6 @@
 <script src="v210-server-delete-ui-fix.js"></script>
 <script src="v212-ui-fix.js"></script>
 <script src="v214-private-ui-fix.js"></script>
+<script src="v215-security-ui-fix.js"></script>
 </body>
 </html>
