@@ -38,16 +38,20 @@ function patchAutoUpdater(autoUpdater) {
   const originalQuitAndInstall = autoUpdater.quitAndInstall.bind(autoUpdater);
   let installing = false;
 
-  autoUpdater.quitAndInstall = function gracefulQuitAndInstall(isSilent = false, isForceRunAfter = true) {
+  autoUpdater.quitAndInstall = function gracefulQuitAndInstall(options = false, legacyIsForceRunAfter = true) {
     if (installing) return;
     installing = true;
+    const invokeOriginal = () => {
+      if (options && typeof options === 'object') originalQuitAndInstall(options);
+      else originalQuitAndInstall(options, legacyIsForceRunAfter);
+    };
     (async () => {
       await prepareRendererShutdown();
       // Give Firebase/Realtime Database a small window to flush explicit removals
       // before the installer terminates the process and launches the new version.
       await new Promise(resolve => setTimeout(resolve, 250));
-      originalQuitAndInstall(isSilent, isForceRunAfter);
-    })().catch(() => originalQuitAndInstall(isSilent, isForceRunAfter));
+      invokeOriginal();
+    })().catch(invokeOriginal);
   };
 }
 
