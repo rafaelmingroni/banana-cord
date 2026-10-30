@@ -10,7 +10,8 @@ const index = fs.readFileSync(path.join(root, 'src', 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 new Function(hotfix);
-assert.strictEqual(pkg.version, '2.0.8', 'V2.0.8 package version must be set.');
+const [major, minor, patch] = String(pkg.version || '').split('.').map(Number);
+assert(major > 2 || (major === 2 && (minor > 0 || (minor === 0 && patch >= 8))), 'V2.0.8 voice regressions must remain enabled in V2.0.8 or newer.');
 assert(index.includes('v208-call-hotfix.js'), 'Renderer must load the V2.0.8 call hotfix.');
 assert(index.indexOf('v208-call-hotfix.js') > index.indexOf('v207-voice-stream-fix.js'), 'V2.0.8 must load after V2.0.7 so it can block the broken transport wrapper.');
 assert(!hotfix.includes("require('firebase/database')"), 'V2.0.8 must never load a second Firebase Database SDK in the voice hotfix.');
@@ -101,4 +102,4 @@ const peers = received.find(row => row.event === 'voice:peers')?.payload?.peers 
 assert.strictEqual(peers.length, 1, 'Initial peer list must remove self and duplicate friend sessions.');
 assert.strictEqual(peers[0].socketId, 'friendNew', 'Initial peer list must keep Gustavo authoritative socket.');
 
-console.log('Banana Cord V2.0.8 restored voice transport regression checks: OK');
+console.log('Banana Cord V2.0.8+ restored voice transport regression checks: OK');
