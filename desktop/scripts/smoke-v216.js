@@ -26,7 +26,7 @@ must(cloud.includes("lastMessage: { fromId: this.user.uid, toId: peerId, at, e2e
 must(!/batch\.set\(messageRef,[\s\S]{0,500}\btext\s*,/.test(cloud), 'new encrypted DM writes plaintext text field');
 
 must(client.includes("ipcRenderer.invoke('e2ee:encrypt'"), 'minimal E2EE renderer bridge missing');
-must(ui.includes('Criptografia ponta a ponta ativa'), 'E2EE UI indicator missing');
+must(ui.includes('criptografia ponta a ponta') && ui.includes('Só você e seu contato conseguem ler'), 'E2EE UI protection indicator missing');
 must(index.indexOf('v216-e2ee-client.js') < index.indexOf('cloud-browser/cloud-v2-all.browser.js'), 'E2EE bridge must load before cloud bundle');
 must(index.includes('v216-e2ee-ui.js'), 'V2.0.16 E2EE UI patch not loaded');
 must(buildCloud.includes("require('./cloud-v2-v216-e2ee.js');"), 'V2.0.16 cloud patch not bundled');
