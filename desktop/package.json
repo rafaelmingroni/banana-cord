@@ -1,7 +1,7 @@
 {
   "name": "banana-cord",
-  "version": "2.0.18",
-  "description": "Banana Cord V2 - DMs E2EE, atualizações premium e chamadas privadas mais claras",
+  "version": "2.0.19",
+  "description": "Banana Cord V2 - detalhes de chat, hierarquia e experiência premium leve",
   "private": true,
   "main": "main-v120.js",
   "author": "Rafael Mingroni",
@@ -17,7 +17,7 @@
     "smoke:ui": "node scripts/smoke-ui.js",
     "smoke:rendezvous": "node scripts/smoke-rendezvous.js",
     "smoke:parity": "node scripts/smoke-cloud-parity.js",
-    "smoke:cloud": "node scripts/smoke-cloud.js && node scripts/smoke-cloud-ui.js && node scripts/smoke-cloud-parity.js && node scripts/smoke-webrtc-signal.js && node scripts/smoke-screen-share.js && node scripts/smoke-v205.js && node scripts/smoke-v206-call-update.js && node scripts/smoke-v208.js && node scripts/smoke-v210.js && node scripts/smoke-v211.js && node scripts/smoke-v212.js && node scripts/smoke-v214.js && node scripts/smoke-v215.js && node scripts/smoke-v216.js && node scripts/smoke-v217.js && node scripts/smoke-v218.js",
+    "smoke:cloud": "node scripts/smoke-cloud.js && node scripts/smoke-cloud-ui.js && node scripts/smoke-cloud-parity.js && node scripts/smoke-webrtc-signal.js && node scripts/smoke-screen-share.js && node scripts/smoke-v205.js && node scripts/smoke-v206-call-update.js && node scripts/smoke-v208.js && node scripts/smoke-v210.js && node scripts/smoke-v211.js && node scripts/smoke-v212.js && node scripts/smoke-v214.js && node scripts/smoke-v215.js && node scripts/smoke-v216.js && node scripts/smoke-v217.js && node scripts/smoke-v218.js && node scripts/smoke-v219.js",
     "smoke:rules": "firebase emulators:exec --project demo-banana-cord --config ../firebase/firebase.json --only firestore,database \"node scripts/smoke-firebase-rules.js && node scripts/smoke-v216-firebase-rules.js\"",
     "smoke:e2e-v2": "electron scripts/e2e-v218-private-call-ui.js && electron scripts/e2e-v217-updater-ui.js && electron scripts/e2e-v216-e2ee.js && electron scripts/e2e-v2-release.js",
     "security:audit": "npm audit --omit=dev --audit-level=critical"
