@@ -1,0 +1,10 @@
+- Corrige definitivamente o ícone do Windows que na V2.0.12 podia aparecer como um quadrado amarelo no atalho da área de trabalho.
+- Redesenha/adapta a identidade visual aprovada da banana feliz com headset e balão de conversa para funcionar como ícone real de aplicativo em tamanhos pequenos.
+- Troca a fonte do ícone para SVG vetorial, preservando as proporções da marca antes de cada renderização.
+- Gera um ICO multi-resolução de verdade com frames independentes em 16, 24, 32, 48, 64, 128 e 256 px.
+- Usa uma renderização dedicada em 32 px para a bandeja do Windows e 256 px para a janela/aplicativo.
+- Deixa de depender do Windows para reduzir sozinho uma única imagem grande, eliminando a causa do ícone chapado/amarelado.
+- Adiciona validação automática de contraste e diversidade de cores nos tamanhos 32 px e 256 px durante a geração do ícone.
+- Depois do build, extrai o ícone realmente embutido em `Banana Cord.exe` e valida que ele contém área escura, amarelo da banana e detalhes suficientes.
+- Se o ícone final voltar a virar um bloco amarelo ou perder detalhes, o build falha antes da publicação da release.
+- Mantém intactas as funções da V2.0.12: links clicáveis, duplo clique em voz, correção da aba Privado, hierarquia de cargos e ligações privadas.
