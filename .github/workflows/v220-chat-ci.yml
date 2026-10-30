@@ -34,13 +34,16 @@ jobs:
       - name: Validate V2.0.20 JavaScript
         shell: pwsh
         run: |
+          node --check desktop/updater-prompt.js
+          node --check desktop/graceful-shutdown.js
           node --check desktop/src/cloud-v2-v220-chat-stability.js
           node --check desktop/src/v220-chat-stability.js
           node --check desktop/scripts/smoke-v220.js
           node --check desktop/scripts/e2e-v220-chat-ui.js
+          node --check desktop/scripts/e2e-v220-updater-relaunch.js
       - name: Regression suite
         working-directory: desktop
         run: npm run smoke:cloud
-      - name: Real Electron chat stress suite
+      - name: Real Electron chat, updater and interaction suite
         working-directory: desktop
         run: npm run smoke:e2e-v2
