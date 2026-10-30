@@ -1,0 +1,55 @@
+name: V2.0.18 Private Call and Responsive Validation
+
+on:
+  push:
+    branches: [v2.0.18-polish-calls-responsive]
+    paths:
+      - "desktop/**"
+      - "RELEASE_NOTES-2.0.18.md"
+      - ".github/workflows/v218-polish-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Critical production dependency audit
+        working-directory: desktop
+        run: npm run security:audit
+
+      - name: Prepare source
+        working-directory: desktop
+        run: npm run prepare:source
+
+      - name: Validate V2.0.18 JavaScript
+        shell: pwsh
+        run: |
+          node --check desktop/updater-prompt.js
+          node --check desktop/graceful-shutdown.js
+          node --check desktop/src/v216-e2ee-ui.js
+          node --check desktop/src/v218-polish.js
+          node --check desktop/scripts/smoke-v218.js
+          node --check desktop/scripts/e2e-v218-private-call-ui.js
+
+      - name: V2.0.18 regression suite
+        working-directory: desktop
+        run: npm run smoke:cloud
+
+      - name: Real Electron V2.0.18 interaction suite
+        working-directory: desktop
+        run: npm run smoke:e2e-v2
