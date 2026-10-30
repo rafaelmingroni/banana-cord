@@ -5,7 +5,7 @@ const { patchAutoUpdater } = require('./graceful-shutdown');
 patchAutoUpdater(autoUpdater);
 
 autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.autoInstallOnAppQuit = false;
 
 autoUpdater.setFeedURL({
   provider: 'github',
