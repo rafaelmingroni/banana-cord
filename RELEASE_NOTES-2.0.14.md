@@ -1,0 +1,10 @@
+- Corrige o bug em que a lateral de `Privado` podia desaparecer ao receber atualizações de voz, presença ou mensagens do servidor.
+- Impede o renderer de canais de servidor de apagar a interface de mensagens privadas.
+- Adiciona auto-reparo da lateral privada caso algum handler legado tente limpar o conteúdo diretamente.
+- Mantém o modo `Privado` selecionado durante reconexões e atualizações do Banana Cloud, sem voltar sozinho para o primeiro servidor.
+- Redesenha a área privada com hierarquia visual própria e mais consistente com o restante do Banana Cord.
+- Mantém `Amigos`, `Nova mensagem` e `Adicionar amigo` sempre acessíveis no modo privado.
+- Exibe solicitações de amizade pendentes diretamente na lateral.
+- Melhora a apresentação de amigos, conversas recentes e estados vazios.
+- Adiciona uma home de Privado com atalhos para adicionar amigo, iniciar DM e abrir a lista de amigos.
+- Adiciona teste de regressão específico para navegação e renderização do Privado.
