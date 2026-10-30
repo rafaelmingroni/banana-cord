@@ -1,6 +1,6 @@
 {
   "name": "banana-cord",
-  "version": "2.0.12",
+  "version": "2.0.13",
   "description": "Banana Cord V2 - contas, servidores persistentes e comunicação em nuvem com voz e tela via WebRTC",
   "private": true,
   "main": "main-v120.js",
@@ -36,7 +36,8 @@
     "electron": "45.1.0",
     "electron-builder": "^26.0.12",
     "esbuild": "0.28.2",
-    "firebase-tools": "15.34.2"
+    "firebase-tools": "15.34.2",
+    "sharp": "0.35.5"
   },
   "build": {
     "appId": "com.bananacord.app",
