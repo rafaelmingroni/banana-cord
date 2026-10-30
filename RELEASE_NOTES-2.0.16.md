@@ -1,0 +1,12 @@
+- Adiciona criptografia ponta a ponta (E2EE) para novas mensagens privadas entre amigos.
+- Usa X25519 para acordo de chaves, HKDF-SHA256 para derivação e AES-256-GCM para confidencialidade e autenticação das mensagens.
+- Mantém a chave privada fora do Firebase e protegida localmente pelo `safeStorage` do Electron/DPAPI do Windows.
+- Publica no Banana Cloud somente chaves públicas X25519 e seus identificadores criptográficos.
+- Mantém histórico antigo de DMs legível, mas novas mensagens enviadas pela V2.0.16 são gravadas no Firestore apenas como ciphertext autenticado.
+- Impede downgrade de uma mensagem já criptografada para plaintext durante edição.
+- Adiciona indicador visual `🔒 Criptografia ponta a ponta ativa` nas conversas compatíveis.
+- Avisa quando o contato ainda não abriu uma versão compatível e, portanto, ainda não publicou uma chave E2EE.
+- Mantém chaves públicas antigas no Firestore para permitir leitura de mensagens após futuras rotações de chave, desde que a chave privada correspondente continue disponível no dispositivo.
+- Adiciona testes Firebase contra adulteração de envelopes, falsificação de remetente e tentativa de misturar plaintext com ciphertext.
+- Adiciona teste Electron real com duas identidades X25519, round-trip de criptografia e rejeição de ciphertext adulterado.
+- Preserva todas as proteções de segurança, voz, servidor, Privado e branding das versões anteriores.
