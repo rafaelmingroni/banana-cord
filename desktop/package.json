@@ -1,6 +1,6 @@
 {
   "name": "banana-cord",
-  "version": "2.0.13",
+  "version": "2.0.14",
   "description": "Banana Cord V2 - contas, servidores persistentes e comunicação em nuvem com voz e tela via WebRTC",
   "private": true,
   "main": "main-v120.js",
@@ -17,7 +17,7 @@
     "smoke:ui": "node scripts/smoke-ui.js",
     "smoke:rendezvous": "node scripts/smoke-rendezvous.js",
     "smoke:parity": "node scripts/smoke-cloud-parity.js",
-    "smoke:cloud": "node scripts/smoke-cloud.js && node scripts/smoke-cloud-ui.js && node scripts/smoke-cloud-parity.js && node scripts/smoke-webrtc-signal.js && node scripts/smoke-screen-share.js && node scripts/smoke-v205.js && node scripts/smoke-v206-call-update.js && node scripts/smoke-v208.js && node scripts/smoke-v210.js && node scripts/smoke-v211.js && node scripts/smoke-v212.js",
+    "smoke:cloud": "node scripts/smoke-cloud.js && node scripts/smoke-cloud-ui.js && node scripts/smoke-cloud-parity.js && node scripts/smoke-webrtc-signal.js && node scripts/smoke-screen-share.js && node scripts/smoke-v205.js && node scripts/smoke-v206-call-update.js && node scripts/smoke-v208.js && node scripts/smoke-v210.js && node scripts/smoke-v211.js && node scripts/smoke-v212.js && node scripts/smoke-v214.js",
     "smoke:rules": "firebase emulators:exec --project demo-banana-cord --config ../firebase/firebase.json --only firestore,database \"node scripts/smoke-firebase-rules.js\"",
     "smoke:e2e-v2": "electron scripts/e2e-v2-release.js"
   },
