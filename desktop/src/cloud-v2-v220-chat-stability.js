@@ -1,4 +1,4 @@
-/* Banana Cord V2.0.20 — bounded chat subscriptions + progressive history. */
+/* Banana Cord V2.0.20 — bounded chat subscriptions + progressive history + anti-flood. */
 (() => {
   if (window.__bananaV220ChatCloud) return;
   window.__bananaV220ChatCloud = true;
@@ -9,6 +9,8 @@
 
   const PAGE = 60;
   const MAX = 240;
+  const FLOOD_CAPACITY = 6;
+  const FLOOD_REFILL_MS = 800;
   const now = () => Date.now();
   const pairId = (a, b) => [String(a), String(b)].sort().join('_');
   function millis(value) {
@@ -37,6 +39,42 @@
     socket.__bananaDmHistoryCount = new Map();
     socket.__bananaMessageHistoryHasMore = new Map();
     socket.__bananaDmHistoryHasMore = new Map();
+    socket.__bananaFlood = { tokens: FLOOD_CAPACITY, updatedAt: now() };
+
+    socket.takeMessagePermitV220 = function takeMessagePermitV220() {
+      const stamp = now();
+      const guard = this.__bananaFlood || (this.__bananaFlood = { tokens: FLOOD_CAPACITY, updatedAt: stamp });
+      const elapsed = Math.max(0, stamp - Number(guard.updatedAt || stamp));
+      if (elapsed >= FLOOD_REFILL_MS) {
+        guard.tokens = Math.min(FLOOD_CAPACITY, Number(guard.tokens || 0) + Math.floor(elapsed / FLOOD_REFILL_MS));
+        guard.updatedAt = stamp - (elapsed % FLOOD_REFILL_MS);
+      }
+      if (guard.tokens < 1) {
+        const waitMs = Math.max(250, FLOOD_REFILL_MS - (stamp - guard.updatedAt));
+        const seconds = Math.max(1, Math.ceil(waitMs / 1000));
+        throw new Error(`Você está enviando mensagens rápido demais. Aguarde ${seconds}s.`);
+      }
+      guard.tokens -= 1;
+      return true;
+    };
+
+    const sendMessageBase = typeof socket.sendMessage === 'function' ? socket.sendMessage.bind(socket) : null;
+    if (sendMessageBase) {
+      socket.sendMessage = async function sendMessageV220(payload = {}) {
+        this.takeMessagePermitV220();
+        return sendMessageBase(payload);
+      };
+    }
+
+    // This patch is deliberately applied after V2.0.16 E2EE, so the DM wrapper
+    // rate-limits the encrypted send path instead of replacing encryption.
+    const sendDmBase = typeof socket.sendDm === 'function' ? socket.sendDm.bind(socket) : null;
+    if (sendDmBase) {
+      socket.sendDm = async function sendDmV220(payload = {}) {
+        this.takeMessagePermitV220();
+        return sendDmBase(payload);
+      };
+    }
 
     socket.watchMessages = async function watchMessagesV220(serverId, channelId, requestedCount = PAGE) {
       const count = Math.min(MAX, Math.max(PAGE, Number(requestedCount) || PAGE));
@@ -134,8 +172,11 @@
   if (window.BananaLegacy?.attachSocket) {
     const previousAttach = window.BananaLegacy.attachSocket;
     window.BananaLegacy.attachSocket = function attachSocketV220(socket, user) {
+      // Let V2.0.16 install its E2EE wrappers first. V2.0.20 then layers
+      // pagination and anti-flood on top of the final encrypted DM methods.
+      const result = previousAttach(socket, user);
       patchSocket(socket);
-      return previousAttach(socket, user);
+      return result;
     };
   }
   if (window.BananaCloudSocket) patchSocket(window.BananaCloudSocket);
