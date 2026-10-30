@@ -97,9 +97,9 @@
   renderChannels = function renderChannelsV212(...args) {
     if (state.viewMode === 'dm') {
       els.app?.classList.add('dm-mode');
-      els.serverName.textContent = 'Privado';
-      els.inviteBtn.style.visibility = 'hidden';
-      els.serverSettingsBtn.style.visibility = 'hidden';
+      if (els.serverName.textContent !== 'Privado') els.serverName.textContent = 'Privado';
+      if (els.inviteBtn.style.visibility !== 'hidden') els.inviteBtn.style.visibility = 'hidden';
+      if (els.serverSettingsBtn.style.visibility !== 'hidden') els.serverSettingsBtn.style.visibility = 'hidden';
       if (!els.channels.querySelector('.dm-sidebar')) renderDmSidebar();
       syncPrivateCallButton();
       return;
@@ -110,9 +110,9 @@
   function stabilizeDmShell() {
     if (state.viewMode !== 'dm') return;
     els.app?.classList.add('dm-mode');
-    els.serverName.textContent = 'Privado';
-    els.inviteBtn.style.visibility = 'hidden';
-    els.serverSettingsBtn.style.visibility = 'hidden';
+    if (els.serverName.textContent !== 'Privado') els.serverName.textContent = 'Privado';
+    if (els.inviteBtn.style.visibility !== 'hidden') els.inviteBtn.style.visibility = 'hidden';
+    if (els.serverSettingsBtn.style.visibility !== 'hidden') els.serverSettingsBtn.style.visibility = 'hidden';
     if (!els.channels.querySelector('.dm-sidebar')) renderDmSidebar();
     syncPrivateCallButton();
   }
@@ -209,7 +209,8 @@
     const active = state.voice.serverId === PRIVATE_SERVER_ID && !!state.voice.channelId;
     button.classList.toggle('active', active);
     button.disabled = active;
-    button.textContent = active ? '☎ Em ligação' : '☎ Ligar';
+    const nextText = active ? '☎ Em ligação' : '☎ Ligar';
+    if (button.textContent !== nextText) button.textContent = nextText;
   }
 
   const startDmBase = startDm;
@@ -295,9 +296,9 @@
     state.viewMode = 'dm';
     state.selectedChannel = null;
     els.app.classList.add('dm-mode', 'v212-private-voice');
-    els.serverName.textContent = 'Privado';
-    els.inviteBtn.style.visibility = 'hidden';
-    els.serverSettingsBtn.style.visibility = 'hidden';
+    if (els.serverName.textContent !== 'Privado') els.serverName.textContent = 'Privado';
+    if (els.inviteBtn.style.visibility !== 'hidden') els.inviteBtn.style.visibility = 'hidden';
+    if (els.serverSettingsBtn.style.visibility !== 'hidden') els.serverSettingsBtn.style.visibility = 'hidden';
     renderDmSidebar();
     els.emptyView.classList.add('hidden');
     els.textView.classList.add('hidden');
