@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.9
+- Corrige exclusão de servidores próprios que ainda podia falhar com erro de permissão no Firebase.
+- Move a correção de exclusão para dentro do bundle único do Banana Cloud, usando a mesma instância do Firestore que criou o banco.
+- Desativa o wrapper legado da V2.0.5 que carregava `firebase/firestore` fora do bundle Cloud e podia misturar runtimes Firebase diferentes.
+- Garante a ordem correta de limpeza: mensagens → canais → membros/referências → convite → servidor.
+- Mantém o dono como membro até todos os canais protegidos serem apagados, evitando `permission-denied` no meio da exclusão.
+- Mantém a exclusão restrita ao dono do servidor e preserva as correções de voz, transmissão e social da V2.0.8.
+- Adiciona regressão executável que comprova que mensagens e canais são removidos antes da limpeza final do servidor.
+
 ## 2.0.8
 - Corrige regressão crítica da V2.0.7 que impedia duas pessoas de entrarem na mesma call e podia mostrar `childPathObj.split is not a function`.
 - Remove da rota ativa de voz os wrappers que carregavam uma segunda instância de `firebase/database`; a call volta a usar exclusivamente o Firebase já empacotado pelo Banana Cloud.
