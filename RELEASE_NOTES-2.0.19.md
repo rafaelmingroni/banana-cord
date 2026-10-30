@@ -1,0 +1,7 @@
+- Adiciona divisores de data em mensagens de servidor e mensagens privadas.
+- Exibe contexto temporal como Hoje, Ontem, há alguns dias, 1/2 semanas atrás e data completa para mensagens antigas.
+- Reorganiza a lateral de membros por hierarquia: Dono, Administradores, Moderadores, Membros e Offline.
+- Adiciona contagem por grupo e identificação visual discreta de cargo.
+- Melhora a tela de gerenciamento de cargos com descrições claras das permissões de cada nível.
+- Mantém alteração de cargo restrita ao dono e preserva a ordem de autoridade: Dono > Administrador > Moderador > Membro.
+- Mantém o visual compacto, responsivo e leve, sem adicionar bibliotecas ou processamento pesado em segundo plano.
