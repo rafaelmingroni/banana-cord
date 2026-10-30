@@ -10,7 +10,7 @@ function expect(condition, message) {
 }
 
 expect(index.includes('<script src="v214-private-ui-fix.js"></script>'), 'V2.0.14 private UI patch is not loaded.');
-expect(ui.includes("if (state.viewMode === 'dm') {\n      renderDmSidebar();\n      return;"), 'renderChannels must guard Privado before server rendering.');
+expect(/renderChannels\s*=\s*function[\s\S]*?if\s*\(state\.viewMode\s*===\s*['"]dm['"]\)\s*\{\s*renderDmSidebar\(\);\s*return;\s*\}[\s\S]*?return\s+renderChannelsBase\(\);/.test(ui), 'renderChannels must guard Privado before server rendering.');
 expect(ui.includes('MutationObserver'), 'Privado self-healing observer is missing.');
 expect(ui.includes('restoreServerReference'), 'Privado must preserve a server reference across reconnects.');
 expect(ui.includes('Adicionar amigo'), 'Privado add-friend action is missing.');
