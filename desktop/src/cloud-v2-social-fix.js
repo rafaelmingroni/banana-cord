@@ -13,6 +13,10 @@
 
   function patchSocket(socket) {
     if (!socket || socket.__bananaV211SocialPatched) return false;
+    // Some renderer/E2E startup paths temporarily attach a partial compatibility
+    // socket. Do not mark those as patched; the real BananaCloudSocket will be
+    // patched when it is attached a moment later.
+    if (typeof socket.handle !== 'function' || !socket.user || !socket.db) return false;
     socket.__bananaV211SocialPatched = true;
 
     // Reading a relationship document that does not exist is denied by the rules,
