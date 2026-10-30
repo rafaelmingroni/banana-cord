@@ -1,0 +1,14 @@
+- Torna links HTTP/HTTPS enviados em chats de servidor e mensagens privadas clicáveis, abrindo no navegador padrão.
+- Restaura a entrada em canal de voz com duplo clique, sem exigir selecionar a sala e depois clicar em `Entrar na voz`.
+- Corrige a aba `Privado`, que podia voltar a exibir canais/estado do servidor quando chegavam atualizações em segundo plano.
+- Separa de forma autoritativa o estado de navegação privada do servidor selecionado.
+- Corrige permissões dos canais de voz para respeitar a hierarquia `Dono > Administrador > Moderador > Membro`.
+- Usuários sem cargo suficiente são bloqueados antes de abrir o microfone ou registrar presença na call.
+- Administradores herdam acesso a salas de moderador e membro; moderadores herdam acesso a salas de membro.
+- Adiciona ligações privadas de voz 1:1 em conversas diretas, com ações `Ligar`, `Atender` e `Desligar`.
+- Mantém a mídia das chamadas privadas em WebRTC; o Banana Cloud coordena somente presença e sinalização.
+- Adiciona aviso visual/sonoro para chamadas privadas recebidas.
+- Atualiza a identidade visual oficial do Banana Cord para o novo ícone da banana com headset e balão de conversa.
+- Aplica o novo ícone à janela, bandeja, executável, instalador e atalhos do Windows.
+- Adiciona regressão específica da V2.0.12 para links, navegação privada, hierarquia de voz e chamadas privadas.
+- Preserva as correções sociais/DM da V2.0.11 e as correções anteriores de call, transmissão e exclusão de servidor.
