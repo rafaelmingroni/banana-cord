@@ -70,5 +70,6 @@ app.on('browser-window-focus', extraCheck);
 app.whenReady().then(() => { const timer = setInterval(extraCheck, 30 * 60 * 1000); timer.unref?.(); });
 
 require('./tray.js');
+require('./e2ee-main.js');
 require('./main.js');
 require('./screen-share-main-fix.js');
