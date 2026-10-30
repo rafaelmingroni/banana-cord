@@ -4,6 +4,7 @@ const assert = require('assert');
 
 const root = path.resolve(__dirname, '..');
 const cloud = fs.readFileSync(path.join(root, 'src', 'cloud-v2-v212.js'), 'utf8');
+const incomingStatus = fs.readFileSync(path.join(root, 'src', 'cloud-v2-v212-incoming-status.js'), 'utf8');
 const ui = fs.readFileSync(path.join(root, 'src', 'v212-ux-private-call.js'), 'utf8');
 const voiceGuard = fs.readFileSync(path.join(root, 'src', 'v212-voice-access-guard.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'src', 'v212.css'), 'utf8');
@@ -13,10 +14,12 @@ const rules = fs.readFileSync(path.resolve(root, '..', 'firebase', 'database.rul
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 new Function(cloud);
+new Function(incomingStatus);
 new Function(ui);
 new Function(voiceGuard);
 
 assert(builder.includes("require('./cloud-v2-v212.js')"), 'V2.0.12 Cloud patch must stay inside the single Firebase bundle.');
+assert(builder.includes("require('./cloud-v2-v212-incoming-status.js')"), 'Private call cancellation status must stay inside the single Firebase bundle.');
 assert(cloud.includes("require('firebase/firestore')"), 'V2.0.12 channel hierarchy must use the bundled Firestore runtime.');
 assert(cloud.includes("require('firebase/database')"), 'V2.0.12 private calls must use the bundled Realtime Database runtime.');
 assert(cloud.includes('normalizeAllowedRoles'), 'V2.0.12 must normalize channel permissions as a minimum-role hierarchy.');
@@ -24,6 +27,21 @@ assert(cloud.includes("event === 'private-call:start'"), 'Private call start eve
 assert(cloud.includes("event === 'private-call:join'"), 'Private call join event must exist.');
 assert(cloud.includes('privateVoiceRooms'), 'Private calls must use isolated private voice rooms.');
 assert(cloud.includes('privateCallInvites'), 'Private calls must use explicit call invitations.');
+assert(incomingStatus.includes("private-call:incoming-status"), 'Caller cancellation must reach the incoming call UI.');
+
+// Execute the hierarchy helpers without creating a real socket. This proves the
+// intended minimum-role behavior instead of only checking for source strings.
+const fakeWindow = {};
+const fakeFirebase = new Proxy({}, { get: () => () => {} });
+const runCloud = new Function('require', 'window', 'crypto', cloud);
+runCloud(() => fakeFirebase, fakeWindow, { randomUUID: () => '00000000-0000-4000-8000-000000000000' });
+assert.deepStrictEqual(fakeWindow.BananaV212NormalizeAllowedRoles(['member']), ['member', 'moderator', 'admin']);
+assert.deepStrictEqual(fakeWindow.BananaV212NormalizeAllowedRoles(['moderator']), ['moderator', 'admin']);
+assert.deepStrictEqual(fakeWindow.BananaV212NormalizeAllowedRoles(['admin']), ['admin']);
+assert.strictEqual(fakeWindow.BananaV212CanAccessRole('member', ['moderator']), false, 'Member must not enter moderator voice.');
+assert.strictEqual(fakeWindow.BananaV212CanAccessRole('moderator', ['member']), true, 'Moderator must enter member voice.');
+assert.strictEqual(fakeWindow.BananaV212CanAccessRole('admin', ['moderator']), true, 'Admin must enter moderator voice.');
+assert.strictEqual(fakeWindow.BananaV212CanAccessRole('owner', ['admin']), true, 'Owner must enter admin voice.');
 
 assert(index.includes('v212.css'), 'V2.0.12 stylesheet must load.');
 assert(index.includes('v212-ux-private-call.js'), 'V2.0.12 UX layer must load.');
