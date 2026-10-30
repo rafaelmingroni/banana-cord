@@ -7,6 +7,7 @@ on:
       - "desktop/**"
       - "firebase/**"
       - "CHANGELOG.md"
+      - "RELEASE_NOTES-*.md"
       - "README.md"
       - ".github/workflows/release-windows.yml"
   workflow_dispatch:
@@ -69,11 +70,14 @@ jobs:
           node --check desktop/src/cloud-v2-socket.js
           node --check desktop/src/cloud-v2-runtime-fixes.js
           node --check desktop/src/cloud-v2-release-fixes.js
+          node --check desktop/src/cloud-v2-v212-fix.js
+          node --check desktop/src/v212-ui-fix.js
           node --check desktop/scripts/inject-firebase-config.js
           node --check desktop/scripts/smoke-cloud.js
           node --check desktop/scripts/smoke-cloud-parity.js
           node --check desktop/scripts/smoke-firebase-rules.js
           node --check desktop/scripts/smoke-ui.js
+          node --check desktop/scripts/smoke-v212.js
           node --check desktop/scripts/e2e-v2-release.js
 
       - name: Cloud foundation and parity tests
@@ -161,23 +165,28 @@ jobs:
           if (-not $latest) { Write-Error "latest.yml não foi gerado."; exit 1 }
           Write-Host "Installer: $($exe.Name) - $($exe.Length) bytes"
 
-      - name: Prepare release notes from changelog
+      - name: Prepare release notes
         shell: pwsh
         run: |
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
-          $lines = Get-Content CHANGELOG.md
-          $header = "## $version"
-          $start = [Array]::IndexOf($lines, $header)
-          if ($start -lt 0) { Write-Error "CHANGELOG.md não possui a seção $header"; exit 1 }
-          $body = New-Object System.Collections.Generic.List[string]
-          for ($i = $start + 1; $i -lt $lines.Count; $i++) {
-            if ($lines[$i] -match '^##\s+') { break }
-            $body.Add($lines[$i])
+          $specific = "RELEASE_NOTES-$version.md"
+          if (Test-Path $specific) {
+            $body = Get-Content $specific
+          } else {
+            $lines = Get-Content CHANGELOG.md
+            $header = "## $version"
+            $start = [Array]::IndexOf($lines, $header)
+            if ($start -lt 0) { Write-Error "CHANGELOG.md não possui a seção $header e $specific não existe"; exit 1 }
+            $body = New-Object System.Collections.Generic.List[string]
+            for ($i = $start + 1; $i -lt $lines.Count; $i++) {
+              if ($lines[$i] -match '^##\s+') { break }
+              $body.Add($lines[$i])
+            }
           }
           @(
             "# Banana Cord V$version"
             ""
-            "Esta é a primeira versão oficial da nova arquitetura do Banana Cord. A experiência deixa de depender de um usuário hospedando a sessão e passa a usar contas e servidores persistentes no Banana Cloud, mantendo voz, câmera e compartilhamento de tela em WebRTC."
+            "Nova versão oficial do Banana Cord V2, com foco em usabilidade, permissões de voz, mensagens privadas e identidade visual."
             ""
             "## O que mudou"
           ) + $body | Set-Content release-notes.md -Encoding UTF8
