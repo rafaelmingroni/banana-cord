@@ -1,0 +1,9 @@
+- Corrige o bug em que uma sequência grande de mensagens podia expandir o layout e fazer canais, cabeçalho ou composer saírem da área visível.
+- Trava a estrutura principal do Banana Cord na altura real da janela e deixa apenas a área de mensagens rolar.
+- Canais, servidores, cabeçalho, perfil e campo de mensagem permanecem fixos e acessíveis mesmo com histórico grande.
+- O histórico deixa de abrir centenas de mensagens de uma vez: carrega inicialmente as 60 mensagens mais recentes.
+- Ao chegar perto do topo, carrega mais 60 mensagens automaticamente e preserva a posição exata do scroll.
+- Corrige a consulta de histórico para buscar as mensagens mais recentes primeiro (`createdAt desc`) em vez das mais antigas.
+- Aplica o mesmo histórico progressivo a canais de servidor e mensagens privadas E2EE.
+- Mantém o limite de histórico renderizado controlado para reduzir trabalho de DOM e travadinhas durante bursts de mensagens.
+- Adiciona teste Electron real com 180 mensagens para garantir que sidebar, canais, chat e composer permaneçam dentro da janela e que o chat tenha scroll independente.
