@@ -23,15 +23,21 @@ app.whenReady().then(async () => {
     (() => {
       const now = Date.now();
       const day = 86400000;
-      state.user = { id:'me', name:'Rafael', status:'online' };
-      state.selectedServer = { id:'s1', name:'Banana Test', ownerId:'owner', memberRoles:{ admin:'admin', mod:'moderator' }, channels:[{id:'c1',name:'geral',type:'text'}] };
+      state.user = { id:'me', name:'Rafael', status:'online', customStatus:'Jogando leve' };
+      state.selectedServer = {
+        id:'s1', name:'Banana Test', ownerId:'owner',
+        memberRoles:{ admin:'admin', mod:'moderator' },
+        roleColors:{ owner:'#ffaa00', admin:'#ff3366', moderator:'#33aaff', member:'#dddddd' },
+        channels:[{id:'c1',name:'geral',type:'text'}]
+      };
       state.selectedChannel = state.selectedServer.channels[0];
+      state.viewMode = 'server';
       state.members = new Map([
-        ['owner',{id:'owner',name:'Owner',status:'online',role:'owner'}],
-        ['admin',{id:'admin',name:'Admin',status:'online',role:'admin'}],
+        ['owner',{id:'owner',name:'Owner',status:'online',role:'owner',customStatus:'Fundador'}],
+        ['admin',{id:'admin',name:'Admin',status:'online',role:'admin',customStatus:'Organizando tudo'}],
         ['mod',{id:'mod',name:'Mod',status:'online',role:'moderator'}],
         ['member',{id:'member',name:'Member',status:'online',role:'member'}],
-        ['off',{id:'off',name:'Offline',status:'offline',role:'member'}],
+        ['off',{id:'off',name:'Offline',status:'offline',role:'member',lastSeen:now-day}],
         ['me',state.user]
       ]);
       state.messagesByChannel.set('c1',[
@@ -50,6 +56,7 @@ app.whenReady().then(async () => {
       const groups = [...document.querySelectorAll('.v219-member-group-title span:first-child')].map(x=>x.textContent);
       const memberRows = document.querySelectorAll('.v219-member-row').length;
       const ownerMark = document.querySelector('.v219-member-row[data-role="owner"] .v219-hierarchy-mark');
+      const names = [...document.querySelectorAll('.message:not(.dm-message) .msg-head b')];
       if (!dividers.some(x=>x.startsWith('Hoje'))) return {ok:false,reason:'Hoje divider missing',dividers};
       if (!dividers.some(x=>x.startsWith('Ontem'))) return {ok:false,reason:'Ontem divider missing',dividers};
       if (!dividers.some(x=>x.includes('1 semana atrás'))) return {ok:false,reason:'weekly divider missing',dividers};
@@ -57,6 +64,25 @@ app.whenReady().then(async () => {
       for (const label of ['Dono','Administradores','Moderadores','Membros','Offline']) if (!groups.includes(label)) return {ok:false,reason:'missing group '+label,groups};
       if (memberRows !== 6) return {ok:false,reason:'unexpected member row count '+memberRows};
       if (!ownerMark) return {ok:false,reason:'owner hierarchy marker missing'};
+      if (names[0]?.dataset.role !== 'owner' || names[1]?.dataset.role !== 'admin') return {ok:false,reason:'message role metadata missing'};
+      if (!names[0]?.style.color || !names[1]?.style.color) return {ok:false,reason:'message role colors missing'};
+
+      openServerSettings();
+      const colorInputs = [...document.querySelectorAll('.v219-role-color-input')];
+      if (colorInputs.length !== 4) return {ok:false,reason:'expected four role color pickers',count:colorInputs.length};
+      if (!document.querySelector('.v219-role-settings')) return {ok:false,reason:'new role settings modal missing'};
+      closeModal();
+
+      openMemberProfile('admin');
+      const profile = document.querySelector('.v219-profile-card');
+      const profileName = document.querySelector('.v219-profile-heading h2')?.textContent || '';
+      const profileRole = document.querySelector('.v219-profile-role')?.textContent || '';
+      const profileAbout = document.querySelector('.v219-profile-about p')?.textContent || '';
+      if (!profile || profileName !== 'Admin') return {ok:false,reason:'rich member profile missing',profileName};
+      if (!profileRole.includes('Administrador')) return {ok:false,reason:'profile role missing',profileRole};
+      if (profileAbout !== 'Organizando tudo') return {ok:false,reason:'profile custom status missing',profileAbout};
+      if (!document.getElementById('dmFromProfile')) return {ok:false,reason:'profile DM action missing'};
+      closeModal();
 
       state.viewMode='dm';
       state.activeDmUserId='admin';
@@ -69,7 +95,7 @@ app.whenReady().then(async () => {
       const dmDividers=[...document.querySelectorAll('.v219-date-divider span')].map(x=>x.textContent);
       if (dmDividers.length !== 2 || !dmDividers[0].startsWith('Hoje') || !dmDividers[1].startsWith('Ontem')) return {ok:false,reason:'DM dividers invalid',dmDividers};
 
-      return {ok:true,dividers,groups,memberRows,dmDividers};
+      return {ok:true,dividers,groups,memberRows,dmDividers,colorInputs:colorInputs.length,profileName,profileRole};
     })();
   `, true);
 
