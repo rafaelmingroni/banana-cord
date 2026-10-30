@@ -1,0 +1,16 @@
+- Endurece as regras do Firestore para impedir falsificação de autor, alteração de metadados imutáveis e transições inválidas de amizade.
+- Oculta documentos de servidor de contas autenticadas que não sejam membros.
+- Impede enumeração da coleção de convites; somente consulta por código exato continua permitida.
+- Passa DMs e chamadas privadas a exigir amizade aceita, permitindo que a mesma regra seja aplicada no backend.
+- Mantém histórico antigo legível aos participantes, mas bloqueia novas mensagens privadas sem amizade válida.
+- Fecha o caminho legado e genérico de signaling no Realtime Database.
+- Bloqueia leitura da raiz de salas de voz e da raiz de session owners, reduzindo enumeração de sessões.
+- Valida identidade do usuário gravada nas salas de voz e campos essenciais de mídia/sinalização.
+- Fixa a origem de atualização no repositório oficial `rafaelmingroni/banana-cord`; convites não podem mais trocar a fonte de updates.
+- Bloqueia popups, navegação arbitrária e webviews no Electron; Node fica desativado em workers e subframes e DevTools ficam desligados no build instalado.
+- Restringe permissões de mídia ao renderer local do Banana Cord e endurece a Content Security Policy.
+- Restringe redirecionamentos de downloads auxiliares a origens HTTPS aprovadas.
+- Adiciona gate de `npm audit` para vulnerabilidades críticas nas dependências de produção.
+- Adiciona Dependabot para NPM e GitHub Actions.
+- Adiciona CodeQL para análise automática de segurança no GitHub.
+- Amplia os testes de Firebase Rules com cenários de abuso e cliente adulterado.
