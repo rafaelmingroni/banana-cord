@@ -1,0 +1,57 @@
+name: V2.0.17 Premium Updater Validation
+
+on:
+  push:
+    branches: [v2.0.17-premium-updater]
+    paths:
+      - "desktop/**"
+      - "RELEASE_NOTES-2.0.17.md"
+      - ".github/workflows/v217-premium-updater-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Critical production dependency audit
+        working-directory: desktop
+        run: npm run security:audit
+
+      - name: Prepare source
+        working-directory: desktop
+        run: npm run prepare:source
+
+      - name: Validate updater JavaScript
+        shell: pwsh
+        run: |
+          node --check desktop/updater-prompt.js
+          node --check desktop/src/v217-premium-updater.js
+          node --check desktop/scripts/smoke-v217.js
+          node --check desktop/scripts/e2e-v217-updater-ui.js
+
+      - name: V2.0.17 updater regression smoke
+        working-directory: desktop
+        run: node scripts/smoke-v217.js
+
+      - name: Existing Cloud regression suite
+        working-directory: desktop
+        run: npm run smoke:cloud
+
+      - name: Real Electron premium updater UI test
+        working-directory: desktop
+        run: electron scripts/e2e-v217-updater-ui.js
