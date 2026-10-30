@@ -4,12 +4,15 @@ const assert = require('assert');
 
 const root = path.resolve(__dirname, '..');
 const hotfix = fs.readFileSync(path.join(root, 'src', 'v208-call-hotfix.js'), 'utf8');
-const social = fs.readFileSync(path.join(root, 'src', 'v207-social-fix.js'), 'utf8');
+const social = fs.readFileSync(path.join(root, 'src', 'cloud-v2-social-fix.js'), 'utf8');
+const legacySocial = fs.readFileSync(path.join(root, 'src', 'v207-social-fix.js'), 'utf8');
 const socialUi = fs.readFileSync(path.join(root, 'src', 'v207-social-ui-fix.js'), 'utf8');
 const index = fs.readFileSync(path.join(root, 'src', 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 new Function(hotfix);
+new Function(social);
+new Function(legacySocial);
 const [major, minor, patch] = String(pkg.version || '').split('.').map(Number);
 assert(major > 2 || (major === 2 && (minor > 0 || (minor === 0 && patch >= 8))), 'V2.0.8 voice regressions must remain enabled in V2.0.8 or newer.');
 assert(index.includes('v208-call-hotfix.js'), 'Renderer must load the V2.0.8 call hotfix.');
@@ -20,9 +23,11 @@ assert(hotfix.includes('__bananaV207VoiceStreamPatched = true'), 'V2.0.8 must bl
 assert(hotfix.includes('avatarStyle(avatar, user)'), 'Local voice card must use the signed-in profile avatar.');
 assert(hotfix.includes("button.textContent = '▶ Assistir transmissão'"), 'Voice sidebar must expose Watch stream.');
 
-// Keep V2.0.7 social fixes while replacing only its voice transport patch.
+// Social behavior remains protected, but V2.0.11 moved Firestore access into the
+// single Banana Cloud browser bundle instead of the external V2.0.7 renderer patch.
 assert(social.includes("where('participants', 'array-contains', this.user.uid)"), 'Friend relationship query must remain rule-compatible.');
 assert(social.includes("collection(this.db, 'publicProfiles')"), 'Friend search must remain available.');
+assert(!legacySocial.includes("require('firebase/firestore')"), 'Legacy social renderer must not load a second Firestore SDK.');
 assert(socialUi.includes('Adicionar amigo'), 'Social onboarding must remain available.');
 
 const processed = [];
