@@ -1,0 +1,15 @@
+- Novo atualizador premium integrado à própria interface do Banana Cord.
+- Remove os pop-ups nativos do Windows para avisos de atualização disponível e atualização pronta.
+- Mantém o download automático em segundo plano enquanto o usuário continua usando o app e jogando normalmente.
+- Exibe progresso real do download, porcentagem, volume transferido e velocidade diretamente no Banana Cord.
+- Usa o badge de atualização no cabeçalho para reabrir o painel quando ele estiver minimizado.
+- Ao terminar o download, mostra as opções `Atualizar agora` e `Depois` sem interromper a sessão.
+- `Depois` mantém a atualização pronta em cache e evita qualquer instalação automática visível ao encerrar o app.
+- `Atualizar agora` encerra voz/presença com segurança e executa o NSIS em modo silencioso, sem mostrar novamente o assistente de instalação.
+- Mostra uma tela Banana Cord de transição `Aplicando atualização...` enquanto o app prepara o reinício.
+- Reabre automaticamente o Banana Cord após a atualização silenciosa.
+- Mostra uma confirmação discreta quando o usuário abre uma versão nova após atualizar.
+- Mantém o instalador tradicional com escolha de pasta apenas para primeira instalação/manual download.
+- Continua publicando `EXE + blockmap + latest.yml`, preservando suporte a download diferencial do electron-updater quando disponível.
+- Adiciona teste de regressão para impedir o retorno de `dialog.showMessageBox`, instalação automática no quit e update não silencioso.
+- Preserva E2EE, hardening de segurança, voz, compartilhamento de tela, Privado e branding das versões anteriores.
