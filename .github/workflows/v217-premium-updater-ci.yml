@@ -54,4 +54,4 @@ jobs:
 
       - name: Real Electron premium updater UI test
         working-directory: desktop
-        run: electron scripts/e2e-v217-updater-ui.js
+        run: npx electron scripts/e2e-v217-updater-ui.js
