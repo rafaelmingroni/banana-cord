@@ -76,9 +76,10 @@
       </div>
       <span id="v218CallTime" class="v218-call-time">00:00</span>
       <button id="v218Hangup" class="v218-call-hangup" type="button">Desligar</button>`;
-    const header = els.main?.querySelector?.(':scope > header');
+    const main = document.querySelector('.main');
+    const header = main?.querySelector?.(':scope > header');
     if (header) header.insertAdjacentElement('afterend', bar);
-    else els.main?.prepend?.(bar);
+    else main?.prepend?.(bar);
     document.getElementById('v218Hangup')?.addEventListener('click', async () => {
       try {
         if (state.voice?.channelId === 'direct' && typeof leaveVoice === 'function') await leaveVoice();
@@ -155,20 +156,23 @@
     const key = `${peerId}:${startedBy}:${startedAt}`;
     const peer = peerFor(peerId);
     const root = ensureIncomingCall();
+    const changedCall = incomingCallKey !== key;
     incomingPeerId = peerId;
     incomingCallKey = key;
     document.getElementById('v218IncomingName').textContent = peer?.name || 'Amigo';
     setAvatar(document.getElementById('v218IncomingAvatar'), peer);
     root.classList.remove('hidden');
-    if (!ringTimer) startRinging();
+    if (changedCall || !ringTimer) startRinging();
     systemNotify(peer, key);
   }
 
   function hideIncomingCall() {
-    ensureIncomingCall().classList.add('hidden');
+    const root = ensureIncomingCall();
+    const wasActive = !!incomingPeerId || !root.classList.contains('hidden') || !!ringTimer || !!ringStopTimer;
+    root.classList.add('hidden');
     incomingPeerId = '';
     incomingCallKey = '';
-    stopRinging();
+    if (wasActive) stopRinging();
   }
 
   async function acceptIncomingCall() {
@@ -228,7 +232,7 @@
     document.getElementById('v218ActiveStatus').textContent = status;
     document.getElementById('v218CallTime').textContent = formatDuration(Date.now() - directCallStartedAt);
     document.getElementById('v218ActiveDot')?.classList.toggle('speaking', localSpeaking || peerSpeaking);
-    hideIncomingCall();
+    if (incomingPeerId) hideIncomingCall();
   }
 
   function bindV218Socket(socket) {
