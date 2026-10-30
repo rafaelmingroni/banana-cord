@@ -72,12 +72,14 @@ jobs:
           node --check desktop/src/cloud-v2-release-fixes.js
           node --check desktop/src/cloud-v2-v212-fix.js
           node --check desktop/src/v212-ui-fix.js
+          node --check desktop/src/v214-private-ui-fix.js
           node --check desktop/scripts/inject-firebase-config.js
           node --check desktop/scripts/smoke-cloud.js
           node --check desktop/scripts/smoke-cloud-parity.js
           node --check desktop/scripts/smoke-firebase-rules.js
           node --check desktop/scripts/smoke-ui.js
           node --check desktop/scripts/smoke-v212.js
+          node --check desktop/scripts/smoke-v214.js
           node --check desktop/scripts/e2e-v2-release.js
 
       - name: Cloud foundation and parity tests
