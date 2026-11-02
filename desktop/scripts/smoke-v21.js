@@ -11,6 +11,7 @@ const ui = read('src/v21-social.js');
 const releaseFixes = read('src/v21-release-fixes.js');
 const css = read('src/v21-social.css');
 const i18n = read('src/v21-i18n.js');
+const legacyI18n = read('src/v21-i18n-legacy.js');
 const cloud = read('src/cloud-v2-v21-social.js');
 const main = read('v21-main.js');
 const mainV110 = read('main-v110.js');
@@ -23,12 +24,17 @@ expect(pkg.build?.files?.includes('v21-main.js'), 'v21-main.js is not packaged')
 expect(pkg.scripts['smoke:cloud'].includes('smoke-v21.js'), '2.1 smoke is not part of release regression');
 expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v21-social-ui.js'), '2.1 UI Electron test missing from release');
 expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v21-main.js'), '2.1 main-process Electron test missing from release');
+expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v21-language.js'), '2.1 live language Electron test missing from release');
+expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v21-submit-priority.js'), '2.1 command submit priority test missing from release');
+expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v21-private-guard.js'), '2.1 Private sidebar guard test missing from release');
 
 expect(index.includes('v21-social.css'), '2.1 stylesheet not loaded');
 expect(index.includes('v21-i18n.js') && index.includes('v21-social.js'), '2.1 renderer scripts not loaded');
+expect(index.includes('v21-i18n-legacy.js'), 'legacy select localization layer not loaded');
 expect(index.includes('v21-release-fixes.js'), '2.1 final integration guard not loaded');
 expect(index.indexOf('v220-chat-stability.js') < index.indexOf('v21-i18n.js'), '2.1 must layer after V2.0.20 stability patch');
-expect(index.indexOf('v21-i18n.js') < index.indexOf('v21-social.js'), 'localization must load before 2.1 UI');
+expect(index.indexOf('v21-i18n.js') < index.indexOf('v21-i18n-legacy.js'), 'targeted option localization must load after base localization');
+expect(index.indexOf('v21-i18n-legacy.js') < index.indexOf('v21-social.js'), 'localization layers must load before 2.1 UI');
 expect(index.indexOf('v21-social.js') < index.indexOf('v21-release-fixes.js'), 'private navigation guard must load after 2.1 channel renderer');
 expect(releaseFixes.includes("if (state.viewMode === 'dm')") && releaseFixes.includes('renderDmSidebar();'), 'V2.1 channel renderer must preserve the private sidebar guard');
 expect(build.includes("require('./cloud-v2-v21-social.js');"), '2.1 cloud patch not bundled');
@@ -54,6 +60,8 @@ expect(cloud.includes("event === 'messages:clear'"), 'server /clear backend miss
 expect(cloud.includes("event === 'dm:clear'"), 'private /clear backend missing');
 expect(cloud.includes("snap.data().authorId !== this.user.uid"), 'normal client must block editing other users messages');
 expect(cloud.includes("mode === 'all' || row.data()?.authorId === this.user.uid"), '/clear permissions missing');
+expect(cloud.includes("payload.all === true"), 'full-channel clear must require explicit clear-all intent');
+expect(releaseFixes.includes("all:clearAll"), 'renderer must send explicit clear-all intent');
 expect(e2ee.includes('editDmV216') && e2ee.includes('window.BananaE2EE.encrypt'), 'encrypted DM edit path must remain E2EE');
 
 expect(ui.includes("{ name:'/clear'"), '/clear command missing');
@@ -81,6 +89,9 @@ expect(i18n.includes("'en-US'"), 'English locale missing');
 expect(i18n.includes("'es-ES'"), 'Spanish locale missing');
 expect(i18n.includes("localStorage.setItem('banana.language'"), 'language preference persistence missing');
 expect(i18n.includes('MutationObserver'), 'live localization of legacy UI missing');
+expect(i18n.includes('.channel,.v21-category-name'), 'user channel/category names are not protected from literal translation');
+expect(!i18n.match(/const PROTECTED[^;]*\boption\b/), 'select options must not be globally protected from localization');
+expect(legacyI18n.includes('HTMLOptionElement') && legacyI18n.includes("'en-US':'Busy'"), 'targeted legacy select option translation missing');
 expect(css.includes('--v21-link:#67a7ff'), 'private/chat links are not moved away from repetitive yellow');
 expect(css.includes('.v21-role-menu'), 'premium role menu styling missing');
 expect(css.includes('.v21-command-menu'), 'slash command autocomplete styling missing');
