@@ -7,9 +7,41 @@ app.commandLine.appendSwitch('disable-software-rasterizer');
 ipcMain.handle('update:get-config', async () => ({ repoUrl: 'https://github.com/rafaelmingroni/banana-cord', autoCheck: true, autoDownload: true, currentVersion: '2.0.0' }));
 ipcMain.handle('update:get-state', async () => ({ status: 'idle', progress: 0, message: '' }));
 ipcMain.handle('clipboard:write', async () => true);
+ipcMain.handle('banana-updater:get-state', async () => ({ phase: 'idle', version: '2.0.0', percent: 0, transferred: 0, total: 0, error: '' }));
+ipcMain.handle('banana-updater:get-version', async () => '2.0.0');
+ipcMain.handle('banana-updater:check', async () => ({ ok: true }));
+
+let socialSettings = {
+  idleSeconds: 0,
+  idleState: 'active',
+  activity: null,
+  settings: {
+    shareActivity: true,
+    autoAwayMinutes: 5,
+    startup: { supported: true, enabled: true, registered: true }
+  },
+  startupLaunch: false
+};
+ipcMain.handle('banana-v21:get-settings', async () => socialSettings);
+ipcMain.handle('banana-v21:set-settings', async (_event, next = {}) => {
+  socialSettings = {
+    ...socialSettings,
+    settings: {
+      ...socialSettings.settings,
+      shareActivity: next.shareActivity ?? socialSettings.settings.shareActivity,
+      autoAwayMinutes: next.autoAwayMinutes ?? socialSettings.settings.autoAwayMinutes,
+      startup: {
+        ...socialSettings.settings.startup,
+        enabled: next.startupEnabled ?? socialSettings.settings.startup.enabled
+      }
+    }
+  };
+  return socialSettings;
+});
+ipcMain.handle('banana-v21:get-system-languages', async () => ['pt-BR', 'en-US']);
 
 const hardTimeout = setTimeout(() => {
-  console.error('V2 release E2E failed: hard timeout');
+  console.error('Mingrx release E2E failed: hard timeout');
   app.exit(1);
 }, 20000);
 
@@ -18,7 +50,7 @@ function finish(code, message) {
   if (message) (code === 0 ? console.log : console.error)(message);
   setTimeout(() => app.exit(code), 50);
 }
-function fail(message) { finish(1, `V2 release E2E failed: ${message}`); }
+function fail(message) { finish(1, `Mingrx release E2E failed: ${message}`); }
 
 app.whenReady().then(async () => {
   const win = new BrowserWindow({
@@ -138,7 +170,7 @@ app.whenReady().then(async () => {
   ]);
 
   if (!result?.ok) return fail(result?.reason || 'unknown renderer failure');
-  console.log('Banana Cord V2.0.0 release Electron interaction test: OK');
+  console.log('Mingrx legacy-release Electron interaction test: OK');
   console.log(JSON.stringify(result));
   try { win.destroy(); } catch {}
   finish(0);
