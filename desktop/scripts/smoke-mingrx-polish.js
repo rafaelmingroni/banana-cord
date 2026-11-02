@@ -59,6 +59,9 @@ assert(socialJs.includes("friend:search") && socialJs.includes("friend:request")
 assert(socialJs.includes('#v1FriendsBtn,.v214-private-request'), 'Gatilhos sociais legados não são redirecionados para a central Mingrx.');
 assert(socialJs.includes('#v207AddFriendBtn,#v207StartFriend'), 'Adicionar amigo legado não é redirecionado para a central Mingrx.');
 assert(socialJs.includes("friend:accept") && socialJs.includes("friend:reject") && socialJs.includes("friend:unblock"), 'Ações sociais essenciais não estão cobertas.');
+assert(!socialJs.includes('new MutationObserver'), 'Central social não deve observar o DOM inteiro: isso pode criar loop de avatar e alto uso de CPU.');
+assert(socialJs.includes("node.dataset.socialAvatarHydrated === 'true'"), 'Hidratação de avatar não possui proteção contra reaplicação.');
+assert(socialJs.includes('bindSocialSocket(state?.socket)'), 'Central social não garante binding do socket ao abrir.');
 
 for (const selector of ['big-banana-img','v214-private-home','mingrx-community-head','banana-updater-logo','cloud-home-logo']) {
   assert(markJs.includes(selector), `Marca fixa ainda não está coberta em ${selector}.`);
