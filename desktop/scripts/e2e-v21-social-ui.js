@@ -118,10 +118,10 @@ app.whenReady().then(async () => {
       if(!checks.activityMember)return{ok:false,reason:'member game activity missing',checks};
 
       const ownRow=document.querySelector('.message[data-message-id="mine1"]');
-      const peerRow=document.querySelector('.message[data-message-id="peer1"]');
-      if(!ownRow||!peerRow)return{ok:false,reason:'decorated message rows missing'};
+      const initialPeerRow=document.querySelector('.message[data-message-id="peer1"]');
+      if(!ownRow||!initialPeerRow)return{ok:false,reason:'decorated message rows missing'};
       if(!ownRow.querySelector('[data-v21-action="edit"]'))return{ok:false,reason:'own edit action missing'};
-      if(peerRow.querySelector('[data-v21-action="edit"]'))return{ok:false,reason:'owner/moderator must not edit another author message'};
+      if(initialPeerRow.querySelector('[data-v21-action="edit"]'))return{ok:false,reason:'owner/moderator must not edit another author message'};
 
       ownRow.querySelector('[data-v21-action="edit"]').click();
       await sleep(30);
@@ -138,7 +138,9 @@ app.whenReady().then(async () => {
       if(!(editedRow?.querySelector('.msg-text')?.textContent||'').includes('mensagem editada'))return{ok:false,reason:'message update did not reach UI'};
       if(!editedRow.querySelector('.v21-edited'))return{ok:false,reason:'edited marker missing'};
 
-      peerRow.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:500,clientY:300}));
+      const currentPeerRow=document.querySelector('.message[data-message-id="peer1"]');
+      if(!currentPeerRow)return{ok:false,reason:'peer message disappeared during edit rerender'};
+      currentPeerRow.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:500,clientY:300}));
       await sleep(20);
       const deleteMenu=document.querySelector('.v21-context-menu button.danger');
       if(!deleteMenu)return{ok:false,reason:'moderator/owner delete action missing in context menu'};
@@ -190,8 +192,7 @@ app.whenReady().then(async () => {
       const dmEdit=dmRow.querySelector('.v21-inline-edit textarea');dmEdit.value='segredo editado';dmEdit.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await sleep(20);
       if(!emitted.some(x=>x.event==='dm:edit'&&x.payload?.messageId==='dm1'&&x.payload?.text==='segredo editado'))return{ok:false,reason:'DM edit not emitted through E2EE-compatible path'};
 
-      const linkColor=getComputedStyle(document.querySelector('.banana-external-link')||document.body).color;
-      return{ok:true,checks,emitted:emitted.map(x=>x.event),linkColor,locale:window.BananaI18n.getLocale(),socialSettingsControls:true};
+      return{ok:true,checks,emitted:emitted.map(x=>x.event),locale:window.BananaI18n.getLocale(),socialSettingsControls:true};
     })();
   `, true);
 
