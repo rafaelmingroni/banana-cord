@@ -73,11 +73,12 @@
     if (lower === 'mine' || lower === 'all') amount = 100;
     const moderator = server && (ROLE_RANK[currentRole()] || 0) >= ROLE_RANK.moderator;
     const mode = server && moderator && lower !== 'mine' ? 'all' : 'mine';
+    const clearAll = !!(server && moderator && lower === 'all');
     const execute = () => {
       const event = dm ? 'dm:clear' : 'messages:clear';
       const payload = dm
         ? { userId:state.activeDmUserId, amount }
-        : { serverId:state.selectedServer.id, channelId:state.selectedChannel.id, amount, mode };
+        : { serverId:state.selectedServer.id, channelId:state.selectedChannel.id, amount, mode, all:clearAll };
       state.socket?.emit(event, payload, result => {
         if (result?.ok === false) return toast(result.message || 'Não foi possível limpar as mensagens.', 4200);
         toast(tr('clear.done', { count:result?.count || 0 }), 3200);
