@@ -9,6 +9,7 @@ const pkg = JSON.parse(read('package.json'));
 const index = read('src/index.html');
 const ui = read('src/v21-social.js');
 const releaseFixes = read('src/v21-release-fixes.js');
+const v212Ui = read('src/v212-ui-fix.js');
 const css = read('src/v21-social.css');
 const i18n = read('src/v21-i18n.js');
 const legacyI18n = read('src/v21-i18n-legacy.js');
@@ -32,6 +33,7 @@ expect(index.includes('v21-social.css'), '2.1 stylesheet not loaded');
 expect(index.includes('v21-i18n.js') && index.includes('v21-social.js'), '2.1 renderer scripts not loaded');
 expect(index.includes('v21-i18n-legacy.js'), 'legacy select localization layer not loaded');
 expect(index.includes('v21-release-fixes.js'), '2.1 final integration guard not loaded');
+expect(index.indexOf('v212-ui-fix.js') < index.indexOf('v21-social.js'), 'voice permission guard must load before V2.1 channel renderer');
 expect(index.indexOf('v220-chat-stability.js') < index.indexOf('v21-i18n.js'), '2.1 must layer after V2.0.20 stability patch');
 expect(index.indexOf('v21-i18n.js') < index.indexOf('v21-i18n-legacy.js'), 'targeted option localization must load after base localization');
 expect(index.indexOf('v21-i18n-legacy.js') < index.indexOf('v21-social.js'), 'localization layers must load before 2.1 UI');
@@ -62,10 +64,16 @@ expect(cloud.includes("event === 'dm:clear'"), 'private /clear backend missing')
 expect(cloud.includes("snap.data().authorId !== this.user.uid"), 'normal client must block editing other users messages');
 expect(cloud.includes("mode === 'all' || row.data()?.authorId === this.user.uid"), '/clear permissions missing');
 expect(cloud.includes("payload.all === true"), 'full-channel clear must require explicit clear-all intent');
-expect(releaseFixes.includes("all:clearAll"), 'renderer must send explicit clear-all intent');
+expect(releaseFixes.includes("all:clearAll"), 'final renderer guard must send explicit clear-all intent');
+expect(ui.includes("all: lower === 'all'"), 'base V2.1 /clear all must send explicit purge intent');
 expect(cloud.includes('refreshDmPreviewV21') && cloud.includes('const deleteDmBase = socket.deleteDm.bind(socket)'), 'DM delete must refresh the Recents preview');
 expect(cloud.includes('await this.refreshDmPreviewV21(peerId);'), 'DM clear must refresh the Recents preview');
 expect(e2ee.includes('editDmV216') && e2ee.includes('window.BananaE2EE.encrypt'), 'encrypted DM edit path must remain E2EE');
+
+expect(v212Ui.includes('function roleCanAccessLocal(channel)'), 'local voice role permission helper missing');
+expect(v212Ui.includes('joinVoice = async function joinVoiceV212(channel)'), 'voice join permission guard missing');
+expect(v212Ui.includes("toast('Seu cargo não permite entrar nessa sala de voz.'"), 'voice denial must fail visibly before joining');
+expect(ui.includes('button.ondblclick=async') && ui.includes('await joinVoice(channel)'), 'V2.1 double-click voice path must use guarded joinVoice');
 
 expect(ui.includes("{ name:'/clear'"), '/clear command missing');
 expect(ui.includes("{ name:'/help'"), '/help command missing');
