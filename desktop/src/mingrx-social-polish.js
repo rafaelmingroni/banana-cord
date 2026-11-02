@@ -163,7 +163,7 @@
     const tab = target.closest('[data-mx-tab]');
     if (tab) { event.preventDefault(); renderTab(tab.dataset.mxTab); return; }
 
-    const friendsTrigger = target.closest('#v1FriendsBtn,.v214-private-request,[data-mingrx-open-friends]');
+    const friendsTrigger = target.closest('#v1FriendsBtn,.v214-private-request,#v214HomeFriends,[data-mingrx-open-friends]');
     if (friendsTrigger) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -171,7 +171,7 @@
       return;
     }
 
-    const legacyAdd = target.closest('#v207AddFriendBtn,#v207StartFriend');
+    const legacyAdd = target.closest('#v207AddFriendBtn,#v207StartFriend,#v214HomeFriend');
     if (legacyAdd) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -226,4 +226,5 @@
   observer.observe(document.body, { childList:true, subtree:true });
 
   window.MingrxOpenFriends = openSocialHub;
+  window.BananaOpenFriendSearch = () => openSocialHub('add');
 })();
