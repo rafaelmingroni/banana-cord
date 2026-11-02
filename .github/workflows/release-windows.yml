@@ -58,6 +58,7 @@ jobs:
         run: |
           node --check desktop/main-v120.js
           node --check desktop/main-v110.js
+          node --check desktop/v21-main.js
           node --check desktop/main.js
           node --check desktop/e2ee-main.js
           node --check desktop/updater-prompt.js
@@ -78,11 +79,16 @@ jobs:
           node --check desktop/src/cloud-v2-v212-fix.js
           node --check desktop/src/cloud-v2-v215-security-fix.js
           node --check desktop/src/cloud-v2-v216-e2ee.js
+          node --check desktop/src/cloud-v2-v21-social.js
           node --check desktop/src/v212-ui-fix.js
           node --check desktop/src/v214-private-ui-fix.js
           node --check desktop/src/v215-security-ui-fix.js
           node --check desktop/src/v216-e2ee-client.js
           node --check desktop/src/v216-e2ee-ui.js
+          node --check desktop/src/v21-i18n.js
+          node --check desktop/src/v21-i18n-legacy.js
+          node --check desktop/src/v21-social.js
+          node --check desktop/src/v21-release-fixes.js
           node --check desktop/scripts/inject-firebase-config.js
           node --check desktop/scripts/smoke-cloud.js
           node --check desktop/scripts/smoke-cloud-parity.js
@@ -93,6 +99,12 @@ jobs:
           node --check desktop/scripts/smoke-v214.js
           node --check desktop/scripts/smoke-v215.js
           node --check desktop/scripts/smoke-v216.js
+          node --check desktop/scripts/smoke-v21.js
+          node --check desktop/scripts/e2e-v21-main.js
+          node --check desktop/scripts/e2e-v21-social-ui.js
+          node --check desktop/scripts/e2e-v21-submit-priority.js
+          node --check desktop/scripts/e2e-v21-language.js
+          node --check desktop/scripts/e2e-v21-private-guard.js
           node --check desktop/scripts/e2e-v216-e2ee.js
           node --check desktop/scripts/e2e-v2-release.js
 
