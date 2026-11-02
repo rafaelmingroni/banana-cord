@@ -47,6 +47,7 @@
       if (next !== root.nodeValue) root.nodeValue = next;
       return;
     }
+    if (root.nodeType !== Node.ELEMENT_NODE && root !== document.body) return;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
@@ -54,12 +55,17 @@
       const next = cleanText(node.nodeValue);
       if (next !== node.nodeValue) node.nodeValue = next;
     }
-    for (const el of root.querySelectorAll?.('[title],[placeholder],[aria-label]') || []) {
-      for (const attr of ['title','placeholder','aria-label']) {
-        if (!el.hasAttribute(attr)) continue;
-        const before = el.getAttribute(attr);
-        const after = cleanText(before);
-        if (after !== before) el.setAttribute(attr, after);
+    if (root.nodeType === Node.ELEMENT_NODE) {
+      const attrs = [];
+      if (root.matches?.('[title],[placeholder],[aria-label]')) attrs.push(root);
+      for (const el of root.querySelectorAll?.('[title],[placeholder],[aria-label]') || []) attrs.push(el);
+      for (const el of attrs) {
+        for (const attr of ['title','placeholder','aria-label']) {
+          if (!el.hasAttribute(attr)) continue;
+          const before = el.getAttribute(attr);
+          const after = cleanText(before);
+          if (after !== before) el.setAttribute(attr, after);
+        }
       }
     }
   }
@@ -97,7 +103,7 @@
     const count = String(source.textContent || '').trim();
     const hidden = source.classList.contains('hidden') || !count || count === '0';
     if (target.textContent !== (count || '0')) target.textContent = count || '0';
-    target.classList.toggle('hidden', hidden);
+    if (target.classList.contains('hidden') !== hidden) target.classList.toggle('hidden', hidden);
   }
 
   function removeBlankTopItems() {
@@ -116,25 +122,26 @@
     brand.dataset.mingrxPolished = 'true';
     brand.innerHTML = `<div class="mingrx-auth-brand">${markSvg()}<div><h1>${wordmark()}</h1><p>Entre para conversar, jogar e compartilhar.</p></div></div>`;
     const missing = document.getElementById('cloudConfigMissing');
-    if (missing) {
-      const h2 = missing.querySelector('h2');
-      if (h2) h2.textContent = 'Mingrx Cloud ainda não configurado';
-    }
-  }
-
-  function upgradePrivateHome() {
-    for (const home of document.querySelectorAll('.v214-private-home')) {
-      const img = home.querySelector('img');
-      if (img) img.replaceWith(htmlNode(markSvg('mingrx-inline-mark mingrx-private-mark')));
-      const heading = home.querySelector('h2');
-      if (heading && heading.textContent.trim() === 'Privado') heading.textContent = 'Mensagens privadas';
-    }
+    const h2 = missing?.querySelector('h2');
+    if (h2) h2.textContent = 'Mingrx Cloud ainda não configurado';
   }
 
   function htmlNode(html) {
     const template = document.createElement('template');
     template.innerHTML = html.trim();
     return template.content.firstElementChild;
+  }
+
+  function upgradePrivateHome(root = document) {
+    const homes = [];
+    if (root?.matches?.('.v214-private-home')) homes.push(root);
+    for (const home of root?.querySelectorAll?.('.v214-private-home') || []) homes.push(home);
+    for (const home of homes) {
+      const img = home.querySelector('img');
+      if (img) img.replaceWith(htmlNode(markSvg('mingrx-inline-mark mingrx-private-mark')));
+      const heading = home.querySelector('h2');
+      if (heading && heading.textContent.trim() === 'Privado') heading.textContent = 'Mensagens privadas';
+    }
   }
 
   function upgradeSettings() {
@@ -163,27 +170,54 @@
     if (setupUrl && /banana-cloud/i.test(setupUrl.value || '')) setupUrl.value = 'Mingrx Cloud';
   }
 
-  function polish(root = document.body) {
-    normalizeText(root);
+  function polishInitial() {
+    normalizeText(document.body);
     installBrandHome();
-    syncUnreadBadge();
     removeBlankTopItems();
     upgradeAuth();
-    upgradePrivateHome();
+    upgradePrivateHome(document);
     upgradeSettings();
     normalizeConnection();
   }
 
-  polish();
+  polishInitial();
 
-  let queued = false;
-  const observer = new MutationObserver(() => {
-    if (queued) return;
-    queued = true;
-    queueMicrotask(() => { queued = false; polish(); });
+  const pendingRoots = new Set();
+  let timer = null;
+  function schedule(root) {
+    if (root) pendingRoots.add(root);
+    if (timer) return;
+    timer = setTimeout(() => {
+      timer = null;
+      const roots = [...pendingRoots];
+      pendingRoots.clear();
+      for (const root of roots) {
+        if (root?.nodeType === Node.TEXT_NODE) normalizeText(root);
+        else if (root?.nodeType === Node.ELEMENT_NODE && root.isConnected) {
+          normalizeText(root);
+          upgradePrivateHome(root);
+        }
+      }
+      installBrandHome();
+      removeBlankTopItems();
+      upgradeAuth();
+      upgradeSettings();
+      normalizeConnection();
+    }, 0);
+  }
+
+  const observer = new MutationObserver(records => {
+    for (const record of records) {
+      for (const node of record.addedNodes) schedule(node);
+    }
   });
-  observer.observe(document.body, { childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:['class'] });
+  observer.observe(document.body, { childList:true, subtree:true });
 
-  window.addEventListener('mingrx:theme-change', () => syncUnreadBadge());
-  window.addEventListener('banana:i18n-changed', () => queueMicrotask(polish));
+  const unread = document.getElementById('dmUnreadBadge');
+  if (unread) {
+    new MutationObserver(syncUnreadBadge).observe(unread, { childList:true, characterData:true, subtree:true, attributes:true, attributeFilter:['class'] });
+  }
+
+  window.addEventListener('mingrx:theme-change', syncUnreadBadge);
+  window.addEventListener('banana:i18n-changed', () => schedule(document.body));
 })();
