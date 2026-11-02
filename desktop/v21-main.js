@@ -5,8 +5,9 @@ const { execFile } = require('child_process');
 const { promisify } = require('util');
 
 const execFileAsync = promisify(execFile);
-const STARTUP_ARG = '--banana-startup';
+const STARTUP_ARG = '--banana-startup'; // kept for compatibility with existing startup behavior
 const SETTINGS_VERSION = 1;
+const PRODUCT_NAME = 'Mingrx Preview';
 const DEFAULTS = {
   version: SETTINGS_VERSION,
   startupInitialized: false,
@@ -101,7 +102,7 @@ function loginOptions(openAtLogin) {
     path: process.execPath,
     args: [STARTUP_ARG],
     enabled: !!openAtLogin,
-    name: 'Banana Cord'
+    name: PRODUCT_NAME
   };
 }
 
@@ -121,7 +122,7 @@ function startupStatus() {
 
 function ensureStartupDefaultOnce() {
   if (process.platform !== 'win32' || !app.isPackaged || settings.startupInitialized) return;
-  try { app.setLoginItemSettings(loginOptions(true)); } catch (error) { console.warn('Banana Cord startup:', error?.message || error); }
+  try { app.setLoginItemSettings(loginOptions(true)); } catch (error) { console.warn('Mingrx startup:', error?.message || error); }
   settings.startupInitialized = true;
   persistSettings();
 }
@@ -195,7 +196,7 @@ async function scanActivity() {
     activity = found ? { ...found, startedAt: Date.now() } : null;
     broadcast();
   } catch (error) {
-    console.warn('Banana Cord game activity:', error?.message || error);
+    console.warn('Mingrx game activity:', error?.message || error);
   }
 }
 
