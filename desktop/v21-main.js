@@ -29,7 +29,6 @@ const GAME_CATALOG = new Map(Object.entries({
   'rainbowsix_vulkan.exe': ['rainbow-six-siege', 'Rainbow Six Siege'],
   'robloxplayerbeta.exe': ['roblox', 'Roblox'],
   'minecraft.windows.exe': ['minecraft', 'Minecraft'],
-  'javaw.exe': ['minecraft-java', 'Minecraft: Java Edition'],
   'eldenring.exe': ['elden-ring', 'Elden Ring'],
   'eldenring_nightreign.exe': ['elden-ring-nightreign', 'Elden Ring Nightreign'],
   'bg3.exe': ['baldurs-gate-3', "Baldur's Gate 3"],
@@ -247,6 +246,11 @@ app.whenReady().then(() => {
 });
 
 app.on('browser-window-created', (_event, win) => {
+  const startupLaunch = process.argv.includes(STARTUP_ARG);
+  if (startupLaunch) {
+    try { win.hide(); } catch {}
+    win.once('ready-to-show', () => { try { win.hide(); } catch {} });
+  }
   win.webContents.once('did-finish-load', () => setTimeout(broadcast, 100));
 });
 
