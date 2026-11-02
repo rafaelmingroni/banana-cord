@@ -22,9 +22,11 @@ for (const file of ['main-v120.js','main-v110.js','rendezvous.js','tray.js','upd
 
 const isStableV1 = pkg.version === '1.2.1';
 const isV2 = /^2\.\d+\.\d+(?:-cloud\.\d+)?$/.test(pkg.version);
+const isMingrx = String(pkg.build?.productName || '').toLowerCase().includes('mingrx');
 assert(isStableV1 || isV2, 'package version must be stable v1.2.1 or a valid v2 version');
 assert(pkg.main === 'main-v120.js', 'deep-link entry must remain enabled during cloud migration');
 assert((pkg.build?.protocols || []).some(p => (p.schemes || []).includes('bananacord')), 'bananacord:// protocol registration missing');
+if (isMingrx) assert((pkg.build?.protocols || []).some(p => (p.schemes || []).includes('mingrx')), 'mingrx:// protocol registration missing');
 assert(!/p[oó]s-beta/i.test(index), 'index.html must not show pós-beta');
 assert(index.includes('v101-fix.js'), 'renderer stability guard must be loaded');
 assert(index.includes('v110.js') && index.includes('v120.js'), 'v1.1 and v1.2 renderers must remain loaded during migration');
@@ -37,7 +39,7 @@ if (isV2) {
   assert(!hotfix.includes('Cloud Preview'), 'preview version label must not ship in official V2 guard');
 }
 assert(!hotfix.includes("VERSION = '1.1.1'"), 'stability guard must not pin an old version');
-assert(tray.includes('banana-tray.png'), 'dedicated tray icon missing');
+assert(tray.includes(isMingrx ? 'mingrx-tray.png' : 'banana-tray.png'), 'dedicated tray icon missing');
 assert(index.includes('ABCD-EFGH'), 'short invite compatibility missing');
 assert(v120.includes('https://rafaelmingroni.github.io/banana-cord/?invite='), 'public invite link base missing');
 assert(v120.includes("ipcRenderer.on('invite:deep-link'"), 'renderer deep-link listener missing');
@@ -70,4 +72,4 @@ if (isV2) {
   assert(index.indexOf('v120.js') < index.indexOf(cloudBundle), 'unified Firebase cloud layer must load after stable renderers');
 }
 
-console.log(`Banana Cord v${pkg.version} UI smoke test: OK`);
+console.log(`${isMingrx ? 'Mingrx Preview' : 'Banana Cord'} v${pkg.version} UI smoke test: OK`);
