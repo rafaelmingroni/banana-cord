@@ -50,6 +50,7 @@ assert(polish.includes('mingrx-x'), 'Wordmark Mingrx não trata o X como detalhe
 assert(polish.includes('mingrx-settings-version'), 'Rodapé/versionamento Mingrx das configurações não foi injetado.');
 assert(polish.includes("querySelectorAll(':scope > .settings-brand,:scope > .settings-nav-foot')"), 'Brand/versionamento legado das configurações ainda pode coexistir com Mingrx.');
 assert(polish.includes("content.classList.add('settings-main')"), 'Conteúdo real das configurações não recebe a camada de layout Mingrx.');
+assert(polish.includes('installNotificationBrandGuard') && polish.includes('MingrxNotification'), 'Notificações nativas ainda podem expor branding Banana Cord.');
 
 assert(socialCss.includes('.mingrx-social-hub') && socialCss.includes('.mingrx-social-tabs'), 'Central social Mingrx não possui estrutura visual própria.');
 assert(socialCss.includes('.mingrx-add-friend') && socialCss.includes('.mingrx-social-row'), 'Busca e cards sociais Mingrx estão incompletos.');
@@ -66,5 +67,6 @@ assert(markJs.includes('var(--mx-accent)'), 'Marcas de superfície ainda não ac
 assert(markCss.includes('mingrx-private-mark') && markCss.includes('mingrx-updater-mark'), 'Dimensionamento das marcas temáticas está incompleto.');
 assert(svg.includes('#7c5cff') && !svg.includes('mxFold') && !svg.includes('linearGradient'), 'SVG oficial ainda possui brilho/fold assimétrico.');
 assert(pkg.scripts['smoke:e2e-v2'].includes('e2e-mingrx-layout.js'), 'E2E de layout responsivo não está na suíte principal.');
+assert(pkg.scripts['smoke:e2e-v2'].includes('e2e-mingrx-social.js'), 'E2E da central social Mingrx não está na suíte principal.');
 
 console.log('Mingrx UI polish smoke: OK');
