@@ -10,7 +10,7 @@ let closeHintShown = false;
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) app.quit();
 
-const isCloudV2 = () => /^2\.0\./.test(String(app.getVersion() || ''));
+const isCloudV2 = () => /^2\./.test(String(app.getVersion() || ''));
 
 function mainWindow() {
   return BrowserWindow.getAllWindows().find(w => !w.isDestroyed()) || null;
