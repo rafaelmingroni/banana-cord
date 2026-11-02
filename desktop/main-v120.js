@@ -50,29 +50,6 @@ function dispatchInvite(code) {
   pendingCode = '';
 }
 
-function enforceRendererScale(win) {
-  if (!win || win.isDestroyed()) return;
-  const wc = win.webContents;
-  const reset = () => {
-    try { wc.setZoomFactor(1); } catch {}
-  };
-
-  reset();
-  wc.on('did-finish-load', reset);
-  wc.on('did-navigate-in-page', reset);
-
-  // Mingrx is a fixed desktop shell, not a browser page. Chromium zoom shortcuts
-  // can otherwise leave the whole UI at 80/90% and make the private sidebar
-  // look collapsed even though its CSS width is correct.
-  wc.on('before-input-event', (event, input) => {
-    const key = String(input?.key || '').toLowerCase();
-    const zoomShortcut = !!input?.control && ['+', '=', '-', '_', '0'].includes(key);
-    if (!zoomShortcut) return;
-    event.preventDefault();
-    reset();
-  });
-}
-
 const gotLock = app.requestSingleInstanceLock();
 
 if (!gotLock) {
@@ -91,7 +68,6 @@ if (!gotLock) {
   });
 
   app.on('browser-window-created', (_event, win) => {
-    enforceRendererScale(win);
     win.webContents.once('did-finish-load', () => {
       if (pendingCode) dispatchInvite(pendingCode);
     });
