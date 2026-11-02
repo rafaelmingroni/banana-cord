@@ -3,7 +3,7 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
-const expect = (ok, message) => { if (!ok) throw new Error(`Banana Cord 2.1 smoke failed: ${message}`); };
+const expect = (ok, message) => { if (!ok) throw new Error(`Mingrx 2.1 compatibility smoke failed: ${message}`); };
 
 const pkg = JSON.parse(read('package.json'));
 const index = read('src/index.html');
@@ -50,7 +50,8 @@ expect(main.includes("execFileAsync('tasklist.exe'"), 'recognized game activity 
 expect(main.includes("'rocketleague.exe': ['rocket-league', 'Rocket League']"), 'Rocket League activity mapping missing');
 expect(!main.includes("'javaw.exe'"), 'generic Java process must not be misreported as Minecraft');
 expect(main.includes('win.hide()') && main.includes("process.argv.includes(STARTUP_ARG)"), 'startup launch must stay hidden in tray');
-expect(tray.includes("/^2\\./"), 'tray must recognize Banana Cloud across all 2.x releases');
+expect(tray.includes('Number(String(app.getVersion()') && tray.includes('>= 2'), 'tray must recognize cloud runtime across all 2.x+ releases');
+expect(tray.includes('Modo: Mingrx Cloud'), 'tray must use Mingrx Cloud product identity');
 
 expect(cloud.includes("event === 'presence:set'"), 'automatic/manual presence event missing');
 expect(cloud.includes("event === 'presence:activity'"), 'activity presence event missing');
@@ -100,4 +101,4 @@ expect(css.includes('.v21-command-menu'), 'slash command autocomplete styling mi
 expect(css.includes('.v21-channel-head'), 'premium channel header styling missing');
 expect(css.includes('.v21-message-tools'), 'message hover toolbar styling missing');
 
-console.log('Banana Cord 2.1 Social Update static regression checks: OK');
+console.log('Mingrx 2.1 compatibility static regression checks: OK');
