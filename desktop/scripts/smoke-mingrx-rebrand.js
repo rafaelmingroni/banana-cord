@@ -31,6 +31,10 @@ assert(css.includes('mingrx-members-open'), 'Drawer contextual de membros não f
 assert(!/box-shadow:\s*0\s+0\s+[0-9]+px\s+#[0-9a-f]{3,8}/i.test(css), 'A camada Mingrx não deve depender de glow neon.');
 assert(shell.includes("BRAND = 'Mingrx'"), 'Shell não declara a marca Mingrx.');
 assert(shell.includes('MutationObserver'), 'Shell deve proteger modais legados contra textos Banana Cord.');
+assert(shell.includes('openCommunityModal'), 'Entrada de comunidades não foi migrada para o shell Mingrx.');
+assert(shell.includes('#addServerBtn,#v207StartServer'), 'Shell Mingrx não intercepta todos os gatilhos legados de comunidade.');
+assert(shell.includes('replaceLegacyMarks'), 'Shell Mingrx não remove marcas visuais antigas do onboarding.');
+assert(shell.includes('.banana-updater-logo img'), 'Updater ainda pode exibir o ícone antigo.');
 
 assert(themeBootstrap.includes("'system'"), 'Tema Sistema não é inicializado antes do primeiro paint.');
 assert(themeBootstrap.includes('prefers-color-scheme: light'), 'Tema Sistema não acompanha o esquema do Windows.');
