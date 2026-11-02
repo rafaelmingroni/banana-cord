@@ -10,7 +10,7 @@ let closeHintShown = false;
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) app.quit();
 
-const isCloudV2 = () => /^2\./.test(String(app.getVersion() || ''));
+const isCloudV2 = () => Number(String(app.getVersion() || '0').split('.')[0] || 0) >= 2;
 
 function mainWindow() {
   return BrowserWindow.getAllWindows().find(w => !w.isDestroyed()) || null;
@@ -27,9 +27,9 @@ function showWindow() {
 function rebuildMenu() {
   if (!tray) return;
   const template = [
-    { label: 'Abrir Banana Cord', click: showWindow },
+    { label: 'Abrir Mingrx', click: showWindow },
     { label: `Versão ${app.getVersion()}`, enabled: false },
-    { label: isCloudV2() ? 'Modo: Banana Cloud' : `Hospedando: ${hostActive ? 'ativo' : 'inativo'}`, enabled: false },
+    { label: isCloudV2() ? 'Modo: Mingrx Cloud' : `Hospedando: ${hostActive ? 'ativo' : 'inativo'}`, enabled: false },
     { type: 'separator' },
     {
       label: 'Mutar / Desmutar',
@@ -37,7 +37,7 @@ function rebuildMenu() {
     },
     { type: 'separator' },
     {
-      label: 'Sair do Banana Cord',
+      label: 'Sair do Mingrx',
       click: async () => {
         if (quitting) return;
         quitting = true;
@@ -65,9 +65,9 @@ app.on('browser-window-created', (_event, win) => {
       closeHintShown = true;
       try {
         tray.displayBalloon({
-          title: 'Banana Cord continua aberto',
+          title: 'Mingrx continua aberto',
           content: isCloudV2()
-            ? 'A janela foi escondida. O Banana Cord continua rodando na bandeja para manter presença, chamadas e notificações.'
+            ? 'A janela foi escondida. O Mingrx continua rodando na bandeja para manter presença, chamadas e notificações.'
             : 'A janela foi escondida. O app continua rodando na bandeja — inclusive o servidor, se você estiver hospedando.',
           iconType: 'info',
           largeIcon: true
@@ -81,18 +81,18 @@ app.on('before-quit', () => { quitting = true; });
 app.on('second-instance', showWindow);
 
 app.whenReady().then(() => {
-  app.setAppUserModelId('com.bananacord.app');
+  app.setAppUserModelId('com.mingrx.preview');
   try {
-    const trayPath = path.join(__dirname, 'assets', 'banana-tray.png');
+    const trayPath = path.join(__dirname, 'assets', 'mingrx-tray.png');
     const raw = nativeImage.createFromPath(trayPath);
     const icon = raw.isEmpty() ? raw : raw.resize({ width: 20, height: 20, quality: 'best' });
     tray = new Tray(icon);
-    tray.setToolTip('Banana Cord');
+    tray.setToolTip('Mingrx Preview');
     tray.on('click', showWindow);
     tray.on('double-click', showWindow);
     rebuildMenu();
   } catch (e) {
-    console.warn('Banana Cord tray:', e?.message || e);
+    console.warn('Mingrx tray:', e?.message || e);
   }
 });
 

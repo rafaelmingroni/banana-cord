@@ -1,0 +1,47 @@
+name: Mingrx Preview Validation
+
+on:
+  push:
+    branches: [v3.0.0-mingrx-rebrand]
+    paths:
+      - "desktop/**"
+      - ".github/workflows/mingrx-preview-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+      - name: Prepare Mingrx source and icons
+        working-directory: desktop
+        run: npm run prepare:source
+      - name: Validate Mingrx brand layer
+        working-directory: desktop
+        run: npm run smoke:mingrx
+      - name: Validate JavaScript
+        shell: pwsh
+        run: |
+          node --check desktop/src/mingrx-shell.js
+          node --check desktop/tray.js
+          node --check desktop/scripts/generate-icons.js
+          node --check desktop/scripts/verify-built-icon.js
+      - name: Existing cloud/UI regression suite
+        working-directory: desktop
+        run: npm run smoke:cloud
+      - name: Existing Electron interaction suite
+        working-directory: desktop
+        run: npm run smoke:e2e-v2

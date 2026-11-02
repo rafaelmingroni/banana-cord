@@ -1,0 +1,106 @@
+/* Mingrx Preview shell. Keeps the mature Banana Cord engine underneath while replacing product identity and navigation shell. */
+(() => {
+  if (window.__mingrxShellLoaded) return;
+  window.__mingrxShellLoaded = true;
+
+  const BRAND = 'Mingrx';
+  const MARK = '../assets/mingrx.svg';
+  document.title = BRAND;
+  document.body.classList.add('mingrx-ui');
+
+  function replaceText(root = document.body) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    for (const node of nodes) {
+      if (!node.nodeValue) continue;
+      node.nodeValue = node.nodeValue
+        .replace(/Banana Cord/g, BRAND)
+        .replace(/BANANA CORD/g, 'MINGRX')
+        .replace(/Banana Cloud/g, 'Mingrx Cloud');
+    }
+  }
+
+  function replaceImages(root = document) {
+    for (const img of root.querySelectorAll?.('.home-banana-img,.big-banana-img') || []) {
+      if (img.getAttribute('src') !== MARK) img.setAttribute('src', MARK);
+      img.setAttribute('alt', BRAND);
+    }
+  }
+
+  function buildTopBar() {
+    const bar = document.querySelector('.servers');
+    if (!bar || bar.querySelector('.mingrx-brand')) return;
+    const brand = document.createElement('div');
+    brand.className = 'mingrx-brand';
+    brand.innerHTML = `<img src="${MARK}" alt=""><span>${BRAND}</span>`;
+    bar.prepend(brand);
+
+    const spacer = document.createElement('div');
+    spacer.className = 'mingrx-top-spacer';
+    bar.appendChild(spacer);
+
+    const chip = document.createElement('span');
+    chip.className = 'mingrx-preview-chip';
+    chip.textContent = 'Preview';
+    bar.appendChild(chip);
+  }
+
+  function buildMemberToggle() {
+    const header = document.querySelector('.main > header');
+    if (!header || header.querySelector('.mingrx-members-toggle')) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'mingrx-members-toggle';
+    button.textContent = 'Membros';
+    button.title = 'Mostrar ou ocultar membros';
+    button.addEventListener('click', () => {
+      const open = document.body.classList.toggle('mingrx-members-open');
+      button.classList.toggle('active', open);
+      button.setAttribute('aria-pressed', String(open));
+    });
+    header.appendChild(button);
+  }
+
+  function normalizeLabels() {
+    const home = document.getElementById('homeServer');
+    if (home) home.title = 'Início e mensagens';
+    const add = document.getElementById('addServerBtn');
+    if (add) add.title = 'Criar ou entrar em uma comunidade';
+    const profile = document.getElementById('profileBtn');
+    if (profile) profile.title = 'Perfil e configurações';
+    const update = document.getElementById('updateBadge');
+    if (update) update.title = 'Atualização do Mingrx';
+  }
+
+  function refresh(root = document.body) {
+    replaceText(root);
+    replaceImages(root);
+    buildTopBar();
+    buildMemberToggle();
+    normalizeLabels();
+  }
+
+  refresh();
+
+  const observer = new MutationObserver(records => {
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (node.nodeType === Node.TEXT_NODE && /Banana (Cord|Cloud)/.test(node.nodeValue || '')) replaceText(node.parentNode || document.body);
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          replaceText(node);
+          replaceImages(node);
+        }
+      }
+    }
+    buildMemberToggle();
+  });
+  observer.observe(document.body, { childList:true, subtree:true });
+
+  window.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && document.body.classList.contains('mingrx-members-open')) {
+      document.body.classList.remove('mingrx-members-open');
+      document.querySelector('.mingrx-members-toggle')?.classList.remove('active');
+    }
+  });
+})();
