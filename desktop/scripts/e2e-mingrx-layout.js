@@ -92,7 +92,7 @@ app.whenReady().then(async () => {
         if(Math.abs(before.messages.left-before.main.left)>3) fail.push('messages shifted from main');
         if(Math.abs(before.composer.left-before.main.left)>3) fail.push('composer shifted from main');
         if(before.scrollWidth>before.innerWidth+3) fail.push('horizontal overflow');
-        const gridParts=before.grid.trim().split(/\s+/).filter(Boolean);
+        const gridParts=before.grid.trim().split(' ').filter(Boolean);
         if(gridParts.length!==2) fail.push('app is not a two-column grid: '+before.grid);
 
         const toggle=document.querySelector('.mingrx-members-toggle');
