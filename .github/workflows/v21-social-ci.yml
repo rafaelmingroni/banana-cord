@@ -51,12 +51,14 @@ jobs:
           node --check desktop/tray.js
           node --check desktop/src/cloud-v2-v21-social.js
           node --check desktop/src/v21-i18n.js
+          node --check desktop/src/v21-i18n-legacy.js
           node --check desktop/src/v21-social.js
           node --check desktop/src/v21-release-fixes.js
           node --check desktop/scripts/smoke-v21.js
           node --check desktop/scripts/e2e-v21-main.js
           node --check desktop/scripts/e2e-v21-social-ui.js
           node --check desktop/scripts/e2e-v21-submit-priority.js
+          node --check desktop/scripts/e2e-v21-language.js
           node --check desktop/scripts/e2e-v21-private-guard.js
 
       - name: Full cloud and UI regression suite
