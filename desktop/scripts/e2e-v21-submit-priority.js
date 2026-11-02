@@ -28,7 +28,7 @@ app.whenReady().then(async () => {
     (async()=>{
       const sleep=ms=>new Promise(r=>setTimeout(r,ms));
       const emitted=[];const handlers=new Map();
-      const socket={connected:true,on(e,f){if(!handlers.has(e))handlers.set(e,new Set());handlers.get(e).add(f);return this},off(){return this},emit(event,payload,ack){emitted.push({event,payload});if(event==='messages:clear')ack?.({ok:true,count:payload.amount,mode:payload.mode});else ack?.({ok:true});return this}};
+      const socket={connected:true,on(e,f){if(!handlers.has(e))handlers.set(e,new Set());handlers.get(e).add(f);return this},off(){return this},emit(event,payload,ack){emitted.push({event,payload});if(event==='messages:clear')ack?.({ok:true,count:payload.amount,mode:payload.mode,all:payload.all});else ack?.({ok:true});return this}};
       state.user={id:'me',name:'Rafael',status:'online'};state.ui.status='online';state.socket=socket;state.viewMode='server';
       state.selectedServer={id:'srv',name:'Test',ownerId:'me',memberRoles:{me:'owner',peer:'member'},categories:[],channels:[{id:'general',name:'geral',type:'text',categoryId:null,allowedRoles:[]}]};
       state.selectedChannel=state.selectedServer.channels[0];state.servers=[state.selectedServer];state.members=new Map([['me',{id:'me',name:'Rafael',role:'owner',status:'online'}],['peer',{id:'peer',name:'Gustavo',role:'member',status:'online'}]]);
@@ -44,9 +44,20 @@ app.whenReady().then(async () => {
 
       const beforeCommandSends=emitted.filter(x=>x.event==='message:send').length;
       els.messageInput.value='/clear 20';els.messageForm.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));await sleep(20);
-      const clear=emitted.find(x=>x.event==='messages:clear');
-      if(!clear||clear.payload?.amount!==20||clear.payload?.mode!=='all')return{ok:false,reason:'slash clear did not win submit priority',emitted};
+      const clear20=emitted.find(x=>x.event==='messages:clear');
+      if(!clear20||clear20.payload?.amount!==20||clear20.payload?.mode!=='all'||clear20.payload?.all!==false)return{ok:false,reason:'slash clear 20 did not keep bounded intent',emitted};
       if(emitted.filter(x=>x.event==='message:send').length!==beforeCommandSends)return{ok:false,reason:'slash command leaked into chat as a message',emitted};
+
+      els.messageInput.value='/clear 100';els.messageForm.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));await sleep(20);
+      const clear100=emitted.filter(x=>x.event==='messages:clear')[1];
+      if(!clear100||clear100.payload?.amount!==100||clear100.payload?.all!==false)return{ok:false,reason:'clear 100 must not become clear all',emitted};
+
+      els.messageInput.value='/clear all';els.messageForm.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));await sleep(20);
+      const confirm=document.getElementById('v21ReleaseClearOk');
+      if(!confirm)return{ok:false,reason:'clear all confirmation missing'};
+      confirm.click();await sleep(20);
+      const clearAll=emitted.filter(x=>x.event==='messages:clear')[2];
+      if(!clearAll||clearAll.payload?.all!==true||clearAll.payload?.mode!=='all')return{ok:false,reason:'explicit clear all intent missing',emitted};
 
       els.messageInput.value='/status away';els.messageForm.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));await sleep(20);
       if(!emitted.some(x=>x.event==='profile:update'&&x.payload?.status==='away'))return{ok:false,reason:'status command was not executed',emitted};
