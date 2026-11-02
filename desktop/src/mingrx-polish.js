@@ -148,18 +148,23 @@
     const shell = document.querySelector('.settings-shell');
     if (!shell) return;
     const nav = shell.querySelector('.settings-nav');
-    if (nav && !nav.querySelector('.mingrx-settings-brand')) {
-      const brand = document.createElement('div');
-      brand.className = 'mingrx-settings-brand';
-      brand.innerHTML = `${markSvg()}<div><b>${wordmark()}</b><small>Configurações</small></div>`;
-      nav.prepend(brand);
+    if (nav) {
+      for (const legacy of nav.querySelectorAll(':scope > .settings-brand,:scope > .settings-nav-foot')) legacy.remove();
+      if (!nav.querySelector('.mingrx-settings-brand')) {
+        const brand = document.createElement('div');
+        brand.className = 'mingrx-settings-brand';
+        brand.innerHTML = `${markSvg()}<div><b>${wordmark()}</b><small>Configurações</small></div>`;
+        nav.prepend(brand);
+      }
+      if (!nav.querySelector('.mingrx-settings-version')) {
+        const version = document.createElement('div');
+        version.className = 'mingrx-settings-version';
+        version.textContent = `${BRAND} ${DISPLAY_VERSION}`;
+        nav.appendChild(version);
+      }
     }
-    if (nav && !nav.querySelector('.mingrx-settings-version')) {
-      const version = document.createElement('div');
-      version.className = 'mingrx-settings-version';
-      version.textContent = `${BRAND} ${DISPLAY_VERSION}`;
-      nav.appendChild(version);
-    }
+    const content = shell.querySelector('.settings-content');
+    if (content) content.classList.add('settings-main');
     normalizeText(shell);
   }
 
