@@ -116,8 +116,11 @@ app.whenReady().then(async () => {
         mark('settings-open-clicked');
         const shell = document.querySelector('#modalBody .settings-shell');
         if (!shell) return { ok: false, reason: 'settings did not open' };
-        const versionFoot = document.querySelector('.settings-nav-foot')?.textContent || '';
-        if (versionFoot !== 'v2.0.0') return { ok: false, reason: 'official version label incorrect: ' + versionFoot };
+        const legacyVersionFoot = document.querySelector('.settings-nav-foot');
+        if (legacyVersionFoot) return { ok: false, reason: 'legacy settings version footer still visible' };
+        const versionFoot = document.querySelector('.mingrx-settings-version')?.textContent?.trim() || '';
+        if (versionFoot !== 'Mingrx Preview · v2.1.0') return { ok: false, reason: 'Mingrx version label incorrect: ' + versionFoot };
+        if (!document.querySelector('.mingrx-settings-brand')) return { ok: false, reason: 'Mingrx settings brand missing' };
         mark('settings-shell-ok');
 
         const tabs = ['tabProfile','tabAudio','tabVideo','tabGeneral','tabDiag','tabNotifications','tabUpdates'];
