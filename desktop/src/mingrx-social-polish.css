@@ -1,0 +1,64 @@
+/* Mingrx Social Hub — premium friends, requests, blocked and discovery UI. */
+.mingrx-social-hub{width:min(720px,calc(100vw - 72px));max-width:100%;display:grid;gap:16px;color:var(--mx-text)}
+.mingrx-social-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding-right:26px}
+.mingrx-social-head h2{margin:0 0 5px;font-size:20px;letter-spacing:-.03em;color:var(--mx-text)}
+.mingrx-social-head p{margin:0;color:var(--mx-muted);font-size:11.5px;line-height:1.45}
+.mingrx-social-tabs{display:flex;align-items:center;gap:5px;padding:4px;border:1px solid var(--mx-line);border-radius:11px;background:var(--mx-panel-2);overflow-x:auto;scrollbar-width:none}
+.mingrx-social-tabs::-webkit-scrollbar{display:none}
+.mingrx-social-tab{flex:0 0 auto;display:flex;align-items:center;gap:7px;min-height:34px;padding:0 11px;border:0!important;border-radius:8px!important;background:transparent!important;color:var(--mx-muted)!important;font-size:11px!important;font-weight:720!important;box-shadow:none!important;white-space:nowrap}
+.mingrx-social-tab:hover{background:var(--mx-hover)!important;color:var(--mx-text)!important}
+.mingrx-social-tab.active{background:var(--mx-panel-3)!important;color:var(--mx-text)!important;box-shadow:inset 0 0 0 1px var(--mx-line)!important}
+.mingrx-social-tab-count{min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center;border-radius:999px;background:var(--mx-panel);color:var(--mx-muted);font-size:9px;font-weight:800}
+.mingrx-social-tab.active .mingrx-social-tab-count{background:var(--mx-accent-soft);color:var(--mx-accent)}
+.mingrx-social-body{display:grid;gap:12px;min-height:280px;max-height:min(510px,60vh);overflow:auto;padding-right:3px}
+.mingrx-social-section{display:grid;gap:8px}
+.mingrx-social-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px}
+.mingrx-social-section-head h3{margin:0;color:var(--mx-muted);font-size:10px;font-weight:800;letter-spacing:.065em;text-transform:uppercase}
+.mingrx-social-section-head small{color:var(--mx-muted);font-size:9px}
+.mingrx-social-list{display:grid;gap:7px}
+.mingrx-social-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:58px;padding:9px 10px;border:1px solid var(--mx-line);border-radius:11px;background:var(--mx-panel);transition:background-color .14s ease,border-color .14s ease}
+.mingrx-social-row:hover{background:var(--mx-panel-2);border-color:color-mix(in srgb,var(--mx-line) 70%,var(--mx-accent))}
+.mingrx-social-row .avatar{width:36px;height:36px}
+.mingrx-social-copy{min-width:0;display:grid;gap:3px}
+.mingrx-social-copy b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mx-text);font-size:12px;font-weight:720}
+.mingrx-social-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mx-muted);font-size:9.5px}
+.mingrx-social-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.mingrx-social-action{min-height:30px!important;width:auto!important;margin:0!important;padding:0 10px!important;border:1px solid var(--mx-line)!important;border-radius:8px!important;background:var(--mx-panel-2)!important;color:var(--mx-text-2)!important;font-size:10px!important;font-weight:760!important;box-shadow:none!important}
+.mingrx-social-action:hover{background:var(--mx-hover)!important;color:var(--mx-text)!important}
+.mingrx-social-action.primary{background:var(--mx-accent)!important;border-color:var(--mx-accent)!important;color:var(--mx-on-accent,#fff)!important}
+.mingrx-social-action.primary:hover{background:var(--mx-accent-hover)!important}
+.mingrx-social-action.danger{background:var(--mx-danger-bg)!important;border-color:color-mix(in srgb,#f0525d 42%,var(--mx-line))!important;color:#ffadb4!important}
+.mingrx-social-action.icon-only{width:32px!important;padding:0!important;font-size:14px!important}
+.mingrx-social-empty{display:grid;place-items:center;text-align:center;min-height:160px;padding:24px;border:1px dashed var(--mx-line);border-radius:12px;background:var(--mx-panel-2);color:var(--mx-muted)}
+.mingrx-social-empty b{display:block;margin-bottom:5px;color:var(--mx-text-2);font-size:12px}
+.mingrx-social-empty span{max-width:390px;font-size:10.5px;line-height:1.5}
+.mingrx-add-friend{display:grid;gap:13px;padding:16px;border:1px solid var(--mx-line);border-radius:12px;background:var(--mx-panel)}
+.mingrx-add-friend-copy h3{margin:0 0 5px;color:var(--mx-text);font-size:15px;letter-spacing:-.02em}
+.mingrx-add-friend-copy p{margin:0;color:var(--mx-muted);font-size:10.5px;line-height:1.5}
+.mingrx-add-friend-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.mingrx-add-friend-form input{min-width:0;height:40px;padding:0 12px;border:1px solid var(--mx-line)!important;border-radius:9px!important;background:var(--mx-input)!important;color:var(--mx-text)!important}
+.mingrx-add-friend-form input:focus{border-color:var(--mx-accent-border)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--mx-accent) 11%,transparent)!important}
+.mingrx-add-friend-form button{min-width:88px!important;height:40px!important;margin:0!important;padding:0 14px!important;border:0!important;border-radius:9px!important;background:var(--mx-accent)!important;color:var(--mx-on-accent,#fff)!important;font-size:10.5px!important;font-weight:800!important;box-shadow:none!important}
+.mingrx-add-friend-form button:hover{background:var(--mx-accent-hover)!important}
+.mingrx-add-friend-results{display:grid;gap:7px}
+.mingrx-social-waiting{display:inline-flex;align-items:center;gap:6px;color:var(--mx-muted);font-size:9.5px;white-space:nowrap}
+.mingrx-social-waiting:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--mx-muted)}
+
+/* Old social blocks never coexist visually with the Mingrx hub. */
+.modal-card:has(.mingrx-social-hub) .v1-social-section,
+.modal-card:has(.mingrx-social-hub) .v207-friend-search,
+.modal-card:has(.mingrx-social-hub) .v207-friend-results{display:none!important}
+
+@media(max-width:720px){
+  .mingrx-social-hub{width:min(620px,calc(100vw - 42px))}
+  .mingrx-social-row{grid-template-columns:36px minmax(0,1fr)}
+  .mingrx-social-actions{grid-column:2;justify-content:flex-start}
+}
+@media(max-width:520px){
+  .mingrx-social-hub{width:calc(100vw - 28px)}
+  .mingrx-social-head{padding-right:18px}
+  .mingrx-social-tabs{gap:3px}
+  .mingrx-social-tab{padding:0 8px}
+  .mingrx-add-friend-form{grid-template-columns:1fr}
+  .mingrx-add-friend-form button{width:100%!important}
+}
