@@ -4,10 +4,10 @@
   window.__mingrxPolishLoaded = true;
 
   const BRAND = 'Mingrx';
-  const DISPLAY_VERSION = 'Preview';
+  const DISPLAY_VERSION = 'Preview · v2.1.0';
 
   function markSvg(className = 'mingrx-inline-mark') {
-    return `<span class="${className}" aria-hidden="true"><svg viewBox="0 0 1024 1024" role="presentation"><rect x="72" y="72" width="880" height="880" rx="220" fill="var(--mx-panel-3)"/><path d="M230 714C259 591 293 431 361 338C397 289 437 281 483 316C516 341 548 378 578 407L619 447C655 482 690 488 724 461C758 433 786 381 819 333C843 298 875 291 897 310C916 326 913 359 906 399L865 714" fill="none" stroke="var(--mx-accent)" stroke-width="126" stroke-linecap="round" stroke-linejoin="round"/><path d="M361 338C397 289 437 281 483 316C516 341 548 378 578 407L619 447C655 482 690 488 724 461" fill="none" stroke="color-mix(in srgb,var(--mx-accent) 72%,white)" stroke-width="64" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/></svg></span>`;
+    return `<span class="${className}" aria-hidden="true"><svg viewBox="0 0 1024 1024" role="presentation"><rect x="72" y="72" width="880" height="880" rx="220" fill="var(--mx-panel-3)"/><path d="M252 716V360c0-72 84-106 132-52L512 452l128-144c48-54 132-20 132 52v356" fill="none" stroke="var(--mx-accent)" stroke-width="124" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
   }
 
   function wordmark() {
