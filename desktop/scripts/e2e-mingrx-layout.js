@@ -4,24 +4,21 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
 
-function ipcMainHandleSafe(channel, handler){
-  try { ipcMain.handle(channel, handler); } catch {}
-}
-
-ipcMainHandleSafe('update:get-config', async () => ({ repoUrl:'', autoCheck:true, autoDownload:true, currentVersion:'2.1.0' }));
-ipcMainHandleSafe('update:get-state', async () => ({ status:'idle', progress:0, message:'' }));
-ipcMainHandleSafe('clipboard:write', async () => true);
-ipcMainHandleSafe('banana-updater:get-state', async () => ({ phase:'idle', version:'2.1.0', percent:0 }));
-ipcMainHandleSafe('banana-updater:get-version', async () => '2.1.0');
-ipcMainHandleSafe('banana-updater:check', async () => ({ ok:true }));
-ipcMainHandleSafe('banana-v21:get-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
-ipcMainHandleSafe('banana-v21:set-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
-ipcMainHandleSafe('banana-v21:get-system-languages', async () => ['pt-BR']);
+function handle(channel, fn) { try { ipcMain.handle(channel, fn); } catch {} }
+handle('update:get-config', async () => ({ repoUrl:'', autoCheck:true, autoDownload:true, currentVersion:'2.1.0' }));
+handle('update:get-state', async () => ({ status:'idle', progress:0, message:'' }));
+handle('clipboard:write', async () => true);
+handle('banana-updater:get-state', async () => ({ phase:'idle', version:'2.1.0', percent:0 }));
+handle('banana-updater:get-version', async () => '2.1.0');
+handle('banana-updater:check', async () => ({ ok:true }));
+handle('banana-v21:get-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
+handle('banana-v21:set-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
+handle('banana-v21:get-system-languages', async () => ['pt-BR']);
 
 const hardTimeout = setTimeout(() => {
   console.error('Mingrx layout E2E failed: hard timeout');
   app.exit(1);
-}, 24000);
+}, 32000);
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 function finish(code, message) {
   clearTimeout(hardTimeout);
@@ -63,27 +60,41 @@ app.whenReady().then(async () => {
 
   async function measure(label, width, height) {
     win.setContentSize(width, height);
-    await sleep(120);
+    await sleep(130);
     const result = await win.webContents.executeJavaScript(`
       (async()=>{
         await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
         const rect = el => { const r=el.getBoundingClientRect(); return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}; };
+        const app=document.getElementById('app');
         const main=document.querySelector('.main');
+        const header=document.querySelector('.main>header');
         const text=document.getElementById('textView');
         const messages=document.getElementById('messages');
         const composer=document.getElementById('messageForm');
         const sidebar=document.querySelector('.sidebar');
         const dmSidebar=document.querySelector('.dm-sidebar');
-        const before={main:rect(main),text:rect(text),messages:rect(messages),composer:rect(composer),sidebar:rect(sidebar),dmSidebar:dmSidebar?rect(dmSidebar):null,innerWidth,innerHeight,scrollWidth:document.documentElement.scrollWidth};
+        const before={
+          app:rect(app),main:rect(main),header:rect(header),text:rect(text),messages:rect(messages),composer:rect(composer),sidebar:rect(sidebar),
+          dmSidebar:dmSidebar?rect(dmSidebar):null,innerWidth,innerHeight,scrollWidth:document.documentElement.scrollWidth,
+          grid:getComputedStyle(app).gridTemplateColumns
+        };
         const fail=[];
-        if(before.sidebar.width < 292) fail.push('private sidebar narrower than 292px');
-        if(before.dmSidebar && before.dmSidebar.width < 260) fail.push('inner DM sidebar collapsed');
+        const expectedSidebar=innerWidth<=760?238:innerWidth<=900?256:innerWidth<=1100?276:296;
+        if(Math.abs(before.sidebar.width-expectedSidebar)>2) fail.push('unexpected private sidebar width '+before.sidebar.width+' expected '+expectedSidebar);
+        if(before.dmSidebar && before.dmSidebar.width < expectedSidebar-28) fail.push('inner DM sidebar collapsed');
+        if(Math.abs(before.main.left-before.sidebar.right)>2) fail.push('ghost gap between sidebar and main: '+(before.main.left-before.sidebar.right));
+        if(Math.abs(before.main.right-before.innerWidth)>2) fail.push('main does not reach viewport right edge: '+(before.innerWidth-before.main.right));
+        if(Math.abs((before.sidebar.width+before.main.width)-before.innerWidth)>3) fail.push('sidebar + main do not fill viewport');
+        if(Math.abs(before.header.left-before.main.left)>2||Math.abs(before.header.right-before.main.right)>2) fail.push('header does not fill main');
         if(before.text.width < before.main.width*.97) fail.push('textView not fluid');
         if(before.messages.width < before.main.width*.97) fail.push('messages not fluid');
         if(before.composer.width < before.main.width*.97) fail.push('composer not fluid');
         if(Math.abs(before.messages.left-before.main.left)>3) fail.push('messages shifted from main');
         if(Math.abs(before.composer.left-before.main.left)>3) fail.push('composer shifted from main');
         if(before.scrollWidth>before.innerWidth+3) fail.push('horizontal overflow');
+        const gridParts=before.grid.trim().split(/\s+/).filter(Boolean);
+        if(gridParts.length!==2) fail.push('app is not a two-column grid: '+before.grid);
+
         const toggle=document.querySelector('.mingrx-members-toggle');
         toggle?.click();
         await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -100,19 +111,27 @@ app.whenReady().then(async () => {
       })();
     `, true);
     if (!result?.ok) throw new Error(`${label}: ${JSON.stringify(result)}`);
-    return {label,width:result.before.innerWidth,height:result.before.innerHeight,sidebarWidth:result.before.sidebar.width,dmSidebarWidth:result.before.dmSidebar?.width||null,mainWidth:result.before.main.width,messagesWidth:result.before.messages.width,composerWidth:result.before.composer.width};
+    return {
+      label,width:result.before.innerWidth,height:result.before.innerHeight,grid:result.before.grid,
+      sidebarWidth:result.before.sidebar.width,mainLeft:result.before.main.left,mainWidth:result.before.main.width,mainRight:result.before.main.right
+    };
   }
 
   try {
     const results=[];
+    results.push(await measure('min-window-980x660',980,660));
+    results.push(await measure('1024x700',1024,700));
     results.push(await measure('1280x720',1280,720));
+    results.push(await measure('1366x768',1366,768));
+    results.push(await measure('1600x900',1600,900));
     results.push(await measure('1920x1080',1920,1080));
-    results.push(await measure('2048x1152-user-screenshot',2048,1152));
+    results.push(await measure('2048x1152',2048,1152));
+    results.push(await measure('2560x1440',2560,1440));
     results.push(await measure('3440x1440',3440,1440));
-    results.push(await measure('resize-back-1366x768',1366,768));
+    results.push(await measure('resize-back-1024x700',1024,700));
     results.push(await measure('resize-forward-2048x1152',2048,1152));
     try { win.destroy(); } catch {}
-    finish(0, `Mingrx fluid DM layout Electron test: OK ${JSON.stringify(results)}`);
+    finish(0, `Mingrx two-column responsive layout Electron test: OK ${JSON.stringify(results)}`);
   } catch (error) {
     fail(error?.message || String(error));
   }
