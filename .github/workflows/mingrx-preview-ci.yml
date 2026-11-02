@@ -55,6 +55,7 @@ jobs:
           node --check desktop/src/mingrx-shell.js
           node --check desktop/src/mingrx-themes.js
           node --check desktop/src/mingrx-polish.js
+          node --check desktop/src/mingrx-social-polish.js
           node --check desktop/src/mingrx-mark-polish.js
           node --check desktop/src/mingrx-final-fixes.js
           node --check desktop/tray.js
@@ -62,6 +63,7 @@ jobs:
           node --check desktop/scripts/verify-built-icon.js
           node --check desktop/scripts/smoke-mingrx-polish.js
           node --check desktop/scripts/e2e-mingrx-layout.js
+          node --check desktop/scripts/e2e-mingrx-social.js
           node --check desktop/scripts/e2e-v2-release.js
 
       - name: Existing cloud/UI regression suite
