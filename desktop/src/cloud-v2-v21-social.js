@@ -27,6 +27,7 @@
   function patchSocket(socket) {
     if (!socket || socket.__bananaV21SocialCloudPatched || !socket.user || !socket.db) return false;
     socket.__bananaV21SocialCloudPatched = true;
+    socket.__bananaPresenceWrite = Promise.resolve();
 
     const publicUserBase = socket.publicUser.bind(socket);
     socket.publicUser = async function publicUserV21(uid) {
@@ -58,19 +59,26 @@
       if (!this.rtdb) return;
       const next = String(payload.state || 'online');
       if (!PRESENCE_STATES.has(next) || next === 'offline') throw new Error('Status inválido.');
-      await update(ref(this.rtdb, `presence/${this.user.uid}`), {
+      const write = () => update(ref(this.rtdb, `presence/${this.user.uid}`), {
         state: next,
         lastChanged: rtdbTimestamp()
       });
+      this.__bananaPresenceWrite = this.__bananaPresenceWrite.catch(() => {}).then(write);
+      await this.__bananaPresenceWrite;
     };
 
     socket.setActivityV21 = async function setActivityV21(payload = {}) {
       if (!this.rtdb) return;
       const activity = safeActivity(payload.activity);
-      await update(ref(this.rtdb, `presence/${this.user.uid}`), {
+      const write = () => update(ref(this.rtdb, `presence/${this.user.uid}`), {
         activity: activity || null,
         lastChanged: rtdbTimestamp()
       });
+      // Presence and activity are intentionally serialized. On first login the
+      // RTDB rule requires state+lastChanged to exist before the optional activity
+      // field is merged, and this also prevents activity from racing an Away update.
+      this.__bananaPresenceWrite = this.__bananaPresenceWrite.catch(() => {}).then(write);
+      await this.__bananaPresenceWrite;
     };
 
     const editMessageBase = socket.editMessage.bind(socket);
