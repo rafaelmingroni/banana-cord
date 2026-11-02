@@ -1,4 +1,4 @@
-/* Mingrx Preview shell. Keeps the mature Banana Cord engine underneath while replacing product identity and navigation shell. */
+/* Mingrx Preview shell. Keeps the mature communication engine underneath while replacing product identity and navigation shell. */
 (() => {
   if (window.__mingrxShellLoaded) return;
   window.__mingrxShellLoaded = true;
@@ -8,16 +8,20 @@
   document.title = BRAND;
   document.body.classList.add('mingrx-ui');
 
+  function brandText(value) {
+    return String(value ?? '')
+      .replace(/Banana Cord/g, BRAND)
+      .replace(/BANANA CORD/g, 'MINGRX')
+      .replace(/Banana Cloud/g, 'Mingrx Cloud');
+  }
+
   function replaceText(root = document.body) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     for (const node of nodes) {
       if (!node.nodeValue) continue;
-      node.nodeValue = node.nodeValue
-        .replace(/Banana Cord/g, BRAND)
-        .replace(/BANANA CORD/g, 'MINGRX')
-        .replace(/Banana Cloud/g, 'Mingrx Cloud');
+      node.nodeValue = brandText(node.nodeValue);
     }
   }
 
@@ -26,6 +30,24 @@
       if (img.getAttribute('src') !== MARK) img.setAttribute('src', MARK);
       img.setAttribute('alt', BRAND);
     }
+  }
+
+  function patchNotifications() {
+    const NativeNotification = window.Notification;
+    if (!NativeNotification || NativeNotification.__mingrxWrapped) return;
+    function MingrxNotification(title, options = {}) {
+      const safe = { ...options };
+      if (safe.body) safe.body = brandText(safe.body);
+      return new NativeNotification(brandText(title), safe);
+    }
+    MingrxNotification.prototype = NativeNotification.prototype;
+    Object.setPrototypeOf(MingrxNotification, NativeNotification);
+    Object.defineProperty(MingrxNotification, '__mingrxWrapped', { value:true });
+    for (const key of ['permission']) {
+      try { Object.defineProperty(MingrxNotification, key, { get:() => NativeNotification[key] }); } catch {}
+    }
+    MingrxNotification.requestPermission = (...args) => NativeNotification.requestPermission(...args);
+    window.Notification = MingrxNotification;
   }
 
   function buildTopBar() {
@@ -81,6 +103,7 @@
     normalizeLabels();
   }
 
+  patchNotifications();
   refresh();
 
   const observer = new MutationObserver(records => {
