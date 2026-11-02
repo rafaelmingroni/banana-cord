@@ -45,7 +45,7 @@
     "appId": "com.mingrx.preview",
     "productName": "Mingrx Preview",
     "artifactName": "Mingrx-Preview-Setup-${version}-${arch}.${ext}",
-    "protocols": [{ "name": "Mingrx Invite", "schemes": ["mingrx"] }],
+    "protocols": [{ "name": "Mingrx Invite", "schemes": ["mingrx", "bananacord"] }],
     "directories": { "output": "dist" },
     "files": ["main-v120.js","main-v110.js","v21-main.js","rendezvous.js","tray.js","updater-prompt.js","graceful-shutdown.js","e2ee-main.js","main.js","screen-share-main-fix.js","src/**/*","server/**/*","cloud/**/*","assets/**/*","package.json","node_modules/**/*"],
     "asar": true,
