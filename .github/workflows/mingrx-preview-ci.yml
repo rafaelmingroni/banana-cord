@@ -5,6 +5,7 @@ on:
     branches: [v3.0.0-mingrx-rebrand]
     paths:
       - "desktop/**"
+      - "firebase/**"
       - ".github/workflows/mingrx-preview-ci.yml"
   workflow_dispatch:
 
@@ -23,37 +24,73 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+
       - name: Install dependencies
         working-directory: desktop
         run: npm install --no-audit --no-fund
+
+      - name: Critical production dependency audit
+        working-directory: desktop
+        run: npm run security:audit
+
       - name: Prepare Mingrx source and icons
         working-directory: desktop
         run: npm run prepare:source
+
       - name: Validate Mingrx brand layer
         working-directory: desktop
         run: npm run smoke:mingrx
+
       - name: Validate JavaScript
         shell: pwsh
         run: |
           node --check desktop/main-v120.js
           node --check desktop/v21-main.js
           node --check desktop/src/mingrx-shell.js
+          node --check desktop/src/mingrx-themes.js
           node --check desktop/tray.js
           node --check desktop/scripts/generate-icons.js
           node --check desktop/scripts/verify-built-icon.js
+          node --check desktop/scripts/e2e-v2-release.js
+
       - name: Existing cloud/UI regression suite
         working-directory: desktop
         run: npm run smoke:cloud
+
+      - name: Firebase security rules regression
+        working-directory: desktop
+        run: npm run smoke:rules
+
       - name: Existing Electron interaction suite
         working-directory: desktop
         run: npm run smoke:e2e-v2
+
+      - name: Inject production Firebase config for private preview
+        working-directory: desktop
+        env:
+          BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
+        run: node scripts/inject-firebase-config.js
+
+      - name: Rebuild prepared source with production config
+        working-directory: desktop
+        run: npm run prepare:source
+
       - name: Build private Mingrx Preview installer
         working-directory: desktop
-        run: npm run dist:win
+        run: npm run dist:win -- --publish never
+
+      - name: Verify private preview installer
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem "desktop/dist/Mingrx-Preview-Setup-*.exe" | Select-Object -First 1
+          if (-not $exe) { Write-Error "Instalador Mingrx Preview .exe não foi gerado."; exit 1 }
+          if ($exe.Length -lt 50000000) { Write-Error "Instalador Mingrx parece pequeno demais."; exit 1 }
+          Write-Host "Mingrx Preview installer: $($exe.Name) - $($exe.Length) bytes"
+
       - name: Upload private preview artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Mingrx-Preview-Windows
+          name: Mingrx-Preview-Windows-${{ github.sha }}
           path: desktop/dist/Mingrx-Preview-Setup-*.exe
           if-no-files-found: error
           retention-days: 7
