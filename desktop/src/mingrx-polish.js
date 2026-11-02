@@ -40,6 +40,25 @@
     return text;
   }
 
+  function installNotificationBrandGuard() {
+    const NativeNotification = window.Notification;
+    if (typeof NativeNotification !== 'function' || NativeNotification.__mingrxWrapped) return;
+    function MingrxNotification(title, options) {
+      const nextOptions = options ? { ...options } : options;
+      if (nextOptions?.body) nextOptions.body = cleanText(nextOptions.body);
+      return new NativeNotification(cleanText(title), nextOptions);
+    }
+    MingrxNotification.prototype = NativeNotification.prototype;
+    MingrxNotification.__mingrxWrapped = true;
+    try {
+      Object.defineProperty(MingrxNotification, 'permission', { configurable:true, get:() => NativeNotification.permission });
+    } catch {}
+    if (typeof NativeNotification.requestPermission === 'function') {
+      MingrxNotification.requestPermission = (...args) => NativeNotification.requestPermission(...args);
+    }
+    window.Notification = MingrxNotification;
+  }
+
   function normalizeText(root = document.body) {
     if (!root) return;
     if (root.nodeType === Node.TEXT_NODE) {
@@ -176,6 +195,7 @@
   }
 
   function polishInitial() {
+    installNotificationBrandGuard();
     normalizeText(document.body);
     installBrandHome();
     removeBlankTopItems();
