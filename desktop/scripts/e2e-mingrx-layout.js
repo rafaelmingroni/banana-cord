@@ -4,19 +4,19 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
 
-ipcMain.handle('update:get-config', async () => ({ repoUrl:'', autoCheck:true, autoDownload:true, currentVersion:'2.1.0' }));
-ipcMain.handle('update:get-state', async () => ({ status:'idle', progress:0, message:'' }));
-ipMainHandleSafe('clipboard:write', async () => true);
-ipMainHandleSafe('banana-updater:get-state', async () => ({ phase:'idle', version:'2.1.0', percent:0 }));
-ipMainHandleSafe('banana-updater:get-version', async () => '2.1.0');
-ipMainHandleSafe('banana-updater:check', async () => ({ ok:true }));
-ipMainHandleSafe('banana-v21:get-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
-ipMainHandleSafe('banana-v21:set-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
-ipMainHandleSafe('banana-v21:get-system-languages', async () => ['pt-BR']);
-
-function ipMainHandleSafe(channel, handler){
+function ipcMainHandleSafe(channel, handler){
   try { ipcMain.handle(channel, handler); } catch {}
 }
+
+ipcMainHandleSafe('update:get-config', async () => ({ repoUrl:'', autoCheck:true, autoDownload:true, currentVersion:'2.1.0' }));
+ipcMainHandleSafe('update:get-state', async () => ({ status:'idle', progress:0, message:'' }));
+ipcMainHandleSafe('clipboard:write', async () => true);
+ipcMainHandleSafe('banana-updater:get-state', async () => ({ phase:'idle', version:'2.1.0', percent:0 }));
+ipcMainHandleSafe('banana-updater:get-version', async () => '2.1.0');
+ipcMainHandleSafe('banana-updater:check', async () => ({ ok:true }));
+ipcMainHandleSafe('banana-v21:get-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
+ipcMainHandleSafe('banana-v21:set-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
+ipcMainHandleSafe('banana-v21:get-system-languages', async () => ['pt-BR']);
 
 const hardTimeout = setTimeout(() => {
   console.error('Mingrx layout E2E failed: hard timeout');
