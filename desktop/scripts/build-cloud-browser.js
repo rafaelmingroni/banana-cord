@@ -12,6 +12,8 @@ fs.mkdirSync(outdir, { recursive: true });
     stdin: {
       contents: [
         "require('./cloud-v2.js');",
+        "require('./cloud-v2-brand.js');",
+        "require('./cloud-v2-storage.js');",
         "require('./cloud-v2-auth-fix.js');",
         "require('./cloud-v2-ui-fix.js');",
         "require('./cloud-v2-socket.js');",
@@ -39,7 +41,7 @@ fs.mkdirSync(outdir, { recursive: true });
       'process.env.NODE_ENV': '"production"'
     }
   });
-  console.log('Banana Cloud single browser bundle generated.');
+  console.log('Mingrx Cloud browser bundle generated.');
 })().catch(err => {
   console.error(err);
   process.exit(1);
