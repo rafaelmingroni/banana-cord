@@ -85,4 +85,5 @@ app.on('before-quit', () => {
   try { rendezvous?.close(); } catch {}
 });
 
+require('./v21-main.js');
 require('./updater-prompt.js');
