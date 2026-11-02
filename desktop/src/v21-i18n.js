@@ -254,7 +254,7 @@
     ['Só você e seu contato conseguem ler as novas mensagens desta conversa.','Only you and your contact can read new messages in this conversation.','Solo tú y tu contacto pueden leer los mensajes nuevos de esta conversación.']
   ].map(([pt,en,es]) => ({ 'pt-BR':pt, 'en-US':en, 'es-ES':es }));
 
-  const PROTECTED = '.msg-text,.msg-head b,.invite-box,.settings-url,#serverName,#channelName,#myName,.voice-user-name,.v219-member-name b,.v219-role-user b,.v219-profile-heading h2,.dm-row b,input,textarea,option,code,pre';
+  const PROTECTED = '.msg-text,.msg-head b,.invite-box,.settings-url,#serverName,#channelName,#myName,.voice-user-name,.v219-member-name b,.v219-role-user b,.v219-profile-heading h2,.dm-row b,.v1-friend-quick-row b,.channel,.v21-category-name,input,textarea,code,pre';
 
   function normalizeLocale(value) {
     const raw = String(value || '').toLowerCase();
