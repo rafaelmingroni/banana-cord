@@ -4,6 +4,15 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const expect = (ok, message) => { if (!ok) throw new Error(message); };
+const versionAtLeast = (actual, minimum) => {
+  const a = String(actual).split('.').map(Number);
+  const b = String(minimum).split('.').map(Number);
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const av = a[i] || 0, bv = b[i] || 0;
+    if (av !== bv) return av > bv;
+  }
+  return true;
+};
 
 const pkg = JSON.parse(read('package.json'));
 const index = read('src/index.html');
@@ -13,7 +22,7 @@ const cloud = read('src/cloud-v2-v220-chat-stability.js');
 const updater = read('updater-prompt.js');
 const build = read('scripts/build-cloud-browser.js');
 
-expect(pkg.version === '2.0.20', `expected 2.0.20, got ${pkg.version}`);
+expect(versionAtLeast(pkg.version, '2.0.20'), `expected 2.0.20 or newer, got ${pkg.version}`);
 expect(index.includes('v220-chat-stability.css') && index.includes('v220-chat-stability.js'), 'V2.0.20 UI assets not loaded');
 expect(build.includes("require('./cloud-v2-v220-chat-stability.js');"), 'V2.0.20 cloud patch not bundled');
 expect(css.includes('height:100vh!important') && css.includes('overflow:hidden!important'), 'viewport lock missing');
@@ -28,9 +37,9 @@ expect(cloud.includes('sendMessageV220') && cloud.includes('sendDmV220'), 'anti-
 expect(cloud.includes('const result = previousAttach(socket, user);') && cloud.indexOf('const result = previousAttach(socket, user);') < cloud.lastIndexOf('patchSocket(socket);'), 'V2.0.20 must layer after E2EE attach');
 expect(ui.includes("els.messages?.addEventListener('scroll'"), 'scroll-triggered history loading missing');
 expect(ui.includes('oldHeight') && ui.includes('scrollHeight - anchor.oldHeight'), 'scroll anchor preservation missing');
-expect(updater.includes('autoUpdater.quitAndInstall(true, true)'), 'V2.0.20 updater must silently install and force relaunch');
+expect(updater.includes('autoUpdater.quitAndInstall(true, true)'), 'silent updater must install and force relaunch');
 expect(updater.includes('autoUpdater.autoRunAppAfterInstall = true'), 'updater relaunch preference missing');
 expect(pkg.scripts['smoke:cloud'].includes('smoke-v220.js'), 'V2.0.20 smoke not included in release regression');
 expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v220-chat-ui.js'), 'V2.0.20 Electron stress test not included');
 
-console.log('Banana Cord V2.0.20 chat stability checks: OK');
+console.log('Banana Cord V2.0.20+ chat stability checks: OK');
