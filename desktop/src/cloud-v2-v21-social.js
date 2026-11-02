@@ -98,8 +98,26 @@
       const moderator = (ROLE_RANK_V21[role] || 0) >= ROLE_RANK_V21.moderator;
       const mode = String(payload.mode || 'mine') === 'all' && moderator ? 'all' : 'mine';
       const amount = Math.max(1, Math.min(100, Number(payload.amount || 20) || 20));
-      const q = query(collection(this.db, 'servers', serverId, 'channels', channelId, 'messages'), orderBy('createdAt', 'desc'), limit(100));
-      const snap = await getDocs(q);
+      const messages = collection(this.db, 'servers', serverId, 'channels', channelId, 'messages');
+
+      // `/clear all` arrives as moderator mode=all with the maximum amount. Work
+      // in 400-write batches so the command really clears the channel instead of
+      // silently stopping at the first 100 messages.
+      if (mode === 'all' && amount === 100) {
+        let count = 0;
+        while (true) {
+          const snap = await getDocs(query(messages, orderBy('createdAt', 'desc'), limit(400)));
+          if (snap.empty) break;
+          const batch = writeBatch(this.db);
+          for (const row of snap.docs) batch.delete(row.ref);
+          await batch.commit();
+          count += snap.size;
+          if (snap.size < 400) break;
+        }
+        return { count, mode, all: true };
+      }
+
+      const snap = await getDocs(query(messages, orderBy('createdAt', 'desc'), limit(400)));
       const targets = [];
       for (const row of snap.docs) {
         if (mode === 'all' || row.data()?.authorId === this.user.uid) targets.push(row);
@@ -117,7 +135,7 @@
       if (!peerId) throw new Error('Conversa inválida.');
       const amount = Math.max(1, Math.min(100, Number(payload.amount || 20) || 20));
       const tid = pairId(this.user.uid, peerId);
-      const q = query(collection(this.db, 'dmThreads', tid, 'messages'), orderBy('createdAt', 'desc'), limit(100));
+      const q = query(collection(this.db, 'dmThreads', tid, 'messages'), orderBy('createdAt', 'desc'), limit(400));
       const snap = await getDocs(q);
       const targets = snap.docs.filter(row => row.data()?.fromId === this.user.uid).slice(0, amount);
       if (!targets.length) return { count: 0, mode: 'mine' };
