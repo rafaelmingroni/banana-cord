@@ -38,6 +38,7 @@ expect(index.indexOf('v21-i18n-legacy.js') < index.indexOf('v21-social.js'), 'lo
 expect(index.indexOf('v21-social.js') < index.indexOf('v21-release-fixes.js'), 'private navigation guard must load after 2.1 channel renderer');
 expect(releaseFixes.includes("if (state.viewMode === 'dm')") && releaseFixes.includes('renderDmSidebar();'), 'V2.1 channel renderer must preserve the private sidebar guard');
 expect(build.includes("require('./cloud-v2-v21-social.js');"), '2.1 cloud patch not bundled');
+expect(cloud.indexOf('const result = previousAttach(socket, user);') < cloud.lastIndexOf('patchSocket(socket);'), 'V2.1 cloud patch must apply after previous socket layers');
 expect(mainV110.includes("require('./v21-main.js');") && mainV110.indexOf("require('./v21-main.js');") < mainV110.indexOf("require('./updater-prompt.js');"), '2.1 main service must start before desktop runtime');
 
 expect(main.includes('powerMonitor.getSystemIdleTime()'), 'system idle time detection missing');
