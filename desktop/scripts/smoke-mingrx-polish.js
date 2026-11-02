@@ -8,6 +8,7 @@ const assert = (condition, message) => { if (!condition) throw new Error(message
 const html = read('src/index.html');
 const css = read('src/mingrx-polish.css');
 const finalCss = read('src/mingrx-final-fixes.css');
+const guardCss = read('src/mingrx-regression-guard.css');
 const finalJs = read('src/mingrx-final-fixes.js');
 const polish = read('src/mingrx-polish.js');
 const socialCss = read('src/mingrx-social-polish.css');
@@ -25,6 +26,7 @@ assert(html.includes('mingrx-social-polish.js'), 'Runtime social Mingrx não foi
 assert(html.includes('mingrx-mark-polish.css'), 'CSS de marcas temáticas não foi carregado.');
 assert(html.includes('mingrx-mark-polish.js'), 'Runtime de marcas temáticas não foi carregado.');
 assert(html.includes('mingrx-final-fixes.css') && html.includes('mingrx-final-fixes.js'), 'Camada final de layout/interação não foi carregada.');
+assert(html.includes('mingrx-regression-guard.css'), 'Guard final de regressão não foi carregado.');
 assert(!html.includes('banana-cloud://firebase'), 'Rótulo técnico banana-cloud ainda aparece no HTML.');
 
 assert(css.includes('#homeServer{display:none!important}'), 'Quadrado Home legado ainda pode aparecer no topo.');
@@ -38,6 +40,11 @@ assert(finalCss.includes('.composer') && finalCss.includes('width:100%!important
 assert(finalCss.includes('.mingrx-members-head') && finalCss.includes('.mingrx-members-close'), 'Drawer de membros não possui cabeçalho/fechamento premium.');
 assert(finalJs.includes('pointerdown') && finalJs.includes("event.key === 'Escape'"), 'Drawer de membros não fecha por clique externo e ESC.');
 assert(finalJs.includes("aria-expanded") && finalJs.includes("aria-hidden"), 'Drawer de membros não sincroniza acessibilidade.');
+
+assert(guardCss.includes('grid-template-columns:296px minmax(0,1fr)!important'), 'Privado não está protegido como grid de duas colunas.');
+assert(guardCss.includes('grid-column:2!important'), 'Conteúdo principal não está explicitamente preso à segunda coluna Mingrx.');
+assert(guardCss.includes('grid-auto-columns:0!important'), 'Colunas implícitas legadas ainda podem reaparecer.');
+assert(guardCss.includes('ghost') || guardCss.includes('implicit'), 'Guard não documenta a regressão de coluna implícita.');
 
 assert(polish.includes("['Banana Cord', BRAND]"), 'Limpeza de marca Banana Cord ausente.');
 assert(polish.includes("['banana-cloud://firebase', 'Mingrx Cloud']"), 'Limpeza do rótulo de conexão legado ausente.');
