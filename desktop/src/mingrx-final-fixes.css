@@ -1,0 +1,16 @@
+/* Final shell interaction fixes loaded last. */
+body.mingrx-ui button.mingrx-brand{
+  appearance:none;
+  border:0;
+  border-right:1px solid var(--mx-line);
+  background:transparent;
+  color:var(--mx-text);
+  text-align:left;
+  box-shadow:none;
+}
+body.mingrx-ui button.mingrx-brand:hover{background:var(--mx-hover)}
+body.mingrx-ui button.mingrx-brand:active{transform:none}
+body.mingrx-ui button.mingrx-brand:focus-visible{
+  border-right-color:var(--mx-line);
+  box-shadow:inset 0 0 0 2px var(--mx-accent-border);
+}
