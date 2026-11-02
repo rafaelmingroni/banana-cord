@@ -35,6 +35,8 @@ jobs:
       - name: Validate JavaScript
         shell: pwsh
         run: |
+          node --check desktop/main-v120.js
+          node --check desktop/v21-main.js
           node --check desktop/src/mingrx-shell.js
           node --check desktop/tray.js
           node --check desktop/scripts/generate-icons.js
@@ -45,3 +47,13 @@ jobs:
       - name: Existing Electron interaction suite
         working-directory: desktop
         run: npm run smoke:e2e-v2
+      - name: Build private Mingrx Preview installer
+        working-directory: desktop
+        run: npm run dist:win
+      - name: Upload private preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mingrx-Preview-Windows
+          path: desktop/dist/Mingrx-Preview-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 7
