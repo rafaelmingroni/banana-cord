@@ -6,18 +6,22 @@ app.commandLine.appendSwitch('disable-software-rasterizer');
 
 ipcMain.handle('update:get-config', async () => ({ repoUrl:'', autoCheck:true, autoDownload:true, currentVersion:'2.1.0' }));
 ipcMain.handle('update:get-state', async () => ({ status:'idle', progress:0, message:'' }));
-ipcMain.handle('clipboard:write', async () => true);
-ipcMain.handle('banana-updater:get-state', async () => ({ phase:'idle', version:'2.1.0', percent:0 }));
-ipcMain.handle('banana-updater:get-version', async () => '2.1.0');
-ipcMain.handle('banana-updater:check', async () => ({ ok:true }));
-ipcMain.handle('banana-v21:get-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
-ipcMain.handle('banana-v21:set-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
-ipcMain.handle('banana-v21:get-system-languages', async () => ['pt-BR']);
+ipMainHandleSafe('clipboard:write', async () => true);
+ipMainHandleSafe('banana-updater:get-state', async () => ({ phase:'idle', version:'2.1.0', percent:0 }));
+ipMainHandleSafe('banana-updater:get-version', async () => '2.1.0');
+ipMainHandleSafe('banana-updater:check', async () => ({ ok:true }));
+ipMainHandleSafe('banana-v21:get-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
+ipMainHandleSafe('banana-v21:set-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
+ipMainHandleSafe('banana-v21:get-system-languages', async () => ['pt-BR']);
+
+function ipMainHandleSafe(channel, handler){
+  try { ipcMain.handle(channel, handler); } catch {}
+}
 
 const hardTimeout = setTimeout(() => {
   console.error('Mingrx layout E2E failed: hard timeout');
   app.exit(1);
-}, 22000);
+}, 24000);
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 function finish(code, message) {
   clearTimeout(hardTimeout);
@@ -69,8 +73,11 @@ app.whenReady().then(async () => {
         const messages=document.getElementById('messages');
         const composer=document.getElementById('messageForm');
         const sidebar=document.querySelector('.sidebar');
-        const before={main:rect(main),text:rect(text),messages:rect(messages),composer:rect(composer),sidebar:rect(sidebar),innerWidth,innerHeight,scrollWidth:document.documentElement.scrollWidth};
+        const dmSidebar=document.querySelector('.dm-sidebar');
+        const before={main:rect(main),text:rect(text),messages:rect(messages),composer:rect(composer),sidebar:rect(sidebar),dmSidebar:dmSidebar?rect(dmSidebar):null,innerWidth,innerHeight,scrollWidth:document.documentElement.scrollWidth};
         const fail=[];
+        if(before.sidebar.width < 292) fail.push('private sidebar narrower than 292px');
+        if(before.dmSidebar && before.dmSidebar.width < 260) fail.push('inner DM sidebar collapsed');
         if(before.text.width < before.main.width*.97) fail.push('textView not fluid');
         if(before.messages.width < before.main.width*.97) fail.push('messages not fluid');
         if(before.composer.width < before.main.width*.97) fail.push('composer not fluid');
@@ -93,16 +100,17 @@ app.whenReady().then(async () => {
       })();
     `, true);
     if (!result?.ok) throw new Error(`${label}: ${JSON.stringify(result)}`);
-    return {label,width:result.before.innerWidth,height:result.before.innerHeight,mainWidth:result.before.main.width,messagesWidth:result.before.messages.width,composerWidth:result.before.composer.width};
+    return {label,width:result.before.innerWidth,height:result.before.innerHeight,sidebarWidth:result.before.sidebar.width,dmSidebarWidth:result.before.dmSidebar?.width||null,mainWidth:result.before.main.width,messagesWidth:result.before.messages.width,composerWidth:result.before.composer.width};
   }
 
   try {
     const results=[];
     results.push(await measure('1280x720',1280,720));
     results.push(await measure('1920x1080',1920,1080));
+    results.push(await measure('2048x1152-user-screenshot',2048,1152));
     results.push(await measure('3440x1440',3440,1440));
     results.push(await measure('resize-back-1366x768',1366,768));
-    results.push(await measure('resize-forward-1920x1080',1920,1080));
+    results.push(await measure('resize-forward-2048x1152',2048,1152));
     try { win.destroy(); } catch {}
     finish(0, `Mingrx fluid DM layout Electron test: OK ${JSON.stringify(results)}`);
   } catch (error) {
