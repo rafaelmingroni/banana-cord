@@ -216,8 +216,9 @@
   if (window.BananaLegacy?.attachSocket) {
     const previousAttach = window.BananaLegacy.attachSocket;
     window.BananaLegacy.attachSocket = function attachSocketV21(socket, user) {
+      const result = previousAttach(socket, user);
       patchSocket(socket);
-      return previousAttach(socket, user);
+      return result;
     };
   }
   if (window.BananaCloudSocket) patchSocket(window.BananaCloudSocket);
