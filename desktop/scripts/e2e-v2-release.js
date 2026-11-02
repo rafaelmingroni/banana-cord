@@ -106,7 +106,12 @@ app.whenReady().then(async () => {
 
         if (document.getElementById('app')?.classList.contains('hidden')) return { ok: false, reason: 'app shell remained hidden after auth' };
 
-        document.getElementById('profileBtn')?.click();
+        const profile = document.getElementById('profileBtn');
+        if (!profile) return { ok:false, reason:'profileBtn missing' };
+        mark('profile-before');
+        profile.click();
+        mark('profile-click-returned');
+        queueMicrotask(() => mark('profile-microtask'));
         await sleep(120);
         mark('settings-open-clicked');
         const shell = document.querySelector('#modalBody .settings-shell');
