@@ -62,6 +62,8 @@ expect(cloud.includes("snap.data().authorId !== this.user.uid"), 'normal client 
 expect(cloud.includes("mode === 'all' || row.data()?.authorId === this.user.uid"), '/clear permissions missing');
 expect(cloud.includes("payload.all === true"), 'full-channel clear must require explicit clear-all intent');
 expect(releaseFixes.includes("all:clearAll"), 'renderer must send explicit clear-all intent');
+expect(cloud.includes('refreshDmPreviewV21') && cloud.includes('const deleteDmBase = socket.deleteDm.bind(socket)'), 'DM delete must refresh the Recents preview');
+expect(cloud.includes('await this.refreshDmPreviewV21(peerId);'), 'DM clear must refresh the Recents preview');
 expect(e2ee.includes('editDmV216') && e2ee.includes('window.BananaE2EE.encrypt'), 'encrypted DM edit path must remain E2EE');
 
 expect(ui.includes("{ name:'/clear'"), '/clear command missing');
