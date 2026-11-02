@@ -2,7 +2,7 @@ name: Mingrx Preview Validation
 
 on:
   push:
-    branches: [v3.0.0-mingrx-rebrand]
+    branches: [v3.0.0-mingrx-rebrand, v3.0.0-mingrx-ui-polish]
     paths:
       - "desktop/**"
       - "firebase/**"
@@ -43,7 +43,7 @@ jobs:
         working-directory: desktop
         run: npm run prepare:source
 
-      - name: Validate Mingrx brand layer
+      - name: Validate Mingrx brand and polish layers
         working-directory: desktop
         run: npm run smoke:mingrx
 
@@ -54,9 +54,12 @@ jobs:
           node --check desktop/v21-main.js
           node --check desktop/src/mingrx-shell.js
           node --check desktop/src/mingrx-themes.js
+          node --check desktop/src/mingrx-polish.js
+          node --check desktop/src/mingrx-mark-polish.js
           node --check desktop/tray.js
           node --check desktop/scripts/generate-icons.js
           node --check desktop/scripts/verify-built-icon.js
+          node --check desktop/scripts/smoke-mingrx-polish.js
           node --check desktop/scripts/e2e-v2-release.js
 
       - name: Existing cloud/UI regression suite
