@@ -8,6 +8,7 @@ const expect = (ok, message) => { if (!ok) throw new Error(`Banana Cord 2.1 smok
 const pkg = JSON.parse(read('package.json'));
 const index = read('src/index.html');
 const ui = read('src/v21-social.js');
+const releaseFixes = read('src/v21-release-fixes.js');
 const css = read('src/v21-social.css');
 const i18n = read('src/v21-i18n.js');
 const cloud = read('src/cloud-v2-v21-social.js');
@@ -25,8 +26,11 @@ expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v21-main.js'), '2.1 main-proces
 
 expect(index.includes('v21-social.css'), '2.1 stylesheet not loaded');
 expect(index.includes('v21-i18n.js') && index.includes('v21-social.js'), '2.1 renderer scripts not loaded');
+expect(index.includes('v21-release-fixes.js'), '2.1 final integration guard not loaded');
 expect(index.indexOf('v220-chat-stability.js') < index.indexOf('v21-i18n.js'), '2.1 must layer after V2.0.20 stability patch');
 expect(index.indexOf('v21-i18n.js') < index.indexOf('v21-social.js'), 'localization must load before 2.1 UI');
+expect(index.indexOf('v21-social.js') < index.indexOf('v21-release-fixes.js'), 'private navigation guard must load after 2.1 channel renderer');
+expect(releaseFixes.includes("if (state.viewMode === 'dm')") && releaseFixes.includes('renderDmSidebar();'), 'V2.1 channel renderer must preserve the private sidebar guard');
 expect(build.includes("require('./cloud-v2-v21-social.js');"), '2.1 cloud patch not bundled');
 expect(mainV110.includes("require('./v21-main.js');") && mainV110.indexOf("require('./v21-main.js');") < mainV110.indexOf("require('./updater-prompt.js');"), '2.1 main service must start before desktop runtime');
 
