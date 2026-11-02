@@ -10,6 +10,8 @@ const css = read('src/mingrx-polish.css');
 const finalCss = read('src/mingrx-final-fixes.css');
 const finalJs = read('src/mingrx-final-fixes.js');
 const polish = read('src/mingrx-polish.js');
+const socialCss = read('src/mingrx-social-polish.css');
+const socialJs = read('src/mingrx-social-polish.js');
 const markCss = read('src/mingrx-mark-polish.css');
 const markJs = read('src/mingrx-mark-polish.js');
 const svg = read('assets/mingrx.svg');
@@ -18,6 +20,8 @@ const pkg = JSON.parse(read('package.json'));
 assert(html.includes('class="mingrx-ui"'), 'Body precisa nascer com a camada Mingrx ativa para evitar flash legado.');
 assert(html.includes('mingrx-polish.css'), 'CSS de polish não foi carregado.');
 assert(html.includes('mingrx-polish.js'), 'Runtime de polish não foi carregado.');
+assert(html.includes('mingrx-social-polish.css'), 'CSS social Mingrx não foi carregado.');
+assert(html.includes('mingrx-social-polish.js'), 'Runtime social Mingrx não foi carregado.');
 assert(html.includes('mingrx-mark-polish.css'), 'CSS de marcas temáticas não foi carregado.');
 assert(html.includes('mingrx-mark-polish.js'), 'Runtime de marcas temáticas não foi carregado.');
 assert(html.includes('mingrx-final-fixes.css') && html.includes('mingrx-final-fixes.js'), 'Camada final de layout/interação não foi carregada.');
@@ -44,6 +48,16 @@ assert(polish.includes("brand.onclick = () => document.getElementById('homeServe
 assert(polish.includes('var(--mx-accent)'), 'Marca Mingrx não está ligada à cor do tema.');
 assert(polish.includes('mingrx-x'), 'Wordmark Mingrx não trata o X como detalhe de identidade.');
 assert(polish.includes('mingrx-settings-version'), 'Rodapé/versionamento Mingrx das configurações não foi injetado.');
+assert(polish.includes("querySelectorAll(':scope > .settings-brand,:scope > .settings-nav-foot')"), 'Brand/versionamento legado das configurações ainda pode coexistir com Mingrx.');
+assert(polish.includes("content.classList.add('settings-main')"), 'Conteúdo real das configurações não recebe a camada de layout Mingrx.');
+
+assert(socialCss.includes('.mingrx-social-hub') && socialCss.includes('.mingrx-social-tabs'), 'Central social Mingrx não possui estrutura visual própria.');
+assert(socialCss.includes('.mingrx-add-friend') && socialCss.includes('.mingrx-social-row'), 'Busca e cards sociais Mingrx estão incompletos.');
+assert(socialJs.includes('window.MingrxOpenFriends'), 'Central social Mingrx não expõe abertura controlada.');
+assert(socialJs.includes("friend:search") && socialJs.includes("friend:request"), 'Busca/solicitação de amizade não estão ligadas ao backend existente.');
+assert(socialJs.includes('#v1FriendsBtn,.v214-private-request'), 'Gatilhos sociais legados não são redirecionados para a central Mingrx.');
+assert(socialJs.includes('#v207AddFriendBtn,#v207StartFriend'), 'Adicionar amigo legado não é redirecionado para a central Mingrx.');
+assert(socialJs.includes("friend:accept") && socialJs.includes("friend:reject") && socialJs.includes("friend:unblock"), 'Ações sociais essenciais não estão cobertas.');
 
 for (const selector of ['big-banana-img','v214-private-home','mingrx-community-head','banana-updater-logo','cloud-home-logo']) {
   assert(markJs.includes(selector), `Marca fixa ainda não está coberta em ${selector}.`);
