@@ -13,7 +13,7 @@
     "dist:win": "electron-builder --win nsis --publish never && node scripts/verify-built-icon.js",
     "predist:portable": "npm run prepare:source && npm run smoke:mingrx && npm run smoke:ui && npm run smoke:rendezvous && npm run smoke:cloud",
     "dist:portable": "electron-builder --win portable",
-    "smoke:mingrx": "node scripts/smoke-mingrx-rebrand.js && node scripts/smoke-mingrx-polish.js",
+    "smoke:mingrx": "node scripts/smoke-mingrx-rebrand.js && node scripts/smoke-mingrx-polish.js && node scripts/smoke-mingrx-scale.js",
     "smoke:v1": "node scripts/smoke-v1.js",
     "smoke:ui": "node scripts/smoke-ui.js",
     "smoke:rendezvous": "node scripts/smoke-rendezvous.js",
@@ -24,7 +24,7 @@
     "security:audit": "npm audit --omit=dev --audit-level=critical"
   },
   "dependencies": {
-    "cors": "^2.8.5",
+    "cors": "^4.21.2",
     "express": "^4.21.2",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
