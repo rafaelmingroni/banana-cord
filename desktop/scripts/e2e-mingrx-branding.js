@@ -103,8 +103,9 @@ app.whenReady().then(async () => {
           window.MingrxRepairBranding?.();
           await sleep(10);
           const text=shell.textContent||'';
-          if(/banana\s*cord|banana\s*cloud|banana-cloud:\/\/firebase/i.test(text)) failures.push('settings legacy branding in '+id+': '+text.slice(0,240));
-          if(/mingrx cloud/i.test(text)) sawCloud=true;
+          const lower=text.toLowerCase();
+          if(lower.includes('banana cord')||lower.includes('banana cloud')||lower.includes('banana-cloud://firebase')) failures.push('settings legacy branding in '+id+': '+text.slice(0,240));
+          if(lower.includes('mingrx cloud')) sawCloud=true;
           if(shell.querySelector('img[src*="banana-cord"],img[alt*="Banana"]')) failures.push('settings banana image in '+id);
           if(shell.querySelector('.settings-brand,.settings-nav-foot,.version-label')) failures.push('legacy settings brand/version node in '+id);
           if(shell.querySelectorAll('.mingrx-settings-brand').length!==1) failures.push('Mingrx settings brand count invalid in '+id);
