@@ -33,6 +33,18 @@
     }
   }
 
+  function replaceLegacyMarks(root = document) {
+    const candidates = [];
+    if (root?.matches?.('.big-banana')) candidates.push(root);
+    for (const mark of root?.querySelectorAll?.('.big-banana') || []) candidates.push(mark);
+    for (const mark of candidates) {
+      if (mark.dataset.mingrxMark === 'true') continue;
+      mark.dataset.mingrxMark = 'true';
+      mark.classList.add('mingrx-empty-mark');
+      mark.innerHTML = `<img src="${MARK}" alt="${BRAND}">`;
+    }
+  }
+
   function patchNotifications() {
     const NativeNotification = window.Notification;
     if (!NativeNotification || NativeNotification.__mingrxWrapped) return;
@@ -131,6 +143,7 @@
   function refresh(root = document.body) {
     replaceText(root);
     replaceImages(root);
+    replaceLegacyMarks(root);
     buildTopBar();
     buildMemberToggle();
     normalizeLabels();
@@ -147,6 +160,7 @@
         if (node.nodeType === Node.ELEMENT_NODE) {
           replaceText(node);
           replaceImages(node);
+          replaceLegacyMarks(node);
         }
       }
     }
