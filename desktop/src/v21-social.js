@@ -428,7 +428,7 @@
       const event = ctx.kind === 'dm' ? 'dm:clear' : 'messages:clear';
       const payload = ctx.kind === 'dm'
         ? { userId:state.activeDmUserId, amount }
-        : { serverId:state.selectedServer.id, channelId:state.selectedChannel.id, amount, mode };
+        : { serverId:state.selectedServer.id, channelId:state.selectedChannel.id, amount, mode, all: lower === 'all' };
       state.socket.emit(event, payload, result => {
         if (result?.ok === false) return toast(result.message || 'Não foi possível limpar as mensagens.', 4200);
         toast(t('clear.done', { count:result?.count || 0 }), 3200);
