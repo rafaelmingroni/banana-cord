@@ -175,12 +175,19 @@ app.whenReady().then(async () => {
         state.voice.channelId = null; state.voice.serverId = null;
 
         mark('create-server-before');
-        document.getElementById('addServerBtn')?.click(); await sleep(30);
+        const addButton = document.getElementById('addServerBtn');
+        if (!addButton) return { ok:false, reason:'addServerBtn missing' };
+        addButton.click();
+        mark('create-server-click-returned');
+        queueMicrotask(() => mark('create-server-microtask'));
+        await sleep(30);
         mark('create-server-modal');
         const input = document.getElementById('newServerName');
         const create = document.getElementById('createServerNow');
         if (!input || !create) return { ok: false, reason: 'create server modal missing' };
-        input.value = 'Servidor E2E'; create.click(); await sleep(70);
+        input.value = 'Servidor E2E'; create.click();
+        mark('create-server-submit-returned');
+        await sleep(70);
         mark('create-server-after');
         if (!emitted.some(x => x.event === 'server:create' && x.payload?.name === 'Servidor E2E')) return { ok: false, reason: 'server:create was not emitted' };
 
