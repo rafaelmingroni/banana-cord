@@ -4,7 +4,7 @@
   window.__bananaV21SocialCloud = true;
 
   const {
-    doc, collection, getDoc, getDocs, query, orderBy, limit, writeBatch
+    doc, collection, getDoc, getDocs, updateDoc, query, orderBy, limit, writeBatch
   } = require('firebase/firestore');
   const {
     ref, update, onValue,
@@ -14,6 +14,13 @@
   const ROLE_RANK_V21 = { member: 0, moderator: 1, admin: 2, owner: 3 };
   const PRESENCE_STATES = new Set(['online', 'away', 'busy', 'offline']);
   const pairId = (a, b) => [String(a), String(b)].sort().join('_');
+  function millis(value) {
+    if (!value) return 0;
+    if (typeof value === 'number') return value;
+    if (typeof value.toMillis === 'function') return value.toMillis();
+    if (typeof value.toDate === 'function') return value.toDate().getTime();
+    return Number(value) || 0;
+  }
 
   function safeActivity(value) {
     if (!value || typeof value !== 'object') return null;
@@ -90,6 +97,29 @@
       return editMessageBase(payload);
     };
 
+    socket.refreshDmPreviewV21 = async function refreshDmPreviewV21(peerId) {
+      const tid = pairId(this.user.uid, peerId);
+      const messages = collection(this.db, 'dmThreads', tid, 'messages');
+      const snap = await getDocs(query(messages, orderBy('createdAt', 'desc'), limit(1)));
+      let lastMessage = null;
+      if (!snap.empty) {
+        const d = snap.docs[0].data() || {};
+        const at = millis(d.createdAt) || Date.now();
+        lastMessage = d.e2ee
+          ? { fromId:d.fromId || '', toId:d.toId || '', at, e2ee:true }
+          : { fromId:d.fromId || '', toId:d.toId || '', text:String(d.text || d.body || ''), at };
+      }
+      await updateDoc(doc(this.db, 'dmThreads', tid), { lastMessage });
+    };
+
+    const deleteDmBase = socket.deleteDm.bind(socket);
+    socket.deleteDm = async function deleteDmV21(payload = {}) {
+      const result = await deleteDmBase(payload);
+      try { await this.refreshDmPreviewV21(String(payload.userId || '')); }
+      catch (error) { console.warn('Banana Cord DM preview refresh:', error?.message || error); }
+      return result;
+    };
+
     socket.clearMessagesV21 = async function clearMessagesV21(payload = {}) {
       const serverId = String(payload.serverId || '');
       const channelId = String(payload.channelId || '');
@@ -141,6 +171,8 @@
       const batch = writeBatch(this.db);
       for (const row of targets) batch.delete(row.ref);
       await batch.commit();
+      try { await this.refreshDmPreviewV21(peerId); }
+      catch (error) { console.warn('Banana Cord DM preview refresh:', error?.message || error); }
       return { count: targets.length, mode: 'mine' };
     };
 
