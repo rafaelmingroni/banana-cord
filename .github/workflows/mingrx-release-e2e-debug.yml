@@ -5,6 +5,7 @@ on:
     branches: [v3.0.0-mingrx-rebrand]
     paths:
       - "desktop/scripts/e2e-v2-release.js"
+      - "desktop/src/mingrx-shell.js"
       - ".github/workflows/mingrx-release-e2e-debug.yml"
 
 permissions:
