@@ -60,13 +60,24 @@
 
   function hydrateAvatars(root = document) {
     for (const node of root.querySelectorAll?.('[data-social-avatar]') || []) {
+      if (node.dataset.socialAvatarHydrated === 'true') continue;
       const user = peerById(node.dataset.socialAvatar);
-      if (user && typeof avatarStyle === 'function') avatarStyle(node, user);
+      if (user && typeof avatarStyle === 'function') {
+        avatarStyle(node, user);
+        node.dataset.socialAvatarHydrated = 'true';
+      }
     }
+  }
+
+  function bindSocialSocket(socket) {
+    if (!socket?.on || socket.__mingrxSocialPolishBound) return;
+    socket.__mingrxSocialPolishBound = true;
+    socket.on('social:state', () => setTimeout(refreshCurrentTab, 0));
   }
 
   function emit(event, payload, callback) {
     const socket = state?.socket;
+    bindSocialSocket(socket);
     if (!socket?.emit) return callback?.({ ok:false, message:'Mingrx Cloud indisponível no momento.' });
     socket.emit(event, payload, callback);
   }
@@ -78,6 +89,7 @@
   }
 
   function openSocialHub(tab = 'friends') {
+    bindSocialSocket(state?.socket);
     activeTab = tab;
     const social = socialState();
     const incomingCount = social.incoming.length;
@@ -212,18 +224,7 @@
     }
   }, true);
 
-  function bindSocialSocket(socket) {
-    if (!socket?.on || socket.__mingrxSocialPolishBound) return;
-    socket.__mingrxSocialPolishBound = true;
-    socket.on('social:state', () => setTimeout(refreshCurrentTab, 0));
-  }
   if (state?.socket) bindSocialSocket(state.socket);
-
-  const observer = new MutationObserver(() => {
-    if (state?.socket) bindSocialSocket(state.socket);
-    if ($id('mingrxSocialBody')) hydrateAvatars($id('mingrxSocialBody'));
-  });
-  observer.observe(document.body, { childList:true, subtree:true });
 
   window.MingrxOpenFriends = openSocialHub;
   window.BananaOpenFriendSearch = () => openSocialHub('add');
