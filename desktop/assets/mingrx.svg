@@ -1,16 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Mingrx">
-  <defs>
-    <linearGradient id="mxRibbon" x1="180" y1="760" x2="860" y2="250" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#5f37e8"/>
-      <stop offset="0.48" stop-color="#7c5cff"/>
-      <stop offset="1" stop-color="#b287ff"/>
-    </linearGradient>
-    <linearGradient id="mxFold" x1="330" y1="330" x2="700" y2="520" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#9b7bff"/>
-      <stop offset="1" stop-color="#6d43f2"/>
-    </linearGradient>
-  </defs>
   <rect x="72" y="72" width="880" height="880" rx="220" fill="#0c0d11"/>
-  <path d="M226 716C256 595 286 430 360 333C397 285 438 278 486 315C515 338 542 368 574 399L620 444C657 480 691 488 724 462C758 435 786 382 819 333C841 301 874 290 897 309C915 324 914 356 907 397L866 716" fill="none" stroke="url(#mxRibbon)" stroke-width="132" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M360 333C397 285 438 278 486 315C515 338 542 368 574 399L620 444C657 480 691 488 724 462" fill="none" stroke="url(#mxFold)" stroke-width="76" stroke-linecap="round" stroke-linejoin="round" opacity=".92"/>
+  <path d="M252 716V360c0-72 84-106 132-52L512 452l128-144c48-54 132-20 132 52v356" fill="none" stroke="#7c5cff" stroke-width="124" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
