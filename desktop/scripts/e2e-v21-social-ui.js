@@ -34,7 +34,7 @@ ipcMain.handle('banana-v21:set-settings', async (_e, next={}) => {
 ipcMain.handle('banana-v21:get-system-languages', async () => ['pt-BR','en-US']);
 
 const hardTimeout = setTimeout(() => {
-  console.error('Banana Cord 2.1 social UI E2E failed: hard timeout');
+  console.error('Mingrx social UI E2E failed: hard timeout');
   app.exit(1);
 }, 25000);
 
@@ -43,7 +43,7 @@ function finish(code, message) {
   if (message) (code === 0 ? console.log : console.error)(message);
   setTimeout(() => app.exit(code), 50);
 }
-function fail(message) { finish(1, `Banana Cord 2.1 social UI E2E failed: ${message}`); }
+function fail(message) { finish(1, `Mingrx social UI E2E failed: ${message}`); }
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 app.whenReady().then(async () => {
@@ -81,7 +81,7 @@ app.whenReady().then(async () => {
       state.socket=fake;
       state.viewMode='server';
       state.selectedServer={
-        id:'srv',name:'Banana Test',ownerId:'me',memberRoles:{me:'owner',peer:'admin'},
+        id:'srv',name:'Mingrx Test',ownerId:'me',memberRoles:{me:'owner',peer:'admin'},
         roleColors:{owner:'#f2c94c',admin:'#c47cff',moderator:'#53b5df',member:'#d7dbe3'},
         categories:[{id:'cat_games',name:'Jogos'}],
         channels:[
@@ -164,7 +164,8 @@ app.whenReady().then(async () => {
       if(!document.querySelector('.v21-role-picker')||!document.querySelector('.v21-role-menu'))return{ok:false,reason:'custom role picker missing'};
       closeModal();
 
-      if(window.BananaI18n.t('settings.social')!=='Idioma e Social')return{ok:false,reason:'Portuguese locale not active'};
+      window.BananaI18n.setLocale('pt-BR');await sleep(30);
+      if(window.BananaI18n.t('settings.social')!=='Idioma e Social')return{ok:false,reason:'Portuguese locale switch failed'};
       window.BananaI18n.setLocale('en-US');await sleep(30);
       if(window.BananaI18n.t('settings.social')!=='Language & Social')return{ok:false,reason:'English locale switch failed'};
       window.BananaI18n.setLocale('es-ES');await sleep(30);
@@ -197,7 +198,7 @@ app.whenReady().then(async () => {
   `, true);
 
   if (!result?.ok) return fail(`${result?.reason || 'unknown'} ${JSON.stringify(result || {})}`);
-  console.log('Banana Cord 2.1 social UI Electron interaction test: OK');
+  console.log('Mingrx social UI Electron interaction test: OK');
   console.log(JSON.stringify(result));
   try { win.destroy(); } catch {}
   finish(0);
