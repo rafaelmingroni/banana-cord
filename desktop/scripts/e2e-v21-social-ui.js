@@ -164,7 +164,8 @@ app.whenReady().then(async () => {
       if(!document.querySelector('.v21-role-picker')||!document.querySelector('.v21-role-menu'))return{ok:false,reason:'custom role picker missing'};
       closeModal();
 
-      if(window.BananaI18n.t('settings.social')!=='Idioma e Social')return{ok:false,reason:'Portuguese locale not active'};
+      window.BananaI18n.setLocale('pt-BR');await sleep(30);
+      if(window.BananaI18n.t('settings.social')!=='Idioma e Social')return{ok:false,reason:'Portuguese locale switch failed'};
       window.BananaI18n.setLocale('en-US');await sleep(30);
       if(window.BananaI18n.t('settings.social')!=='Language & Social')return{ok:false,reason:'English locale switch failed'};
       window.BananaI18n.setLocale('es-ES');await sleep(30);
