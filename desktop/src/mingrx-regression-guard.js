@@ -107,6 +107,27 @@
     } catch {}
   }
 
+  function scheduleFix() {
+    if (queued) return;
+    queued = true;
+    setTimeout(() => {
+      queued = false;
+      fixAll();
+    }, 0);
+  }
+
+  function wrapFunction(name, after) {
+    const base = window[name];
+    if (typeof base !== 'function' || base.__mingrxGuardWrapped) return;
+    const wrapped = function(...args) {
+      const result = base.apply(this, args);
+      setTimeout(after, 0);
+      return result;
+    };
+    wrapped.__mingrxGuardWrapped = true;
+    window[name] = wrapped;
+  }
+
   function wrapCloudBridge() {
     const legacy = window.BananaLegacy;
     const base = legacy?.attachSocket;
@@ -114,18 +135,24 @@
     const wrapped = function(...args) {
       const result = base.apply(this, args);
       fixCloudState();
-      scheduleFix();
+      setTimeout(() => { fixCloudState(); fixSettings(); }, 0);
       return result;
     };
     wrapped.__mingrxGuardWrapped = true;
     legacy.attachSocket = wrapped;
   }
 
+  function installHooks() {
+    wrapCloudBridge();
+    wrapFunction('openSettings', fixSettings);
+    wrapFunction('showDmHome', () => { fixPrivateIdentity(); fixSettings(); });
+  }
+
   function fixAll() {
     if (fixing) return;
     fixing = true;
     try {
-      wrapCloudBridge();
+      installHooks();
       fixCloudState();
       fixAuth();
       fixPrivateIdentity();
@@ -135,32 +162,16 @@
     }
   }
 
-  function scheduleFix() {
-    if (queued) return;
-    queued = true;
-    queueMicrotask(() => {
-      queued = false;
-      fixAll();
-    });
-  }
-
-  function observeSurface(element, shouldRepair) {
-    if (!element) return;
-    const observer = new MutationObserver(records => {
-      if (fixing) return;
-      if (!shouldRepair || shouldRepair(records, element)) scheduleFix();
-    });
-    observer.observe(element, { childList:true, subtree:true });
-  }
+  /* Event-driven only: do not observe the document. Hot chat/social rendering stays untouched. */
+  document.addEventListener('click', event => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+    if (target.closest('#profileBtn,.settings-nav-item,[id^="tab"]')) scheduleFix();
+    if (target.closest('#homeServer,.mingrx-brand')) setTimeout(fixPrivateIdentity, 0);
+  }, true);
+  window.addEventListener('banana:i18n-changed', scheduleFix);
 
   fixAll();
-  setTimeout(fixAll, 0);
-  setTimeout(fixAll, 120);
-
-  /* Deliberately avoid a document-wide observer: chat/social rendering is hot and must stay untouched. */
-  observeSurface(document.getElementById('cloudGate'));
-  observeSurface(document.getElementById('emptyView'), (_records, root) => !!root.querySelector('.v214-private-home'));
-  observeSurface(document.getElementById('modalBody'), (_records, root) => !!root.querySelector('.settings-shell'));
-
+  setTimeout(fixAll, 80);
   window.MingrxRepairBranding = fixAll;
 })();
