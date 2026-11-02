@@ -100,10 +100,9 @@
       const amount = Math.max(1, Math.min(100, Number(payload.amount || 20) || 20));
       const messages = collection(this.db, 'servers', serverId, 'channels', channelId, 'messages');
 
-      // `/clear all` arrives as moderator mode=all with the maximum amount. Work
-      // in 400-write batches so the command really clears the channel instead of
-      // silently stopping at the first 100 messages.
-      if (mode === 'all' && amount === 100) {
+      // Only the explicit `/clear all` intent may purge the full channel. A
+      // moderator using `/clear 100` still removes exactly the newest 100.
+      if (mode === 'all' && payload.all === true) {
         let count = 0;
         while (true) {
           const snap = await getDocs(query(messages, orderBy('createdAt', 'desc'), limit(400)));
