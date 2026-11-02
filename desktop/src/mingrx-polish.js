@@ -15,6 +15,12 @@
   }
 
   const TEXT_MAP = new Map([
+    ['Configurações do servidor', 'Configurações da comunidade'],
+    ['Nome do servidor', 'Nome da comunidade'],
+    ['Hierarquia do servidor', 'Hierarquia da comunidade'],
+    ['Novo servidor', 'Nova comunidade'],
+    ['Servidores', 'Comunidades'],
+    ['Servidor', 'Comunidade'],
     ['Banana Cord', BRAND],
     ['BANANA CORD', 'MINGRX'],
     ['Banana Cloud', 'Mingrx Cloud'],
@@ -74,10 +80,13 @@
       brand.replaceWith(button);
       brand = button;
     }
-    brand.innerHTML = `${markSvg()}${wordmark()}<span class="mingrx-brand-badge hidden">0</span>`;
-    brand.title = 'Início e mensagens';
-    brand.setAttribute('aria-label', 'Início e mensagens');
-    brand.onclick = () => document.getElementById('homeServer')?.click();
+    if (brand.dataset.mingrxHome !== 'true') {
+      brand.dataset.mingrxHome = 'true';
+      brand.innerHTML = `${markSvg()}${wordmark()}<span class="mingrx-brand-badge hidden">0</span>`;
+      brand.title = 'Início e mensagens';
+      brand.setAttribute('aria-label', 'Início e mensagens');
+      brand.onclick = () => document.getElementById('homeServer')?.click();
+    }
     syncUnreadBadge();
   }
 
@@ -87,7 +96,7 @@
     if (!source || !target) return;
     const count = String(source.textContent || '').trim();
     const hidden = source.classList.contains('hidden') || !count || count === '0';
-    target.textContent = count || '0';
+    if (target.textContent !== (count || '0')) target.textContent = count || '0';
     target.classList.toggle('hidden', hidden);
   }
 
@@ -116,7 +125,7 @@
   function upgradePrivateHome() {
     for (const home of document.querySelectorAll('.v214-private-home')) {
       const img = home.querySelector('img');
-      if (img) img.replaceWith(htmlNode(markSvg('mingrx-inline-mark')));
+      if (img) img.replaceWith(htmlNode(markSvg('mingrx-inline-mark mingrx-private-mark')));
       const heading = home.querySelector('h2');
       if (heading && heading.textContent.trim() === 'Privado') heading.textContent = 'Mensagens privadas';
     }
@@ -175,6 +184,6 @@
   });
   observer.observe(document.body, { childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:['class'] });
 
-  window.addEventListener('mingrx:theme-change', () => installBrandHome());
+  window.addEventListener('mingrx:theme-change', () => syncUnreadBadge());
   window.addEventListener('banana:i18n-changed', () => queueMicrotask(polish));
 })();
