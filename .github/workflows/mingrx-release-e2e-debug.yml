@@ -26,4 +26,4 @@ jobs:
         run: npm run prepare:source
       - name: Run final release interaction test
         working-directory: desktop
-        run: electron scripts/e2e-v2-release.js
+        run: npx electron scripts/e2e-v2-release.js
