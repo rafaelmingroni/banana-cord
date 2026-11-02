@@ -97,36 +97,102 @@
     header.appendChild(button);
   }
 
-  function openCommunityModal() {
-    if (typeof window.openModal !== 'function' && typeof openModal !== 'function') return;
-    const show = typeof window.openModal === 'function' ? window.openModal : openModal;
-    show(`
-      <div class="simple-modal-head mingrx-community-head">
-        <h2>Comunidades</h2>
-        <p>Crie seu espaço no Mingrx ou entre usando um código de convite.</p>
-      </div>
-      <label>Nome da nova comunidade</label>
-      <input id="newServerName" maxlength="40" autocomplete="off" placeholder="Minha comunidade">
-      <button id="createServerNow">Criar comunidade</button>
-      <div class="divider"><span>ou</span></div>
-      <label>Código de convite</label>
-      <input id="joinCode" maxlength="32" autocomplete="off" placeholder="A1B2C3D4">
-      <button id="joinServerNow" class="secondary">Entrar na comunidade</button>
-    `);
-    queueMicrotask(() => document.getElementById('newServerName')?.focus());
+  function buildCommunityModal() {
+    let overlay = document.getElementById('mingrxCommunityModal');
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'mingrxCommunityModal';
+    overlay.className = 'modal hidden mingrx-community-modal';
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.innerHTML = `
+      <div class="modal-card mingrx-community-card" role="dialog" aria-modal="true" aria-labelledby="mingrxCommunityTitle">
+        <button type="button" class="modal-close" id="mingrxCommunityClose" aria-label="Fechar">×</button>
+        <div class="mingrx-community-head">
+          <img src="${MARK}" alt="" aria-hidden="true">
+          <div>
+            <h2 id="mingrxCommunityTitle">Comunidades</h2>
+            <p>Crie seu espaço no Mingrx ou entre usando um convite.</p>
+          </div>
+        </div>
+        <div class="mingrx-community-section">
+          <label for="newServerName">Nova comunidade</label>
+          <div class="mingrx-community-action-row">
+            <input id="newServerName" maxlength="40" autocomplete="off" placeholder="Nome da comunidade">
+            <button type="button" id="createServerNow" class="action">Criar</button>
+          </div>
+        </div>
+        <div class="mingrx-community-divider"><span>ou entre em uma existente</span></div>
+        <div class="mingrx-community-section">
+          <label for="joinCode">Código de convite</label>
+          <div class="mingrx-community-action-row">
+            <input id="joinCode" maxlength="64" autocomplete="off" placeholder="Cole o código">
+            <button type="button" id="joinServerNow" class="secondary">Entrar</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const close = () => {
+      overlay.classList.add('hidden');
+      overlay.setAttribute('aria-hidden', 'true');
+      const name = overlay.querySelector('#newServerName');
+      const code = overlay.querySelector('#joinCode');
+      if (name) name.value = '';
+      if (code) code.value = '';
+    };
+    const showError = message => {
+      if (typeof toast === 'function') toast(message, 3200);
+    };
+    const emitCreate = () => {
+      const name = overlay.querySelector('#newServerName')?.value?.trim() || '';
+      if (!name) return showError('Digite um nome para a comunidade.');
+      if (typeof state === 'undefined' || !state.socket) return showError('Conecte-se antes de criar uma comunidade.');
+      state.socket.emit('server:create', { name });
+      close();
+    };
+    const emitJoin = () => {
+      const code = overlay.querySelector('#joinCode')?.value?.trim() || '';
+      if (!code) return showError('Cole um código de convite.');
+      if (typeof state === 'undefined' || !state.socket) return showError('Conecte-se antes de entrar em uma comunidade.');
+      state.socket.emit('server:join', { inviteCode: code });
+      close();
+    };
+
+    overlay.querySelector('#mingrxCommunityClose')?.addEventListener('click', close);
+    overlay.addEventListener('click', event => { if (event.target === overlay) close(); });
+    overlay.querySelector('#createServerNow')?.addEventListener('click', emitCreate);
+    overlay.querySelector('#joinServerNow')?.addEventListener('click', emitJoin);
+    overlay.querySelector('#newServerName')?.addEventListener('keydown', event => { if (event.key === 'Enter') emitCreate(); });
+    overlay.querySelector('#joinCode')?.addEventListener('keydown', event => { if (event.key === 'Enter') emitJoin(); });
+    overlay._mingrxClose = close;
+    return overlay;
   }
 
-  function installCommunityTrigger() {
-    if (window.__mingrxCommunityTriggerInstalled) return;
-    window.__mingrxCommunityTriggerInstalled = true;
-    document.addEventListener('click', event => {
-      const trigger = event.target?.closest?.('#addServerBtn,#v207StartServer');
-      if (!trigger) return;
+  function openCommunityModal() {
+    const overlay = buildCommunityModal();
+    overlay.classList.remove('hidden');
+    overlay.setAttribute('aria-hidden', 'false');
+    overlay.querySelector('#newServerName')?.focus();
+  }
+
+  function upgradeCommunityTrigger(target) {
+    if (!target || target.dataset.mingrxCommunityTrigger === 'true') return target;
+    const clone = target.cloneNode(true);
+    clone.dataset.mingrxCommunityTrigger = 'true';
+    clone.title = 'Criar ou entrar em uma comunidade';
+    target.replaceWith(clone);
+    clone.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
       openCommunityModal();
-    }, true);
+    });
+    return clone;
+  }
+
+  function installCommunityTriggers(root = document) {
+    if (root?.matches?.('#addServerBtn,#v207StartServer')) upgradeCommunityTrigger(root);
+    for (const trigger of root?.querySelectorAll?.('#addServerBtn,#v207StartServer') || []) upgradeCommunityTrigger(trigger);
   }
 
   function normalizeLabels() {
@@ -144,13 +210,14 @@
     replaceText(root);
     replaceImages(root);
     replaceLegacyMarks(root);
+    installCommunityTriggers(root);
     buildTopBar();
     buildMemberToggle();
     normalizeLabels();
   }
 
   patchNotifications();
-  installCommunityTrigger();
+  buildCommunityModal();
   refresh();
 
   const observer = new MutationObserver(records => {
@@ -161,6 +228,7 @@
           replaceText(node);
           replaceImages(node);
           replaceLegacyMarks(node);
+          installCommunityTriggers(node);
         }
       }
     }
@@ -169,9 +237,12 @@
   observer.observe(document.body, { childList:true, subtree:true });
 
   window.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && document.body.classList.contains('mingrx-members-open')) {
+    if (event.key !== 'Escape') return;
+    if (document.body.classList.contains('mingrx-members-open')) {
       document.body.classList.remove('mingrx-members-open');
       document.querySelector('.mingrx-members-toggle')?.classList.remove('active');
     }
+    const community = document.getElementById('mingrxCommunityModal');
+    if (community && !community.classList.contains('hidden')) community._mingrxClose?.();
   });
 })();
