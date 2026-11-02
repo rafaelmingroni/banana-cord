@@ -26,6 +26,7 @@
     if (!root) return;
     const replacements = [
       [/banana-cloud:\/\/firebase/gi, 'Mingrx Cloud'],
+      [/mingrx-cloud:\/\/firebase/gi, 'Mingrx Cloud'],
       [/banana\s+cloud/gi, 'Mingrx Cloud'],
       [/banana\s+cord/gi, BRAND],
       [/conta\s+banana/gi, 'Conta Mingrx']
@@ -63,9 +64,10 @@
     }
   }
 
-  function removeLegacySettingsBrand(shell) {
-    for (const legacy of shell.querySelectorAll('.settings-brand,.settings-nav-foot,.version-label')) legacy.remove();
-    for (const image of shell.querySelectorAll('img')) {
+  function removeLegacySettingsBrand(root) {
+    if (!root) return;
+    for (const legacy of root.querySelectorAll('.settings-brand,.settings-nav-foot,.version-label')) legacy.remove();
+    for (const image of root.querySelectorAll('img')) {
       const src = String(image.getAttribute('src') || '');
       const alt = String(image.getAttribute('alt') || '');
       if (/banana-cord|banana/i.test(src) || /banana\s*cord/i.test(alt)) image.replaceWith(htmlNode(markSvg()));
@@ -75,7 +77,8 @@
   function fixSettings() {
     const shell = document.querySelector('.settings-shell');
     if (!shell) return;
-    removeLegacySettingsBrand(shell);
+    const settingsRoot = shell.closest('.settings-modal') || document.getElementById('modalBody') || shell;
+    removeLegacySettingsBrand(settingsRoot);
     const nav = shell.querySelector('.settings-nav');
     if (nav) {
       if (!nav.querySelector('.mingrx-settings-brand')) {
@@ -93,7 +96,7 @@
     }
     const content = shell.querySelector('.settings-content');
     content?.classList.add('settings-main');
-    replaceVisibleText(shell);
+    replaceVisibleText(settingsRoot);
   }
 
   function fixCloudState() {
@@ -141,20 +144,23 @@
     });
   }
 
+  function observeSurface(element, shouldRepair) {
+    if (!element) return;
+    const observer = new MutationObserver(records => {
+      if (fixing) return;
+      if (!shouldRepair || shouldRepair(records, element)) scheduleFix();
+    });
+    observer.observe(element, { childList:true, subtree:true });
+  }
+
   fixAll();
   setTimeout(fixAll, 0);
   setTimeout(fixAll, 120);
 
-  const observer = new MutationObserver(records => {
-    if (fixing) return;
-    for (const record of records) {
-      if (record.type === 'childList' && record.addedNodes.length) {
-        scheduleFix();
-        break;
-      }
-    }
-  });
-  observer.observe(document.body, { childList:true, subtree:true });
+  /* Deliberately avoid a document-wide observer: chat/social rendering is hot and must stay untouched. */
+  observeSurface(document.getElementById('cloudGate'));
+  observeSurface(document.getElementById('emptyView'), (_records, root) => !!root.querySelector('.v214-private-home'));
+  observeSurface(document.getElementById('modalBody'), (_records, root) => !!root.querySelector('.settings-shell'));
 
   window.MingrxRepairBranding = fixAll;
 })();
