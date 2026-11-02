@@ -16,6 +16,12 @@
   }
 
   function replaceText(root = document.body) {
+    if (!root) return;
+    if (root.nodeType === Node.TEXT_NODE) {
+      const next = brandText(root.nodeValue);
+      if (next !== root.nodeValue) root.nodeValue = next;
+      return;
+    }
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
@@ -27,7 +33,10 @@
   }
 
   function replaceImages(root = document) {
-    for (const img of root.querySelectorAll?.('.home-banana-img,.big-banana-img,.banana-updater-logo img,.banana-updater-install-logo img') || []) {
+    const images = [];
+    if (root?.matches?.('.home-banana-img,.big-banana-img,.banana-updater-logo img,.banana-updater-install-logo img')) images.push(root);
+    for (const img of root?.querySelectorAll?.('.home-banana-img,.big-banana-img,.banana-updater-logo img,.banana-updater-install-logo img') || []) images.push(img);
+    for (const img of images) {
       if (img.getAttribute('src') !== MARK) img.setAttribute('src', MARK);
       img.setAttribute('alt', BRAND);
     }
@@ -221,19 +230,36 @@
   buildCommunityModal();
   refresh();
 
+  const pendingRoots = new Set();
+  let refreshTimer = null;
+  function scheduleRefresh(root) {
+    if (root) pendingRoots.add(root);
+    if (refreshTimer) return;
+    refreshTimer = setTimeout(() => {
+      refreshTimer = null;
+      const roots = [...pendingRoots];
+      pendingRoots.clear();
+      for (const item of roots) {
+        if (!item?.isConnected && item !== document.body) continue;
+        replaceText(item);
+        if (item.nodeType === Node.ELEMENT_NODE) {
+          replaceImages(item);
+          replaceLegacyMarks(item);
+          installCommunityTriggers(item);
+        }
+      }
+      buildMemberToggle();
+      normalizeLabels();
+    }, 0);
+  }
+
   const observer = new MutationObserver(records => {
     for (const record of records) {
       for (const node of record.addedNodes) {
-        if (node.nodeType === Node.TEXT_NODE && /Banana (Cord|Cloud)/.test(node.nodeValue || '')) replaceText(node.parentNode || document.body);
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          replaceText(node);
-          replaceImages(node);
-          replaceLegacyMarks(node);
-          installCommunityTriggers(node);
-        }
+        if (node.nodeType === Node.TEXT_NODE) scheduleRefresh(node);
+        else if (node.nodeType === Node.ELEMENT_NODE) scheduleRefresh(node);
       }
     }
-    buildMemberToggle();
   });
   observer.observe(document.body, { childList:true, subtree:true });
 
