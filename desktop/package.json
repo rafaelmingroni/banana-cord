@@ -24,7 +24,7 @@
     "security:audit": "npm audit --omit=dev --audit-level=critical"
   },
   "dependencies": {
-    "cors": "^4.21.2",
+    "cors": "^2.8.5",
     "express": "^4.21.2",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
