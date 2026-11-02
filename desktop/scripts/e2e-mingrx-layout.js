@@ -15,10 +15,12 @@ handle('banana-v21:get-settings', async () => ({ idleSeconds:0,idleState:'active
 handle('banana-v21:set-settings', async () => ({ idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false }));
 handle('banana-v21:get-system-languages', async () => ['pt-BR']);
 
+// This sweep resizes a real Electron window through many desktop resolutions.
+// Hosted Windows runners can take much longer than local machines to commit each resize.
 const hardTimeout = setTimeout(() => {
   console.error('Mingrx layout E2E failed: hard timeout');
   app.exit(1);
-}, 32000);
+}, 90000);
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 function finish(code, message) {
   clearTimeout(hardTimeout);
