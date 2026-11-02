@@ -59,13 +59,17 @@ jobs:
           node --check desktop/src/mingrx-mark-polish.js
           node --check desktop/src/mingrx-final-fixes.js
           node --check desktop/src/mingrx-regression-guard.js
+          node --check desktop/src/mingrx-media.js
+          node --check desktop/src/mingrx-invite-fix.js
           node --check desktop/tray.js
           node --check desktop/scripts/generate-icons.js
           node --check desktop/scripts/verify-built-icon.js
           node --check desktop/scripts/smoke-mingrx-polish.js
+          node --check desktop/scripts/smoke-mingrx-media.js
           node --check desktop/scripts/e2e-mingrx-layout.js
           node --check desktop/scripts/e2e-mingrx-social.js
           node --check desktop/scripts/e2e-mingrx-branding.js
+          node --check desktop/scripts/e2e-mingrx-media-invite.js
           node --check desktop/scripts/e2e-v2-release.js
 
       - name: Existing cloud/UI regression suite
@@ -90,7 +94,7 @@ jobs:
         working-directory: desktop
         shell: pwsh
         run: |
-          node -e "const c=require('./cloud/firebase-config.js'); if(!c.apiKey||!c.authDomain||!c.projectId||!c.appId){console.error('Firebase runtime config missing'); process.exit(1)}; console.log('Firebase runtime config: OK')"
+          node -e "const c=require('./cloud/firebase-config.js'); if(!c.apiKey||!c.authDomain||!c.projectId||!c.appId||!c.storageBucket){console.error('Firebase runtime config/storage bucket missing'); process.exit(1)}; console.log('Firebase runtime config + storage bucket: OK')"
 
       - name: Rebuild prepared source with production config
         working-directory: desktop
