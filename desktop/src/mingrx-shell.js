@@ -174,6 +174,7 @@
     overlay.setAttribute('aria-hidden', 'false');
     overlay.querySelector('#newServerName')?.focus();
   }
+  window.MingrxOpenCommunity = openCommunityModal;
 
   function upgradeCommunityTrigger(target) {
     if (!target || target.dataset.mingrxCommunityTrigger === 'true') return target;
