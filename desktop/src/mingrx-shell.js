@@ -21,12 +21,13 @@
     while (walker.nextNode()) nodes.push(walker.currentNode);
     for (const node of nodes) {
       if (!node.nodeValue) continue;
-      node.nodeValue = brandText(node.nodeValue);
+      const next = brandText(node.nodeValue);
+      if (next !== node.nodeValue) node.nodeValue = next;
     }
   }
 
   function replaceImages(root = document) {
-    for (const img of root.querySelectorAll?.('.home-banana-img,.big-banana-img') || []) {
+    for (const img of root.querySelectorAll?.('.home-banana-img,.big-banana-img,.banana-updater-logo img,.banana-updater-install-logo img') || []) {
       if (img.getAttribute('src') !== MARK) img.setAttribute('src', MARK);
       img.setAttribute('alt', BRAND);
     }
@@ -84,6 +85,38 @@
     header.appendChild(button);
   }
 
+  function openCommunityModal() {
+    if (typeof window.openModal !== 'function' && typeof openModal !== 'function') return;
+    const show = typeof window.openModal === 'function' ? window.openModal : openModal;
+    show(`
+      <div class="simple-modal-head mingrx-community-head">
+        <h2>Comunidades</h2>
+        <p>Crie seu espaço no Mingrx ou entre usando um código de convite.</p>
+      </div>
+      <label>Nome da nova comunidade</label>
+      <input id="newServerName" maxlength="40" autocomplete="off" placeholder="Minha comunidade">
+      <button id="createServerNow">Criar comunidade</button>
+      <div class="divider"><span>ou</span></div>
+      <label>Código de convite</label>
+      <input id="joinCode" maxlength="32" autocomplete="off" placeholder="A1B2C3D4">
+      <button id="joinServerNow" class="secondary">Entrar na comunidade</button>
+    `);
+    queueMicrotask(() => document.getElementById('newServerName')?.focus());
+  }
+
+  function installCommunityTrigger() {
+    if (window.__mingrxCommunityTriggerInstalled) return;
+    window.__mingrxCommunityTriggerInstalled = true;
+    document.addEventListener('click', event => {
+      const trigger = event.target?.closest?.('#addServerBtn,#v207StartServer');
+      if (!trigger) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      openCommunityModal();
+    }, true);
+  }
+
   function normalizeLabels() {
     const home = document.getElementById('homeServer');
     if (home) home.title = 'Início e mensagens';
@@ -104,6 +137,7 @@
   }
 
   patchNotifications();
+  installCommunityTrigger();
   refresh();
 
   const observer = new MutationObserver(records => {
