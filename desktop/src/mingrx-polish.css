@@ -1,0 +1,238 @@
+/* Mingrx final polish — fixes private layout, auth/settings identity, top bar, and theme-aware branding. */
+
+/* ---------- Shell geometry ---------- */
+body.mingrx-ui .app{
+  grid-template-columns:minmax(268px,280px) minmax(0,1fr)!important;
+}
+body.mingrx-ui .sidebar{
+  min-width:268px!important;
+  width:auto!important;
+  overflow:hidden;
+}
+body.mingrx-ui .main{min-width:0!important}
+body.mingrx-ui .server-title,
+body.mingrx-ui .channels,
+body.mingrx-ui .profile-bar{min-width:0}
+
+/* The brand itself is the Home/DM entry. The old square Home icon is hidden. */
+body.mingrx-ui #homeServer{display:none!important}
+.mingrx-brand{
+  position:relative;
+  cursor:pointer;
+  user-select:none;
+  outline:none;
+}
+.mingrx-brand:focus-visible{box-shadow:0 0 0 2px var(--mx-accent-border);border-radius:10px}
+.mingrx-brand-word{display:flex;align-items:baseline;line-height:1}
+.mingrx-brand-word .mingrx-x{color:var(--mx-accent);font-weight:900;font-style:italic;margin-left:.02em}
+.mingrx-inline-mark{width:29px;height:29px;display:inline-grid;place-items:center;flex:0 0 29px}
+.mingrx-inline-mark svg{width:100%;height:100%;display:block}
+.mingrx-brand-badge{
+  position:absolute;left:24px;top:3px;min-width:16px;height:16px;padding:0 4px;
+  display:grid;place-items:center;border-radius:999px;background:var(--mx-accent);
+  color:var(--mx-on-accent,#fff);font-size:9px;font-weight:800;border:2px solid var(--mx-top);
+}
+.mingrx-brand-badge.hidden{display:none!important}
+
+/* ---------- Private / DM sidebar ---------- */
+body.mingrx-ui .app.dm-mode{
+  grid-template-columns:minmax(280px,296px) minmax(0,1fr)!important;
+}
+body.mingrx-ui .app.dm-mode .sidebar{min-width:280px!important}
+body.mingrx-ui .app.dm-mode .channels{padding:12px 12px 16px!important;overflow-x:hidden}
+body.mingrx-ui .v214-private-sidebar{
+  width:100%!important;
+  min-width:0!important;
+  gap:10px!important;
+}
+body.mingrx-ui .v214-private-sidebar *,
+body.mingrx-ui .v214-private-intro,
+body.mingrx-ui .v214-private-intro b,
+body.mingrx-ui .v214-private-intro span{
+  word-break:normal!important;
+  overflow-wrap:break-word!important;
+  white-space:normal!important;
+}
+body.mingrx-ui .v214-private-intro{
+  padding:12px!important;
+  border:1px solid var(--mx-line)!important;
+  background:var(--mx-panel-2)!important;
+  box-shadow:none!important;
+  border-radius:12px!important;
+}
+body.mingrx-ui .v214-private-intro b{color:var(--mx-text)!important;font-size:13px!important}
+body.mingrx-ui .v214-private-intro span{color:var(--mx-muted)!important;font-size:10.5px!important;line-height:1.45!important}
+body.mingrx-ui .v214-private-sidebar .v1-dm-tools{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:8px!important;
+}
+body.mingrx-ui .v214-private-sidebar .v1-dm-tools button,
+body.mingrx-ui .v214-private-sidebar .v207-dm-add-friend{
+  min-width:0!important;
+  width:100%!important;
+  padding:9px 10px!important;
+  border-radius:9px!important;
+  font-size:11px!important;
+  line-height:1.2!important;
+}
+body.mingrx-ui .v214-private-sidebar .v1-dm-tools button{
+  background:var(--mx-panel-2)!important;
+  border:1px solid var(--mx-line)!important;
+  color:var(--mx-text-2)!important;
+}
+body.mingrx-ui .v214-private-sidebar .v1-dm-tools button:hover{
+  background:var(--mx-hover)!important;color:var(--mx-text)!important;
+}
+body.mingrx-ui .v214-private-sidebar .v207-dm-add-friend{
+  background:var(--mx-accent)!important;
+  border:1px solid var(--mx-accent)!important;
+  color:var(--mx-on-accent,#fff)!important;
+  box-shadow:none!important;
+}
+body.mingrx-ui .v214-private-sidebar .v207-dm-add-friend:hover{background:var(--mx-accent-hover)!important;filter:none!important}
+body.mingrx-ui .v214-private-request{
+  border:1px solid var(--mx-accent-border)!important;
+  background:var(--mx-accent-soft)!important;
+  color:var(--mx-text)!important;
+}
+body.mingrx-ui .v214-private-request:hover{background:color-mix(in srgb,var(--mx-accent-soft) 78%,var(--mx-hover))!important}
+body.mingrx-ui .v214-private-request span:last-child{color:var(--mx-accent)!important}
+body.mingrx-ui .v214-private-section-title{color:var(--mx-muted)!important}
+body.mingrx-ui .v214-private-section-title small{color:var(--mx-muted)!important}
+body.mingrx-ui .v214-private-sidebar .v1-friend-quick-row:hover,
+body.mingrx-ui .v214-private-sidebar .dm-row:hover{
+  background:var(--mx-hover)!important;border-color:var(--mx-line)!important;
+}
+body.mingrx-ui .v214-private-sidebar .dm-row.active{
+  background:var(--mx-accent-soft)!important;
+  border-color:var(--mx-accent-border)!important;
+  box-shadow:inset 3px 0 0 var(--mx-accent)!important;
+}
+body.mingrx-ui .v214-private-empty-mini{
+  border-color:var(--mx-line)!important;background:var(--mx-panel-2)!important;color:var(--mx-muted)!important;
+}
+body.mingrx-ui .v214-private-home img{box-shadow:none!important;border-radius:18px!important}
+body.mingrx-ui .v214-private-home h2{color:var(--mx-text)!important}
+body.mingrx-ui .v214-private-home p{color:var(--mx-muted)!important}
+body.mingrx-ui .v214-private-home-actions .primary{
+  background:var(--mx-accent)!important;color:var(--mx-on-accent,#fff)!important;
+}
+body.mingrx-ui .v214-private-home-actions .secondary{
+  background:var(--mx-panel-2)!important;color:var(--mx-text-2)!important;border:1px solid var(--mx-line)!important;
+}
+
+/* ---------- Auth / registration ---------- */
+body.mingrx-ui .cloud-gate{
+  background:
+    radial-gradient(circle at 50% 10%,color-mix(in srgb,var(--mx-accent) 12%,transparent),transparent 36%),
+    var(--mx-bg)!important;
+  color:var(--mx-text)!important;
+}
+body.mingrx-ui .cloud-shell{width:min(448px,calc(100vw - 36px))!important}
+body.mingrx-ui .cloud-brand{
+  justify-content:center!important;text-align:center!important;gap:10px!important;margin:0 0 18px!important;
+}
+body.mingrx-ui .cloud-brand .mingrx-auth-brand{display:grid;justify-items:center;gap:9px}
+body.mingrx-ui .cloud-brand .mingrx-inline-mark{width:62px;height:62px}
+body.mingrx-ui .cloud-brand h1{margin:0!important;font-size:27px!important;letter-spacing:-.035em!important;color:var(--mx-text)!important}
+body.mingrx-ui .cloud-brand p{margin:3px 0 0!important;color:var(--mx-muted)!important;font-size:12px!important}
+body.mingrx-ui .cloud-panel{
+  background:var(--mx-panel)!important;border:1px solid var(--mx-line)!important;border-radius:16px!important;
+  box-shadow:var(--mx-shadow)!important;color:var(--mx-text)!important;
+}
+body.mingrx-ui .cloud-panel h2{color:var(--mx-text)!important}
+body.mingrx-ui .cloud-panel p,body.mingrx-ui .cloud-panel small{color:var(--mx-muted)!important}
+body.mingrx-ui .cloud-panel code{background:var(--mx-panel-2)!important;color:var(--mx-accent)!important}
+body.mingrx-ui .cloud-tabs{background:var(--mx-panel-2)!important}
+body.mingrx-ui .cloud-tabs button{color:var(--mx-muted)!important}
+body.mingrx-ui .cloud-tabs button.active{background:var(--mx-panel-3)!important;color:var(--mx-text)!important}
+body.mingrx-ui .cloud-form label{color:var(--mx-text-2)!important}
+body.mingrx-ui .cloud-form input{background:var(--mx-input)!important;color:var(--mx-text)!important;border-color:var(--mx-line)!important}
+body.mingrx-ui .cloud-form input:focus{border-color:var(--mx-accent-border)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--mx-accent) 12%,transparent)!important}
+body.mingrx-ui .cloud-form button.primary,
+body.mingrx-ui .cloud-actions .primary{
+  background:var(--mx-accent)!important;color:var(--mx-on-accent,#fff)!important;border:0!important;
+}
+body.mingrx-ui .cloud-form button.primary:hover,
+body.mingrx-ui .cloud-actions .primary:hover{background:var(--mx-accent-hover)!important}
+body.mingrx-ui .cloud-actions button{background:var(--mx-panel-2)!important;color:var(--mx-text-2)!important;border-color:var(--mx-line)!important}
+body.mingrx-ui .link-button{color:var(--mx-text-2)!important}
+body.mingrx-ui .cloud-spinner{border-color:var(--mx-line)!important;border-top-color:var(--mx-accent)!important}
+body.mingrx-ui .cloud-error{background:var(--mx-danger-bg)!important;color:#ffb7bd!important}
+
+/* ---------- Settings ---------- */
+body.mingrx-ui .modal-card.settings-modal{
+  background:var(--mx-bg)!important;border-color:var(--mx-line)!important;box-shadow:var(--mx-shadow)!important;
+  width:min(960px,calc(100vw - 44px))!important;max-height:min(760px,calc(100vh - 44px))!important;
+  padding:0!important;overflow:hidden!important;
+}
+body.mingrx-ui .settings-shell{
+  display:grid!important;grid-template-columns:210px minmax(0,1fr)!important;min-width:0!important;min-height:560px!important;
+  background:var(--mx-bg)!important;color:var(--mx-text)!important;
+}
+body.mingrx-ui .settings-nav{
+  min-width:0!important;padding:20px 12px!important;background:var(--mx-panel)!important;border-right:1px solid var(--mx-line)!important;
+}
+body.mingrx-ui .settings-main{min-width:0!important;padding:24px 28px!important;background:var(--mx-bg)!important;overflow:auto!important}
+body.mingrx-ui .settings-nav-item{min-width:0!important;white-space:normal!important;text-align:left!important}
+body.mingrx-ui .settings-nav-item.active{background:var(--mx-accent-soft)!important;color:var(--mx-accent)!important}
+body.mingrx-ui .settings-main h1,
+body.mingrx-ui .settings-main h2,
+body.mingrx-ui .settings-main h3{color:var(--mx-text)!important}
+body.mingrx-ui .settings-main p,
+body.mingrx-ui .settings-main small,
+body.mingrx-ui .settings-main label{color:var(--mx-muted)!important}
+body.mingrx-ui .settings-main button:not(.danger-action):not(.settings-nav-item){
+  border-color:var(--mx-line)!important;box-shadow:none!important;
+}
+body.mingrx-ui .settings-main .action,
+body.mingrx-ui .settings-main button.primary{
+  background:var(--mx-accent)!important;color:var(--mx-on-accent,#fff)!important;border-color:var(--mx-accent)!important;
+}
+body.mingrx-ui .danger-action,
+body.mingrx-ui .v219-remove-member{
+  background:var(--mx-danger-bg)!important;color:#ffabb1!important;border:1px solid color-mix(in srgb,#f0525d 40%,var(--mx-line))!important;
+}
+body.mingrx-ui .v21-setting-card,
+body.mingrx-ui .v219-profile-section,
+body.mingrx-ui .v219-profile-card,
+body.mingrx-ui .v219-permission-card,
+body.mingrx-ui .v219-role-row{
+  background:var(--mx-panel)!important;border-color:var(--mx-line)!important;box-shadow:none!important;
+}
+body.mingrx-ui .mingrx-settings-brand{
+  display:flex;align-items:center;gap:10px;padding:0 8px 16px;margin-bottom:10px;border-bottom:1px solid var(--mx-line);
+}
+body.mingrx-ui .mingrx-settings-brand .mingrx-inline-mark{width:32px;height:32px}
+body.mingrx-ui .mingrx-settings-brand b{font-size:14px;color:var(--mx-text)}
+body.mingrx-ui .mingrx-settings-brand small{display:block;margin-top:2px;color:var(--mx-muted);font-size:9px}
+body.mingrx-ui .mingrx-settings-version{
+  margin-top:auto;padding:14px 8px 0;color:var(--mx-muted);font-size:9px;border-top:1px solid var(--mx-line);
+}
+
+/* ---------- Framing / spacing ---------- */
+body.mingrx-ui .main>header{min-width:0!important;overflow:hidden}
+body.mingrx-ui .main>header #channelName{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
+body.mingrx-ui .main>header #channelDesc{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.mingrx-ui .messages{max-width:1120px;width:100%;margin:0 auto}
+body.mingrx-ui .composer{max-width:1120px;width:100%;margin:0 auto}
+body.mingrx-ui .empty-view{padding:32px!important}
+body.mingrx-ui .connection-badge{white-space:nowrap!important}
+
+@media(max-width:980px){
+  body.mingrx-ui .app{grid-template-columns:minmax(250px,260px) minmax(0,1fr)!important}
+  body.mingrx-ui .app.dm-mode{grid-template-columns:minmax(262px,274px) minmax(0,1fr)!important}
+  body.mingrx-ui .sidebar{min-width:250px!important}
+  body.mingrx-ui .app.dm-mode .sidebar{min-width:262px!important}
+  body.mingrx-ui .settings-shell{grid-template-columns:190px minmax(0,1fr)!important}
+}
+@media(max-width:760px){
+  body.mingrx-ui .app{grid-template-columns:minmax(226px,236px) minmax(0,1fr)!important}
+  body.mingrx-ui .app.dm-mode{grid-template-columns:minmax(238px,248px) minmax(0,1fr)!important}
+  body.mingrx-ui .sidebar{min-width:226px!important}
+  body.mingrx-ui .app.dm-mode .sidebar{min-width:238px!important}
+  body.mingrx-ui .mingrx-brand{min-width:54px!important;width:auto!important;padding-right:8px!important}
+  body.mingrx-ui .mingrx-brand-word{display:none}
+  body.mingrx-ui .settings-shell{grid-template-columns:168px minmax(0,1fr)!important}
+  body.mingrx-ui .settings-main{padding:20px!important}
+}
