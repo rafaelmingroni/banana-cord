@@ -184,6 +184,14 @@
           gate()?.classList.add('hidden');
           return;
         }
+
+        // A prior Cloud boot can be stuck waiting for its first Firestore
+        // snapshot while its "started" flag blocks every replayed event.
+        // Reset only the incomplete connection; preserve Firebase auth/data.
+        if (attempt === 0 && typeof window.BananaCloudRestartBoot === 'function') {
+          console.warn('Mingrx Cloud: restarting stalled initial connection.');
+          await window.BananaCloudRestartBoot();
+        }
         await sleep(450);
       }
 
