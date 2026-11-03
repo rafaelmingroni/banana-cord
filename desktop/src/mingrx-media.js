@@ -200,9 +200,15 @@
     };
   } catch {}
 
-  async function updateCommunityPhoto(file) {
-    const server = state.selectedServer;
-    if (!server || !can('admin')) {
+  function canEditCommunity(server) {
+    if (!server || !state.user?.id) return false;
+    const role = typeof roleFor === 'function' ? roleFor(state.user.id, server) : 'member';
+    return (ROLE_RANK?.[role] || 0) >= (ROLE_RANK?.admin || 2);
+  }
+
+  async function updateCommunityPhoto(file, targetServer = state.selectedServer) {
+    const server = targetServer;
+    if (!server || !canEditCommunity(server)) {
       throw new Error('Apenas administradores podem alterar a foto da comunidade.');
     }
     const { blob } = await compressImage(file, { maxDimension: 384, maxBytes: COMMUNITY_MAX_OUTPUT });
@@ -211,15 +217,29 @@
       throw new Error('A foto compactada ficou grande demais para o modo gratuito.');
     }
     server.icon = icon;
+    const current = state.servers.find(item => item.id === server.id);
+    if (current) current.icon = icon;
     renderServers();
     state.socket.emit('server:update', { serverId: server.id, icon });
     return icon;
   }
 
+  function clearCommunityPhoto(targetServer = state.selectedServer) {
+    const server = targetServer;
+    if (!server || !canEditCommunity(server)) {
+      throw new Error('Apenas administradores podem alterar a foto da comunidade.');
+    }
+    server.icon = '';
+    const current = state.servers.find(item => item.id === server.id);
+    if (current) current.icon = '';
+    renderServers();
+    state.socket.emit('server:update', { serverId: server.id, icon: '' });
+  }
+
   function injectCommunityPhotoCard() {
     const server = state.selectedServer;
     const body = els?.modalBody;
-    if (!server || !body || !can('admin') || body.querySelector('.mingrx-community-photo-card')) return;
+    if (!server || !body || !canEditCommunity(server) || body.querySelector('.mingrx-community-photo-card')) return;
     const settings = body.querySelector('.server-settings-grid') || body.querySelector('.v219-server-settings') || body;
     if (!settings) return;
 
@@ -238,7 +258,7 @@
     const title = document.createElement('b');
     title.textContent = 'Foto da comunidade';
     const note = document.createElement('small');
-    note.textContent = 'PNG, JPG ou WebP. Salva de forma compactada no modo gratuito (Spark).';
+    note.textContent = 'PNG, JPG ou WebP. A foto é compactada automaticamente e salva no plano gratuito (Spark).';
     const actions = document.createElement('div');
     actions.className = 'mingrx-community-photo-actions';
     const choose = document.createElement('button');
@@ -262,7 +282,7 @@
       choose.disabled = true;
       choose.textContent = 'Salvando…';
       try {
-        await updateCommunityPhoto(file);
+        await updateCommunityPhoto(file, server);
         updatePreview();
         remove.classList.remove('hidden');
         choose.textContent = 'Trocar foto';
@@ -276,13 +296,15 @@
     };
 
     remove.onclick = () => {
-      server.icon = '';
-      renderServers();
-      state.socket.emit('server:update', { serverId: server.id, icon: '' });
-      updatePreview();
-      remove.classList.add('hidden');
-      choose.textContent = 'Escolher foto';
-      toast('Foto removida.');
+      try {
+        clearCommunityPhoto(server);
+        updatePreview();
+        remove.classList.add('hidden');
+        choose.textContent = 'Escolher foto';
+        toast('Foto removida.');
+      } catch (error) {
+        toast(error?.message || 'Não consegui remover a foto.', 4500);
+      }
     };
 
     actions.append(choose, remove, input);
@@ -302,6 +324,8 @@
   window.MingrxMedia = Object.freeze({
     parseMedia,
     compressImage,
+    updateCommunityPhoto,
+    clearCommunityPhoto,
     injectCommunityPhotoCard,
     sparkMode: true,
     chatImageUpload: false
