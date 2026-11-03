@@ -37,7 +37,7 @@ assert(media.includes('updateCommunityPhoto'), 'Fluxo único de atualização da
 assert(media.includes('clearCommunityPhoto'), 'Fluxo único de remoção da foto da comunidade ausente.');
 assert(media.includes('INPUT_MAX = 12 * 1024 * 1024'), 'Foto da comunidade voltou a exigir arquivo original muito pequeno.');
 assert(media.includes('mingrx-community-photo-card'), 'Controle gratuito de foto da comunidade foi removido.');
-assert(media.includes('modo gratuito (Spark)'), 'UI não explica que a foto da comunidade usa o modo gratuito.');
+assert(media.includes('plano gratuito (Spark)'), 'UI não explica que a foto da comunidade usa o plano gratuito Spark.');
 
 // The mature V1 renderer owns drag/drop, unread/mention badges and the context menu.
 // Mingrx 3.1 must wrap/decorate it, never replace it with a simpler button renderer.
