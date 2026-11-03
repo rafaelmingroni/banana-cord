@@ -1,4 +1,4 @@
-name: Build and publish Banana Cord for Windows
+name: Build and publish Mingrx for Windows
 
 on:
   push:
@@ -9,11 +9,16 @@ on:
       - "CHANGELOG.md"
       - "RELEASE_NOTES-*.md"
       - "README.md"
+      - "docs/**"
       - ".github/workflows/release-windows.yml"
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: mingrx-release-main
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -28,6 +33,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
 
       - name: Setup Java for Firebase emulators
         uses: actions/setup-java@v4
@@ -49,7 +56,13 @@ jobs:
           BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
         run: node scripts/inject-firebase-config.js
 
-      - name: Prepare source
+      - name: Verify Firebase production config
+        working-directory: desktop
+        shell: pwsh
+        run: |
+          node -e "const c=require('./cloud/firebase-config.js'); const need=['apiKey','authDomain','projectId','appId','storageBucket']; const miss=need.filter(k=>!String(c[k]||'').trim()); if(miss.length){console.error('Missing Firebase config: '+miss.join(','));process.exit(1)}; console.log('Mingrx Firebase config: OK')"
+
+      - name: Prepare source and Mingrx assets
         working-directory: desktop
         run: npm run prepare:source
 
@@ -64,69 +77,44 @@ jobs:
           node --check desktop/updater-prompt.js
           node --check desktop/tray.js
           node --check desktop/src/app.js
-          node --check desktop/src/v101-fix.js
-          node --check desktop/src/v1.js
-          node --check desktop/src/v110.js
-          node --check desktop/src/v120.js
           node --check desktop/src/cloud-v2-mode.js
           node --check desktop/src/cloud-v2.js
+          node --check desktop/src/cloud-v2-brand.js
+          node --check desktop/src/cloud-v2-storage.js
           node --check desktop/src/cloud-v2-auth-fix.js
-          node --check desktop/src/cloud-v2-ui-fix.js
-          node --check desktop/src/cloud-v2-legacy-bridge.js
           node --check desktop/src/cloud-v2-socket.js
           node --check desktop/src/cloud-v2-runtime-fixes.js
           node --check desktop/src/cloud-v2-release-fixes.js
-          node --check desktop/src/cloud-v2-v212-fix.js
-          node --check desktop/src/cloud-v2-v215-security-fix.js
-          node --check desktop/src/cloud-v2-v216-e2ee.js
-          node --check desktop/src/cloud-v2-v21-social.js
-          node --check desktop/src/v212-ui-fix.js
-          node --check desktop/src/v214-private-ui-fix.js
-          node --check desktop/src/v215-security-ui-fix.js
-          node --check desktop/src/v216-e2ee-client.js
-          node --check desktop/src/v216-e2ee-ui.js
-          node --check desktop/src/v21-i18n.js
-          node --check desktop/src/v21-i18n-legacy.js
-          node --check desktop/src/v21-social.js
-          node --check desktop/src/v21-release-fixes.js
-          node --check desktop/scripts/inject-firebase-config.js
-          node --check desktop/scripts/smoke-cloud.js
-          node --check desktop/scripts/smoke-cloud-parity.js
-          node --check desktop/scripts/smoke-firebase-rules.js
-          node --check desktop/scripts/smoke-v216-firebase-rules.js
-          node --check desktop/scripts/smoke-ui.js
-          node --check desktop/scripts/smoke-v212.js
-          node --check desktop/scripts/smoke-v214.js
-          node --check desktop/scripts/smoke-v215.js
-          node --check desktop/scripts/smoke-v216.js
-          node --check desktop/scripts/smoke-v21.js
-          node --check desktop/scripts/e2e-v21-main.js
-          node --check desktop/scripts/e2e-v21-social-ui.js
-          node --check desktop/scripts/e2e-v21-submit-priority.js
-          node --check desktop/scripts/e2e-v21-language.js
-          node --check desktop/scripts/e2e-v21-private-guard.js
-          node --check desktop/scripts/e2e-v216-e2ee.js
-          node --check desktop/scripts/e2e-v2-release.js
+          node --check desktop/src/mingrx-shell.js
+          node --check desktop/src/mingrx-themes.js
+          node --check desktop/src/mingrx-polish.js
+          node --check desktop/src/mingrx-social-polish.js
+          node --check desktop/src/mingrx-mark-polish.js
+          node --check desktop/src/mingrx-final-fixes.js
+          node --check desktop/src/mingrx-regression-guard.js
+          node --check desktop/src/mingrx-media.js
+          node --check desktop/src/mingrx-invite-fix.js
+          node --check desktop/src/v217-premium-updater.js
+          node --check desktop/scripts/build-cloud-browser.js
+          node --check desktop/scripts/smoke-mingrx-rebrand.js
+          node --check desktop/scripts/smoke-mingrx-polish.js
+          node --check desktop/scripts/smoke-mingrx-media.js
+          node --check desktop/scripts/e2e-mingrx-layout.js
+          node --check desktop/scripts/e2e-mingrx-social.js
+          node --check desktop/scripts/e2e-mingrx-branding.js
+          node --check desktop/scripts/e2e-mingrx-media-invite.js
 
-      - name: Cloud foundation and parity tests
+      - name: Mingrx launch regression tests
+        working-directory: desktop
+        run: npm run smoke:mingrx
+
+      - name: Existing Cloud regression suite
         working-directory: desktop
         run: npm run smoke:cloud
 
       - name: Firebase security rules emulator tests
         working-directory: desktop
         run: npm run smoke:rules
-
-      - name: Deploy hardened Firebase rules when CI credential is configured
-        shell: pwsh
-        working-directory: desktop
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: |
-          if (-not $env:FIREBASE_TOKEN) {
-            Write-Host "::warning::FIREBASE_TOKEN is not configured; production Firebase rules were validated but not deployed by this workflow."
-            exit 0
-          }
-          npx firebase-tools deploy --project banana-cord --config ../firebase/firebase.json --only firestore:rules,database --token $env:FIREBASE_TOKEN --non-interactive
 
       - name: UI regression tests
         working-directory: desktop
@@ -136,17 +124,33 @@ jobs:
         working-directory: desktop
         run: npm run smoke:rendezvous
 
-      - name: Real Electron V2 release interaction test
+      - name: Real Electron interaction suite
         working-directory: desktop
         run: npm run smoke:e2e-v2
 
-      - name: Validate official version
+      - name: Deploy Firebase rules when CI credential is configured
+        shell: pwsh
+        working-directory: desktop
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          if (-not $env:FIREBASE_TOKEN) {
+            Write-Host "::warning::FIREBASE_TOKEN is not configured. Firestore, Realtime Database and Storage rules passed emulator tests but must be published manually in Firebase Console."
+            exit 0
+          }
+          npx firebase-tools deploy --project banana-cord --config ../firebase/firebase.json --only firestore:rules,database,storage --token $env:FIREBASE_TOKEN --non-interactive
+
+      - name: Validate official Mingrx version and migration identity
         shell: pwsh
         run: |
-          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
-          if ($version -notmatch '^\d+\.\d+\.\d+$') { Write-Error "Release oficial exige versão sem sufixo: $version"; exit 1 }
-          if ($version -notmatch '^2\.') { Write-Error "Este workflow publica a linha V2: $version"; exit 1 }
-          Write-Host "Banana Cord official version: $version"
+          $pkg = Get-Content desktop/package.json | ConvertFrom-Json
+          $version = $pkg.version
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { Write-Error "Release oficial exige semver sem sufixo: $version"; exit 1 }
+          if ($version -notmatch '^3\.') { Write-Error "Mingrx public launch must be 3.x: $version"; exit 1 }
+          if ($pkg.build.productName -ne 'Mingrx') { Write-Error "productName must be Mingrx"; exit 1 }
+          if ($pkg.build.appId -ne 'com.bananacord.app') { Write-Error "Migration appId changed; old installs would not upgrade in place."; exit 1 }
+          if ($pkg.build.artifactName -notlike 'Mingrx-Setup-*') { Write-Error "Installer artifact is not branded Mingrx."; exit 1 }
+          Write-Host "Mingrx $version migration identity: OK"
 
       - name: Prepare version tag
         shell: pwsh
@@ -160,26 +164,21 @@ jobs:
 
           $releaseJson = gh api "repos/$repo/releases/tags/$tag" 2>$null
           $releaseExists = ($LASTEXITCODE -eq 0)
-          $releaseComplete = $false
-
           if ($releaseExists) {
             $release = $releaseJson | ConvertFrom-Json
             $assetNames = @($release.assets | ForEach-Object { $_.name })
-            $hasExe = ($assetNames | Where-Object { $_ -like "Banana-Cord-Setup-$version-*.exe" }).Count -gt 0
-            $hasBlockmap = ($assetNames | Where-Object { $_ -like "*.exe.blockmap" }).Count -gt 0
+            $hasExe = ($assetNames | Where-Object { $_ -like "Mingrx-Setup-$version-*.exe" }).Count -gt 0
+            $hasBlockmap = ($assetNames | Where-Object { $_ -like "Mingrx-Setup-$version-*.exe.blockmap" }).Count -gt 0
             $hasLatest = $assetNames -contains "latest.yml"
-            $releaseComplete = $hasExe -and $hasBlockmap -and $hasLatest
-
-            if ($releaseComplete) {
+            if ($hasExe -and $hasBlockmap -and $hasLatest) {
               $tagCommit = (git rev-list -n 1 $tag).Trim()
               if ($tagCommit -ne $env:GITHUB_SHA) {
-                Write-Error "A versão $version já foi publicada. Aumente desktop/package.json antes de publicar novas mudanças."
+                Write-Error "Mingrx $version already exists on another commit. Bump the version before publishing."
                 exit 1
               }
-              Write-Host "Release $tag já está completa no commit atual."
+              Write-Host "Mingrx $tag already complete on this commit."
               exit 0
             }
-
             foreach ($asset in $release.assets) { gh api -X DELETE "repos/$repo/releases/assets/$($asset.id)" }
           }
 
@@ -196,40 +195,24 @@ jobs:
         shell: pwsh
         run: |
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
-          $exe = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe" | Select-Object -First 1
-          $blockmap = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe.blockmap" | Select-Object -First 1
+          $exe = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe" | Select-Object -First 1
+          $blockmap = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe.blockmap" | Select-Object -First 1
           $latest = Get-Item "desktop/dist/latest.yml" -ErrorAction SilentlyContinue
-          if (-not $exe) { Write-Error "Instalador .exe não foi gerado."; exit 1 }
-          if ($exe.Length -lt 50000000) { Write-Error "Instalador parece pequeno demais."; exit 1 }
-          if (-not $blockmap) { Write-Error "Blockmap não foi gerado."; exit 1 }
-          if (-not $latest) { Write-Error "latest.yml não foi gerado."; exit 1 }
-          Write-Host "Installer: $($exe.Name) - $($exe.Length) bytes"
+          if (-not $exe) { Write-Error "Mingrx installer .exe was not generated."; exit 1 }
+          if ($exe.Length -lt 50000000) { Write-Error "Mingrx installer is unexpectedly small."; exit 1 }
+          if (-not $blockmap) { Write-Error "Mingrx blockmap was not generated."; exit 1 }
+          if (-not $latest) { Write-Error "latest.yml was not generated."; exit 1 }
+          $latestText = Get-Content $latest.FullName -Raw
+          if ($latestText -notmatch 'Mingrx-Setup-') { Write-Error "latest.yml does not point to the Mingrx installer."; exit 1 }
+          Write-Host "Mingrx installer: $($exe.Name) - $($exe.Length) bytes"
 
       - name: Prepare release notes
         shell: pwsh
         run: |
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
           $specific = "RELEASE_NOTES-$version.md"
-          if (Test-Path $specific) {
-            $body = Get-Content $specific
-          } else {
-            $lines = Get-Content CHANGELOG.md
-            $header = "## $version"
-            $start = [Array]::IndexOf($lines, $header)
-            if ($start -lt 0) { Write-Error "CHANGELOG.md não possui a seção $header e $specific não existe"; exit 1 }
-            $body = New-Object System.Collections.Generic.List[string]
-            for ($i = $start + 1; $i -lt $lines.Count; $i++) {
-              if ($lines[$i] -match '^##\s+') { break }
-              $body.Add($lines[$i])
-            }
-          }
-          @(
-            "# Banana Cord V$version"
-            ""
-            "Nova versão oficial do Banana Cord V2, com foco em privacidade, segurança e comunicação criptografada."
-            ""
-            "## O que mudou"
-          ) + $body | Set-Content release-notes.md -Encoding UTF8
+          if (-not (Test-Path $specific)) { Write-Error "$specific is required for a public Mingrx release."; exit 1 }
+          Get-Content $specific | Set-Content release-notes.md -Encoding UTF8
 
       - name: Create or update GitHub Release
         shell: pwsh
@@ -240,17 +223,16 @@ jobs:
           $tag = "v$version"
           gh release view $tag *> $null
           if ($LASTEXITCODE -eq 0) {
-            gh release edit $tag --title "Banana Cord V$version" --notes-file release-notes.md --latest
+            gh release edit $tag --title "Mingrx $version" --notes-file release-notes.md --latest
           } else {
-            gh release create $tag --title "Banana Cord V$version" --target $env:GITHUB_SHA --notes-file release-notes.md --latest
+            gh release create $tag --title "Mingrx $version" --target $env:GITHUB_SHA --notes-file release-notes.md --latest
           }
-
-          $exe = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe" | Select-Object -First 1
-          $blockmap = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe.blockmap" | Select-Object -First 1
+          $exe = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe" | Select-Object -First 1
+          $blockmap = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe.blockmap" | Select-Object -First 1
           $latest = Get-Item "desktop/dist/latest.yml"
           gh release upload $tag $exe.FullName $blockmap.FullName $latest.FullName --clobber
 
-      - name: Verify published release
+      - name: Verify published Mingrx release
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -258,12 +240,13 @@ jobs:
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
           $tag = "v$version"
           $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" | ConvertFrom-Json
+          if ($release.name -ne "Mingrx $version") { Write-Error "Release title is not Mingrx $version"; exit 1 }
           $names = @($release.assets | ForEach-Object { $_.name })
-          $hasExe = ($names | Where-Object { $_ -like "Banana-Cord-Setup-$version-*.exe" }).Count -gt 0
-          $hasBlockmap = ($names | Where-Object { $_ -like "*.exe.blockmap" }).Count -gt 0
+          $hasExe = ($names | Where-Object { $_ -like "Mingrx-Setup-$version-*.exe" }).Count -gt 0
+          $hasBlockmap = ($names | Where-Object { $_ -like "Mingrx-Setup-$version-*.exe.blockmap" }).Count -gt 0
           $hasLatest = $names -contains "latest.yml"
           if (-not ($hasExe -and $hasBlockmap -and $hasLatest)) {
-            Write-Error "Release incompleta: $($names -join ', ')"
+            Write-Error "Incomplete Mingrx release: $($names -join ', ')"
             exit 1
           }
-          Write-Host "Banana Cord V$version publicado com EXE + blockmap + latest.yml."
+          Write-Host "Mingrx $version published with EXE + blockmap + latest.yml."
