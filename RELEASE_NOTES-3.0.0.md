@@ -60,6 +60,7 @@ A marca visível passa a ser Mingrx; o identificador legado permanece apenas por
 
 A V3 também reorganiza a presença pública do projeto:
 
+- repositório oficial em `rafaelmingroni/mingrx-app`;
 - README totalmente refeito;
 - banners oficiais do Mingrx;
 - logo no README;
@@ -67,8 +68,7 @@ A V3 também reorganiza a presença pública do projeto:
 - guia Mingrx Cloud atualizado;
 - landing de convites rebatizada;
 - workflows atualizados para Mingrx;
-- pipeline de release preparado para artefatos `Mingrx-Setup-*`;
-- repositório preparado para ser renomeado de `banana-cord` para `mingrx`.
+- pipeline de release preparado para artefatos `Mingrx-Setup-*`.
 
 ## Arquitetura
 
