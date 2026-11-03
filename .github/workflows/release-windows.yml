@@ -6,6 +6,7 @@ on:
     paths:
       - "desktop/**"
       - "firebase/**"
+      - "RELEASE_NOTES-*.md"
       - ".github/workflows/release-windows.yml"
   workflow_dispatch:
 
