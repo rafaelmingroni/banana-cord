@@ -125,7 +125,10 @@
     const text = loadingPanel()?.querySelector('p');
     if (text) text.textContent = 'Não foi possível concluir o login.';
     if (ui) {
-      ui.error.textContent = friendlyBootError(error);
+      const issue = window.BananaCloudBootIssue || {};
+      const stage = String(issue.stage || window.BananaCloudBootStage || 'auth-recovery');
+      const code = String(issue.code || error?.code || 'timeout');
+      ui.error.textContent = friendlyBootError(error) + ' [Etapa: ' + stage + '; código: ' + code + ']';
       ui.error.classList.remove('hidden');
       ui.actions.classList.remove('hidden');
     }
@@ -146,6 +149,7 @@
     if (!user || recoveryRunning) return;
     recoveryRunning = true;
     showBootLoading();
+    window.BananaCloudBootStage = 'auth-reload';
 
     try {
       await user.reload();
@@ -156,6 +160,7 @@
 
       // Critical: refresh the ID token so Firestore/RTDB rules see
       // request.auth.token.email_verified === true immediately.
+      window.BananaCloudBootStage = 'token-refresh';
       const token = await user.getIdTokenResult(true);
       if (token?.claims?.email_verified !== true) {
         const stale = new Error('A sessão autenticada ainda não recebeu a confirmação do e-mail.');
@@ -169,6 +174,7 @@
       // A second attempt is useful if the first request failed while the old
       // token was still in flight.
       for (let attempt = 0; attempt < 2; attempt += 1) {
+        window.BananaCloudBootStage = 'socket-boot-attempt-' + (attempt + 1);
         window.dispatchEvent(new CustomEvent('banana:cloud-ready', {
           detail: {
             ...detail,
