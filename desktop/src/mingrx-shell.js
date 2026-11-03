@@ -1,4 +1,4 @@
-/* Mingrx Preview shell. Keeps the mature communication engine underneath while replacing product identity and navigation shell. */
+/* Mingrx shell. Keeps the mature communication engine underneath while replacing product identity and navigation shell. */
 (() => {
   if (window.__mingrxShellLoaded) return;
   window.__mingrxShellLoaded = true;
@@ -83,11 +83,6 @@
     const spacer = document.createElement('div');
     spacer.className = 'mingrx-top-spacer';
     bar.appendChild(spacer);
-
-    const chip = document.createElement('span');
-    chip.className = 'mingrx-preview-chip';
-    chip.textContent = 'Preview';
-    bar.appendChild(chip);
   }
 
   function buildMemberToggle() {
