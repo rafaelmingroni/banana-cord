@@ -14,7 +14,7 @@ safeHandle('banana-v21:get-settings', async () => ({idleSeconds:0,idleState:'act
 safeHandle('banana-v21:set-settings', async () => ({}));
 safeHandle('banana-v21:get-system-languages', async () => ['pt-BR']);
 
-const hardTimeout = setTimeout(() => { console.error('Mingrx Spark media/invite E2E failed: hard timeout'); app.exit(1); }, 24000);
+const hardTimeout = setTimeout(() => { console.error('Mingrx Spark media/invite E2E failed: hard timeout'); app.exit(1); }, 26000);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function finish(code, message) { clearTimeout(hardTimeout); if (message) (code ? console.error : console.log)(message); setTimeout(() => app.exit(code), 50); }
 const fail = message => finish(1, `Mingrx Spark media/invite E2E failed: ${message}`);
@@ -54,7 +54,7 @@ app.whenReady().then(async () => {
       if(attach) failures.push('chat/DM attachment button must not exist in Spark mode');
       if(!window.MingrxMedia?.sparkMode || window.MingrxMedia?.chatImageUpload!==false) failures.push('Spark media runtime flags are incorrect');
       if(!window.MingrxInvite?.open) failures.push('Mingrx invite runtime missing');
-      if(!window.Mingrx31UX?.repairCommunitySettings || !window.Mingrx31UX?.stopWatching) failures.push('Mingrx 3.1 UX runtime missing');
+      if(!window.Mingrx31UX?.repairCommunitySettings || !window.Mingrx31UX?.stopWatching || !window.Mingrx31UX?.repairVoiceList || !window.Mingrx31UX?.repairRemoteCard) failures.push('Mingrx 3.1 UX runtime missing');
 
       // Invite must open immediately and old premium handler must be gone.
       const invite=document.getElementById('inviteBtn');
@@ -92,11 +92,26 @@ app.whenReady().then(async () => {
       await sleep(40);
       if(document.querySelector('#modal > .modal-card')?.classList.contains('mingrx-server-settings-modal')) failures.push('wide settings modal class leaked after closing');
 
+      // Voice rows must resolve names from current community membership, never a stale cached label.
+      state.viewMode='server';
+      state.selectedServer=server;
+      state.selectedChannel=server.channels[1];
+      state.voicePresence.set('voice',[
+        {socketId:'self-voice',userId:'me',user:{id:'me',name:'Comunidade',avatar:''},mediaState:{muted:false,camera:false,screen:false},speaking:false},
+        {socketId:'peer-voice',userId:'peer',user:{id:'peer',name:'Comunidade',avatar:''},mediaState:{muted:false,camera:false,screen:false},speaking:false}
+      ]);
+      const voiceWrap=document.createElement('div');
+      renderVoiceUsers(voiceWrap,'voice');
+      const voiceNames=[...voiceWrap.querySelectorAll('.voice-user-name')].map(el=>el.textContent.trim());
+      if(voiceNames[0]!=='Rafael' || voiceNames[1]!=='Gustavo') failures.push('voice names did not resolve from current member/profile identity: '+JSON.stringify(voiceNames));
+      const voiceEntries=state.voicePresence.get('voice')||[];
+      if(voiceEntries[0]?.user?.name!=='Rafael' || voiceEntries[1]?.user?.name!=='Gustavo') failures.push('voice presence cache kept stale community labels');
+
       // Watching a stream must expose an explicit stop control and return to normal grid mode.
       const fakeCard=document.createElement('div');
       fakeCard.id='video-peer-e2e';
       fakeCard.className='video-card is-sharing';
-      fakeCard.innerHTML='<video></video><div class="video-label">Gustavo · compartilhando tela</div>';
+      fakeCard.innerHTML='<div class="video-placeholder" style="display:none"><div class="avatar-video"></div></div><video style="display:block"></video><button class="expand-btn"></button><div class="video-label">Comunidade · compartilhando tela</div>';
       els.videoGrid.appendChild(fakeCard);
       state.ui.focusSharing=true;
       state.ui.showAllOverride=false;
@@ -108,6 +123,20 @@ app.whenReady().then(async () => {
       if(fakeCard.querySelector('.mingrx-stop-watching')) failures.push('stop-watching button remained after stopping');
       if(fakeCard.classList.contains('mingrx-watching-stream')) failures.push('watched stream marker remained after stopping');
       if(state.ui.focusSharing!==false || state.ui.showAllOverride!==true) failures.push('stop-watching did not restore normal grid mode');
+
+      // When screen/camera state ends, any lingering WebRTC video track must not freeze the last frame.
+      const fakeVideo=fakeCard.querySelector('video');
+      fakeVideo.srcObject=new MediaStream();
+      fakeCard.classList.add('is-sharing');
+      fakeCard.querySelector('.video-placeholder').style.display='none';
+      fakeVideo.style.display='block';
+      const stalePeer={socketId:'peer-e2e',user:{id:'peer',name:'Comunidade',avatar:''},mediaState:{screen:false,camera:false,muted:false},remoteStream:new MediaStream()};
+      window.Mingrx31UX.repairRemoteCard(stalePeer);
+      if(fakeVideo.srcObject!==null) failures.push('ended remote screen kept a stale video srcObject');
+      if(fakeVideo.style.display!=='none') failures.push('ended remote screen kept the frozen video visible');
+      if(fakeCard.querySelector('.video-placeholder').style.display!=='grid') failures.push('ended remote screen did not restore avatar placeholder');
+      if(fakeCard.classList.contains('is-sharing')) failures.push('ended remote screen kept sharing class');
+      if((fakeCard.querySelector('.video-label')?.textContent||'').trim()!=='Gustavo') failures.push('remote video card kept stale community name after identity repair');
       fakeCard.remove();
 
       // Old 3.0 image markers still render for backwards compatibility, but no new upload UI exists.
@@ -129,11 +158,11 @@ app.whenReady().then(async () => {
       if(!dmImage || !dmImage.src.includes('example.com/screenshot.webp')) failures.push('legacy DM inline image did not render');
       if((els.messages.textContent||'').includes('MINGRX_IMAGE_V1')) failures.push('raw legacy DM media marker leaked to UI');
 
-      return {ok:failures.length===0,failures,elapsed,emitted:emitted.map(x=>x.event),attachPresent:!!attach,sparkMode:window.MingrxMedia?.sparkMode,inviteReplaced:invite?.dataset.mingrxInvite==='1',photoPlacement:photoCard?.dataset.mingrx31Placement||'',stopWatchingTest:true};
+      return {ok:failures.length===0,failures,elapsed,emitted:emitted.map(x=>x.event),attachPresent:!!attach,sparkMode:window.MingrxMedia?.sparkMode,inviteReplaced:invite?.dataset.mingrxInvite==='1',photoPlacement:photoCard?.dataset.mingrx31Placement||'',voiceNames,stopWatchingTest:true,endedStreamCleanup:true};
     })();
   `, true);
 
   try { win.destroy(); } catch {}
   if (!result?.ok) return fail(JSON.stringify(result));
-  finish(0, `Mingrx Spark media + invite + UX Electron test: OK ${JSON.stringify(result)}`);
+  finish(0, `Mingrx Spark media + invite + voice UX Electron test: OK ${JSON.stringify(result)}`);
 }).catch(error => fail(error?.stack || error?.message || String(error)));
