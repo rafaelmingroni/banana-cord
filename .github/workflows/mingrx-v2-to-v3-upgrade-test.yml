@@ -37,19 +37,24 @@ jobs:
       - name: Verify old Banana Cord update endpoint still resolves after repository rename
         shell: pwsh
         run: |
-          $headers = @{ Accept = 'application/vnd.github+json'; 'User-Agent' = 'Mingrx-Upgrade-Test' }
-          $response = Invoke-WebRequest 'https://api.github.com/repos/rafaelmingroni/banana-cord/releases/latest' -Headers $headers -MaximumRedirection 0 -SkipHttpErrorCheck
-          if ($response.StatusCode -in 301,302,307,308) {
-            $location = [string]$response.Headers.Location
+          $raw = & curl.exe -sS -D - -o NUL -H 'Accept: application/vnd.github+json' -H 'User-Agent: Mingrx-Upgrade-Test' 'https://api.github.com/repos/rafaelmingroni/banana-cord/releases/latest'
+          if ($LASTEXITCODE -ne 0) { Write-Error 'Could not query legacy GitHub updater endpoint.'; exit 1 }
+          $status = @($raw | Where-Object { $_ -match '^HTTP/' } | Select-Object -First 1)
+          $locationLine = @($raw | Where-Object { $_ -match '^location:' } | Select-Object -First 1)
+          $statusText = [string]($status | Select-Object -First 1)
+          if ($statusText -match '\s(301|302|307|308)\s') {
+            $location = ([string]($locationLine | Select-Object -First 1)) -replace '^location:\s*',''
             if ($location -notmatch 'rafaelmingroni/mingrx-app') {
+              Write-Host ($raw -join "`n")
               Write-Error "Legacy repository redirects somewhere unexpected: $location"
               exit 1
             }
             Write-Host "Legacy updater endpoint redirects to mingrx-app: $location"
-          } elseif ($response.StatusCode -eq 200) {
+          } elseif ($statusText -match '\s200\s') {
             Write-Host 'Legacy updater endpoint is still served successfully by GitHub.'
           } else {
-            Write-Error "Legacy updater endpoint returned HTTP $($response.StatusCode)"
+            Write-Host ($raw -join "`n")
+            Write-Error "Legacy updater endpoint returned unexpected status: $statusText"
             exit 1
           }
 
