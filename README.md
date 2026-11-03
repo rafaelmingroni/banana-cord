@@ -1,141 +1,138 @@
-# 🍌 Banana Cord
+# Mingrx
 
-**Projeto pessoal de Rafael Mingroni.**
+**Comunicação leve para jogar, conversar e compartilhar.**
 
-Banana Cord é um aplicativo leve de comunicação para grupos pequenos de amigos, com servidores, canais de texto e voz, mensagens privadas, webcam e compartilhamento de tela. A prioridade continua sendo **baixo consumo durante jogos**, visual simples e uso direto.
+Mingrx é um aplicativo desktop para grupos de amigos, criado por Rafael Mingroni com foco em **baixo consumo durante jogos**, interface rápida e comunicação direta. Ele reúne comunidades, chat, mensagens privadas, voz, câmera e compartilhamento de tela em um único app.
 
-> **Versão atual: v2.0.0**
+> **Versão pública atual: 3.0.0**
 
-## 🚀 O que mudou na V2
+## O que é o Mingrx 3.0
 
-A V1 dependia de um usuário hospedar a sessão. Na V2 isso mudou: o Banana Cord passa a usar **contas e servidores persistentes no Banana Cloud**.
+O Mingrx 3.0 marca a evolução pública do projeto que começou como Banana Cord. A identidade visual, o aplicativo e a experiência agora são Mingrx, mantendo compatibilidade de atualização para quem já usava versões anteriores.
 
-Agora o fluxo é:
-1. abrir o Banana Cord;
-2. criar uma conta com e-mail e senha;
-3. verificar o e-mail;
-4. entrar na conta;
-5. criar um servidor ou entrar por convite;
-6. usar texto, voz, câmera e compartilhamento sem depender de um host específico ficar online.
+Quem já possui Banana Cord instalado recebe o Mingrx pelo **atualizador automático**. Conta, comunidades, preferências locais e chaves de criptografia são preservadas durante a migração.
 
-A mídia das calls continua em **WebRTC entre os participantes**, enquanto autenticação, servidores, mensagens, presença e sinalização usam Firebase.
-
-## ✨ Recursos
+## Recursos
 
 ### Conta e perfil
-- Cadastro por e-mail e senha
+- Conta persistente com e-mail e senha
 - Verificação de e-mail
-- Login persistente
-- Logout e novo login
-- Recuperação/troca de senha pelo fluxo de conta
-- Nome, avatar e status
+- Recuperação de senha
+- Avatar, nome, presença e status personalizado
+- Migração automática de dados locais das versões anteriores
 
-### Servidores e canais
-- Servidores persistentes
-- Convites por código/link
+### Comunidades
+- Comunidades persistentes
+- Foto personalizada com compactação automática
+- Convites permanentes e temporários
 - Cargos: Dono, Administrador, Moderador e Membro
-- Categorias e canais
-- Canais de texto e voz
-- Permissões de acesso
+- Categorias e canais de texto/voz
+- Canais com restrição por cargo
+- Lista de membros e presença em tempo real
 
-### Chat e privado
+### Chat e mensagens privadas
 - Mensagens persistentes
-- Editar e excluir mensagens
-- Respostas, reações e @menções
+- Edição, exclusão, respostas, reações e menções
 - Indicadores de não lidas
-- Mensagens privadas
-- Amigos, bloqueio e status
+- Amigos, solicitações e bloqueio
+- Mensagens privadas com criptografia ponta a ponta
+- Envio de imagens e prints em comunidades e DMs
+- Ctrl+V para colar screenshots diretamente no chat
+- Visualização ampliada de imagens
 
-### Voz, câmera e tela
+### Voz, câmera e compartilhamento
 - Voz WebRTC para grupos pequenos
-- Indicador de fala
+- Chamada privada 1:1
 - Mute, deafen e push-to-talk
-- Volume individual
-- Seleção e teste de microfone
-- Seleção de saída de áudio
+- Volume individual por participante
+- Seleção e teste de microfone/saída de áudio
 - Webcam
-- Compartilhamento 720p/1080p e 30/60 FPS
+- Compartilhamento de tela 720p/1080p, 30/60 FPS
 - Perfis de qualidade, fluidez e economia
-- RTT WebRTC exibido durante calls
-- Prévia local segura ao compartilhar a própria tela, evitando efeito espelho recursivo
+- Diagnóstico de conexão e RTT
+- Prévia local protegida contra efeito espelho recursivo
 
-### Notificações e sons
-- Sons de entrada/saída da chamada
-- Sons de pessoas entrando/saindo
-- Sons de mute/desmute
-- Sons de deafen/undeafen
-- Alerta de mensagem privada
-- Volume configurável e botão de teste
+### Interface
+- Identidade visual Mingrx
+- Temas Sistema, Midnight, Pearl, Crimson, Ocean, Forest e Mono
+- Layout responsivo para diferentes resoluções e ultrawide
+- Interface de amigos/privado integrada ao shell principal
+- Atualizador visual em segundo plano
 
-### Configurações
-- Perfil
-- Áudio
-- Vídeo e tela
-- Geral
-- Diagnóstico
-- Notificações
-- Atualizações
-
-## 🚀 Instalação
+## Instalação
 
 Baixe a versão mais recente em **Releases**:
 
 https://github.com/rafaelmingroni/banana-cord/releases/latest
 
-O instalador do Windows ainda não possui assinatura digital, então o SmartScreen pode exibir um aviso.
-
 O instalador oficial segue o padrão:
 
-`Banana-Cord-Setup-x.x.x-x64.exe`
+`Mingrx-Setup-x.x.x-x64.exe`
 
-## 🔄 Atualizações automáticas
+O instalador ainda não possui assinatura digital, então o Windows SmartScreen pode exibir um aviso na primeira execução.
 
-O Banana Cord usa GitHub Releases + `electron-updater`.
+## Atualizações automáticas e migração
 
-Quem já tem uma versão instalada recebe novas versões automaticamente. Quando uma Release nova é publicada, o aplicativo verifica a atualização, baixa em segundo plano e oferece **Reiniciar e instalar**.
+Mingrx usa GitHub Releases + `electron-updater`.
+
+A versão 3.0 mantém deliberadamente a identidade técnica de instalação das versões Banana Cord para permitir uma atualização **no mesmo aplicativo**, sem criar uma instalação paralela. Isso inclui o mesmo App ID e suporte temporário ao protocolo antigo de convite.
+
+Após atualizar para a linha 3.x, o usuário vê um aviso dentro do app explicando que o projeto ganhou um novo nome e identidade, enquanto sua conta e configurações continuam preservadas.
 
 Cada Release oficial publica:
-- `Banana-Cord-Setup-x.x.x-x64.exe`
-- `Banana-Cord-Setup-x.x.x-x64.exe.blockmap`
+- `Mingrx-Setup-x.x.x-x64.exe`
+- `Mingrx-Setup-x.x.x-x64.exe.blockmap`
 - `latest.yml`
 
-Isso permite migrar da linha 1.2.x para a V2 e, depois, receber futuras versões 2.1, 2.2 e assim por diante sem precisar baixar manualmente um instalador novo toda vez.
+> O slug técnico deste repositório permanece `banana-cord` durante a migração para garantir que instalações antigas encontrem a Release 3.0 automaticamente. O produto público é Mingrx.
 
-## 🔗 Convites
+## Convites
 
-O instalador registra o protocolo `bananacord://`, permitindo que links de convite abram o aplicativo instalado.
+O protocolo principal é:
 
-A página pública de entrada continua em:
+`mingrx://join/CODIGO`
+
+Durante a migração, `bananacord://` continua aceito para não invalidar links antigos.
+
+A página pública de convite permanece temporariamente no endereço técnico do repositório:
 
 `https://rafaelmingroni.github.io/banana-cord/?invite=CODIGO`
 
-## ⚙️ Arquitetura V2
+## Arquitetura
 
 - Electron no desktop
 - Firebase Authentication para contas
-- Firestore para servidores, membros, canais, mensagens e DMs
-- Firebase Realtime Database para presença e sinalização em tempo real
-- WebRTC para voz, webcam e compartilhamento de tela
-- GitHub Releases + `electron-updater` para atualizações automáticas
-- GitHub Actions para testes e publicação
+- Firestore para comunidades, canais, mensagens, relações sociais e DMs
+- Firebase Realtime Database para presença, sinalização e estado de voz
+- Firebase Storage para fotos de comunidades e imagens do chat
+- WebRTC para voz, câmera e compartilhamento de tela
+- Criptografia X25519 + AES-256-GCM nas mensagens privadas protegidas
+- GitHub Releases + `electron-updater` para distribuição e atualizações
+- GitHub Actions para testes, validação de regras, build e publicação
 
-O workflow de lançamento executa testes de Cloud, regras de segurança Firebase, regressões de UI/convites e um teste real do renderer Electron antes de publicar o instalador.
+## Segurança
 
-## ⚠️ Limitações atuais
+- E-mail verificado obrigatório para operações Cloud
+- Regras de Firestore/Realtime Database/Storage validadas em emuladores no CI
+- Chaves privadas E2EE permanecem no dispositivo
+- Uploads de imagem são compactados no cliente e validados por tipo/tamanho no Storage
+- Navegação externa e permissões do Electron são limitadas pelo processo principal
 
-- Calls foram projetadas para grupos pequenos; a interface atual trabalha com até 5 participantes por sala
-- Redes com NAT/firewall muito restritivo podem exigir infraestrutura TURN dedicada no futuro
+## Limitações atuais
+
+- Calls são otimizadas para grupos pequenos
+- Redes com NAT/firewall extremamente restritivo podem exigir TURN dedicado no futuro
 - O instalador ainda não é assinado digitalmente
-- Qualidade e latência de voz/tela dependem da conexão entre os participantes
+- Qualidade de voz/tela depende da conexão entre os participantes
 
-## 📁 Estrutura
+## Estrutura do projeto
 
-- `desktop/` — aplicativo Electron
-- `desktop/src/` — interface e camada Cloud
-- `firebase/` — regras de segurança e configuração dos emuladores
+- `desktop/` — aplicativo Electron Mingrx
+- `desktop/src/` — interface e runtime Cloud
+- `firebase/` — regras e configuração dos emuladores
 - `docs/` — página pública de convite e documentação
-- `.github/workflows/` — validação, build e Releases
+- `.github/workflows/` — validação, build e publicação
 
 ---
 
-Banana Cord é um projeto pessoal em desenvolvimento contínuo, criado para comunicação entre amigos com foco em leveza e simplicidade.
+Mingrx é um projeto em desenvolvimento contínuo. Bugs encontrados após o lançamento são tratados por atualizações incrementais distribuídas pelo próprio aplicativo.
