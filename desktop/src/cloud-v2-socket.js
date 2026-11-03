@@ -210,8 +210,8 @@
         try {
           // Cached snapshots can render previously known servers but must not
           // claim backend connectivity until a server-origin snapshot arrives.
-          window.BananaLegacy?.setConnection?.(!snap.metadata.fromCache);
-          window.BananaCloudBootStage = snap.metadata.fromCache
+          window.BananaLegacy?.setConnection?.(snap.metadata?.fromCache !== true);
+          window.BananaCloudBootStage = snap.metadata?.fromCache === true
             ? 'server-list-cache'
             : 'server-list-online';
           const ids = snap.docs.map(d => d.id);
