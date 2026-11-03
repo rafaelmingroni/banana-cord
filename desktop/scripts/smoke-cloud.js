@@ -62,5 +62,7 @@ assert(recovery.includes("[Etapa: "), 'Cloud failure UI must include safe startu
 assert(socket.includes('window.BananaCloudRestartBoot = async function restartCloudBoot()'), 'Cloud bootstrap must expose recovery for a stalled initial connection');
 assert(socket.includes('started = false;') && socket.includes('activeSocket = null;'), 'Cloud recovery must reset the incomplete socket');
 assert(recovery.includes('await window.BananaCloudRestartBoot()'), 'Cloud verified-session recovery must restart the stalled initial connection');
-assert(recovery.includes('await user.getIdTokenResult(true)'), 'Cloud recovery must refresh verified Firebase token');
+assert(recovery.includes("withAuthDeadline(user.getIdTokenResult(true), 'token-refresh')"), 'Cloud recovery must refresh verified Firebase token with a deadline');
+assert(recovery.includes("withAuthDeadline(user.reload(), 'auth-reload')"), 'Auth reload must not hang forever');
+assert(recovery.includes('cloudBootCopy'), 'User must be able to copy startup diagnostics without secrets');
 console.log(`Mingrx ${pkg.version} single-runtime cloud smoke test: OK`);
