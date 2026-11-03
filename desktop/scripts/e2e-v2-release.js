@@ -119,7 +119,7 @@ app.whenReady().then(async () => {
         const legacyVersionFoot = document.querySelector('.settings-nav-foot');
         if (legacyVersionFoot) return { ok: false, reason: 'legacy settings version footer still visible' };
         const versionFoot = document.querySelector('.mingrx-settings-version')?.textContent?.trim() || '';
-        if (versionFoot !== 'Mingrx Preview · v2.1.0') return { ok: false, reason: 'Mingrx version label incorrect: ' + versionFoot };
+        if (versionFoot !== 'Mingrx · v3.0.0') return { ok: false, reason: 'Mingrx version label incorrect: ' + versionFoot };
         if (!document.querySelector('.mingrx-settings-brand')) return { ok: false, reason: 'Mingrx settings brand missing' };
         mark('settings-shell-ok');
 
@@ -207,7 +207,7 @@ app.whenReady().then(async () => {
   ]);
 
   if (!result?.ok) return fail(result?.reason || 'unknown renderer failure');
-  console.log('Mingrx legacy-release Electron interaction test: OK');
+  console.log('Mingrx public-release Electron interaction test: OK');
   console.log(JSON.stringify(result));
   try { win.destroy(); } catch {}
   finish(0);
