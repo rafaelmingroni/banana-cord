@@ -41,9 +41,9 @@ assert(shell.includes('#addServerBtn,#v207StartServer'), 'Shell Mingrx não inte
 assert(shell.includes('replaceLegacyMarks'), 'Shell Mingrx não remove marcas visuais antigas do onboarding.');
 assert(shell.includes('.banana-updater-logo img'), 'Updater ainda pode exibir o ícone antigo.');
 assert(!shell.includes("chip.textContent = 'Preview'"), 'Shell final ainda exibe selo Preview.');
-assert(polish.includes("DISPLAY_VERSION = '3.0.0'"), 'Configurações não exibem a versão final Mingrx 3.0.0.');
+assert(polish.includes("DISPLAY_VERSION = '3.1.0'"), 'Configurações não exibem a versão final Mingrx 3.1.0.');
 assert(!polish.includes('Preview · v2.1.0'), 'Texto legado de preview ainda existe na camada final.');
-assert(regressionGuard.includes("const VERSION = '3.0.0'"), 'Guard final ainda não fixa a identidade visual em Mingrx 3.0.0.');
+assert(regressionGuard.includes("const VERSION = '3.1.0'"), 'Guard final ainda não fixa a identidade visual em Mingrx 3.1.0.');
 assert(!regressionGuard.includes('Preview · v2.1.0'), 'Guard final ainda pode reintroduzir o selo Preview.');
 assert(v21Main.includes("PRODUCT_NAME = 'Mingrx'"), 'Inicialização do Windows ainda não usa o nome final Mingrx.');
 
@@ -104,8 +104,8 @@ for (const theme of ['midnight','pearl','crimson','ocean','forest','mono']) {
 assert(svg.includes('viewBox="0 0 1024 1024"'), 'SVG oficial Mingrx precisa ser 1024x1024.');
 assert(svg.includes('#7c5cff'), 'Cor principal Mingrx ausente do SVG.');
 
-assert(pkg.version === '3.0.0', 'Release Mingrx precisa estar em 3.0.0.');
-assert(lock.version === pkg.version && lock.packages?.['']?.version === pkg.version, 'package-lock precisa acompanhar a versão 3.0.0 do package.json.');
+assert(pkg.version === '3.1.0', 'Release Mingrx precisa estar em 3.1.0.');
+assert(lock.version === pkg.version && lock.packages?.['']?.version === pkg.version, 'package-lock precisa acompanhar a versão 3.1.0 do package.json.');
 for (const name of Object.keys(pkg.dependencies || {})) {
   assert(name in (lock.packages?.['']?.dependencies || {}), `package-lock não contém a dependência ${name}.`);
 }

@@ -4,7 +4,7 @@
   window.__mingrxPolishLoaded = true;
 
   const BRAND = 'Mingrx';
-  const DISPLAY_VERSION = '3.0.0';
+  const DISPLAY_VERSION = '3.1.0';
 
   function markSvg(className = 'mingrx-inline-mark') {
     return `<span class="${className}" aria-hidden="true"><svg viewBox="0 0 1024 1024" role="presentation"><rect x="72" y="72" width="880" height="880" rx="220" fill="var(--mx-panel-3)"/><path d="M252 716V360c0-72 84-106 132-52L512 452l128-144c48-54 132-20 132 52v356" fill="none" stroke="var(--mx-accent)" stroke-width="124" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;

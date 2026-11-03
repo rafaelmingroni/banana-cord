@@ -1,0 +1,146 @@
+/* Mingrx 3.1 — community settings + stream watching UX. */
+body.mingrx-ui .modal-card.mingrx-server-settings-modal{
+  width:min(760px,calc(100vw - 32px))!important;
+  max-width:760px!important;
+  max-height:min(88vh,860px)!important;
+  overflow:auto!important;
+  padding:22px!important;
+}
+
+body.mingrx-ui .mingrx-server-settings-modal .v219-role-settings{
+  width:100%;
+  min-width:0;
+}
+
+body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-card{
+  width:100%!important;
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:88px minmax(0,1fr)!important;
+  gap:16px!important;
+  align-items:center!important;
+  margin:0 0 4px!important;
+  padding:16px!important;
+  min-height:120px!important;
+  border:1px solid var(--mx-line)!important;
+  border-radius:14px!important;
+  background:var(--mx-panel-2)!important;
+}
+
+body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-preview{
+  width:88px!important;
+  height:88px!important;
+  border-radius:20px!important;
+  flex:none!important;
+  background-color:var(--mx-panel-3)!important;
+  background-size:cover!important;
+  background-position:center!important;
+  border:1px solid var(--mx-line)!important;
+}
+
+body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-copy{
+  min-width:0!important;
+  display:grid!important;
+  gap:6px!important;
+}
+
+body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-copy b{
+  font-size:13px!important;
+}
+
+body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-copy small{
+  font-size:10px!important;
+  line-height:1.5!important;
+}
+
+body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-actions{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:8px!important;
+  margin-top:4px!important;
+}
+
+body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-actions button{
+  width:auto!important;
+  min-width:110px!important;
+  min-height:34px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-actions button:not(.hidden){display:inline-flex!important}
+body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-actions button.hidden{display:none!important}
+
+/* Community photos are real visual identities, not tiny initials. */
+body.mingrx-ui #serverList{gap:7px!important}
+body.mingrx-ui #serverList .server-icon.mingrx-community-button{
+  width:40px!important;
+  height:40px!important;
+  flex:0 0 40px!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border-radius:11px!important;
+  background-color:var(--mx-panel-3)!important;
+  background-size:cover!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  font-size:11px!important;
+  font-weight:800!important;
+}
+body.mingrx-ui #serverList .server-icon.mingrx-community-button-has-photo{
+  color:transparent!important;
+  border-color:#353947!important;
+}
+body.mingrx-ui #serverList .server-icon.mingrx-community-button-has-photo:hover{
+  border-color:#5c6173!important;
+}
+body.mingrx-ui #serverList .server-icon.mingrx-community-button-has-photo.active{
+  border-color:var(--mx-accent)!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--mx-accent) 28%,transparent)!important;
+}
+
+body.mingrx-ui .video-card.mingrx-watching-stream{
+  outline:2px solid var(--mx-accent)!important;
+  outline-offset:-2px;
+}
+
+body.mingrx-ui .mingrx-stop-watching{
+  position:absolute!important;
+  top:10px!important;
+  right:10px!important;
+  z-index:20!important;
+  width:auto!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:7px 10px!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+  border-radius:9px!important;
+  background:rgba(12,13,17,.88)!important;
+  color:#fff!important;
+  font-size:10px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  backdrop-filter:blur(8px);
+  box-shadow:0 6px 22px rgba(0,0,0,.28)!important;
+}
+
+body.mingrx-ui .mingrx-stop-watching:hover{
+  background:rgba(48,24,30,.94)!important;
+  border-color:rgba(255,120,140,.5)!important;
+  color:#ffd7dd!important;
+}
+
+@media(max-width:620px){
+  body.mingrx-ui .modal-card.mingrx-server-settings-modal{
+    width:calc(100vw - 18px)!important;
+    padding:16px!important;
+  }
+  body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-card{
+    grid-template-columns:1fr!important;
+  }
+  body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-preview{
+    width:76px!important;
+    height:76px!important;
+  }
+}

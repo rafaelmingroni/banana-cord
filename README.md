@@ -3,10 +3,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/rafaelmingroni/mingrx-app/releases/latest"><img alt="Release" src="https://img.shields.io/badge/release-3.0.0-7c5cff?style=flat-square"></a>
+  <a href="https://github.com/rafaelmingroni/mingrx-app/releases/latest"><img alt="Release" src="https://img.shields.io/badge/release-3.1.0-7c5cff?style=flat-square"></a>
   <img alt="Windows" src="https://img.shields.io/badge/Windows-x64-20232a?style=flat-square&logo=windows11&logoColor=white">
   <img alt="Electron" src="https://img.shields.io/badge/Electron-45-20232a?style=flat-square&logo=electron&logoColor=9feaf9">
-  <img alt="Firebase" src="https://img.shields.io/badge/Firebase-Cloud-20232a?style=flat-square&logo=firebase&logoColor=ffca28">
+  <img alt="Firebase" src="https://img.shields.io/badge/Firebase-Spark-20232a?style=flat-square&logo=firebase&logoColor=ffca28">
   <img alt="WebRTC" src="https://img.shields.io/badge/WebRTC-voice%20%7C%20video%20%7C%20screen-20232a?style=flat-square">
 </p>
 
@@ -14,9 +14,9 @@
 
 **Mingrx é um aplicativo desktop de comunicação para amigos e pequenos grupos, criado para ser bonito, direto e leve enquanto você joga.**
 
-Ele reúne comunidades, canais de texto e voz, mensagens privadas, webcam, compartilhamento de tela, presença e perfis em um único aplicativo para Windows. A V3 marca a transformação completa do antigo **Banana Cord** em Mingrx, preservando a base técnica e o caminho de atualização dos usuários existentes.
+Ele reúne comunidades, canais de texto e voz, mensagens privadas, webcam, compartilhamento de tela, presença e perfis em um único aplicativo para Windows. O projeto nasceu como Banana Cord e evoluiu para Mingrx preservando o caminho de atualização dos usuários existentes.
 
-> **Versão em preparação: Mingrx 3.0.0**  
+> **Versão atual: Mingrx 3.1.0**  
 > Projeto pessoal de **Rafael Mingroni**.
 
 ## Por que o Mingrx existe
@@ -30,38 +30,49 @@ O Mingrx prioriza:
 - **comunidades persistentes**;
 - **voz, câmera e compartilhamento de tela no mesmo lugar**;
 - **configuração simples para quem só quer entrar e usar**;
-- **atualizações automáticas** sem reinstalações manuais a cada versão.
+- **atualizações automáticas** sem reinstalações manuais a cada versão;
+- **backend compatível com Firebase Spark**, sem exigir billing para os recursos principais.
 
-## Mingrx 3.0
+## Mingrx 3.1
 
-A V3 não é apenas uma troca de nome. É uma nova identidade construída sobre a base amadurecida nas versões anteriores.
+A 3.1 torna explícita a arquitetura **Spark-first** do projeto.
 
-### Nova identidade
+### Firebase gratuito como base oficial
 
-- marca **Mingrx** em toda a experiência visível;
-- novo símbolo e novo ícone do aplicativo;
-- direção visual em grafite, violeta e superfícies discretas;
-- temas de aparência;
-- layout de comunidades mais horizontal e compacto;
-- painel de membros contextual;
-- menos ruído visual, menos efeitos decorativos e mais foco no conteúdo.
+A produção usa:
+
+- Firebase Authentication para contas e verificação de e-mail;
+- Cloud Firestore para comunidades, canais, chat, DMs e perfis;
+- Realtime Database para presença e sinalização;
+- WebRTC para voz, webcam e compartilhamento de tela.
+
+O aplicativo **não depende de Firebase Storage**.
 
 ### Mídia e comunidades
 
 - foto personalizada para comunidades;
-- anexos de imagem em canais e mensagens privadas;
-- colar screenshots diretamente pelo clipboard;
-- compactação automática das imagens antes do envio;
-- visualização ampliada das imagens;
-- armazenamento protegido por regras do Firebase Storage.
+- compactação automática da foto da comunidade;
+- a foto é salva como um data URL pequeno no próprio documento do Firestore;
+- envio de imagem em chat/DM foi removido para manter o projeto no plano Spark;
+- marcadores de imagem eventualmente criados pela 3.0 continuam sendo renderizados por compatibilidade.
+
+### Identidade Mingrx
+
+- marca **Mingrx** em toda a experiência visível;
+- símbolo e ícone próprios;
+- direção visual em grafite, violeta e superfícies discretas;
+- temas de aparência;
+- layout de comunidades horizontal e compacto;
+- painel de membros contextual;
+- menos ruído visual e mais foco no conteúdo.
 
 ### Continuidade com o Banana Cord
 
-A identidade visual muda, mas a migração foi desenhada para não abandonar quem já usa o aplicativo.
+A identidade visual mudou, mas a migração foi desenhada para não abandonar quem já usava o aplicativo.
 
-O identificador interno do Windows permanece compatível com a instalação histórica do Banana Cord. Assim, a V3 pode assumir a instalação existente e continuar o fluxo de atualização automática em vez de aparecer como um aplicativo totalmente separado.
+O identificador interno do Windows permanece `com.bananacord.app`. Isso é intencional: a Mingrx atualiza a instalação existente em vez de aparecer como um segundo aplicativo independente.
 
-O protocolo antigo `bananacord://` também continua aceito por compatibilidade, enquanto novos convites passam a usar `mingrx://`.
+O protocolo antigo `bananacord://` também continua aceito por compatibilidade, enquanto novos convites usam `mingrx://`.
 
 ## Recursos
 
@@ -78,7 +89,7 @@ O protocolo antigo `bananacord://` também continua aceito por compatibilidade, 
 
 - comunidades persistentes na nuvem;
 - criação e entrada por convite;
-- foto personalizada;
+- foto personalizada no modo Spark;
 - cargos e permissões;
 - categorias;
 - canais de texto;
@@ -94,8 +105,7 @@ O protocolo antigo `bananacord://` também continua aceito por compatibilidade, 
 - reações;
 - menções;
 - indicadores de não lidas;
-- anexos de imagem;
-- suporte a screenshot via copiar/colar.
+- E2EE em mensagens privadas compatíveis.
 
 ### Voz e vídeo
 
@@ -120,7 +130,7 @@ O protocolo antigo `bananacord://` também continua aceito por compatibilidade, 
 
 ### Personalização
 
-- tema do sistema;
+- System;
 - Midnight;
 - Pearl;
 - Crimson;
@@ -134,30 +144,27 @@ O protocolo antigo `bananacord://` também continua aceito por compatibilidade, 
   <img src="docs/assets/mingrx-cloud-banner.svg" alt="Arquitetura do Mingrx" width="100%">
 </p>
 
-O Mingrx separa dados persistentes de mídia em tempo real:
-
 | Camada | Responsabilidade |
 | --- | --- |
 | **Electron** | aplicativo desktop, interface, captura, áudio, integração com Windows e auto-update |
 | **Firebase Authentication** | contas e verificação de identidade |
-| **Cloud Firestore** | comunidades, membros, canais, mensagens e DMs |
+| **Cloud Firestore** | comunidades, membros, canais, mensagens, DMs e fotos compactadas de comunidade |
 | **Realtime Database** | presença e sinalização em tempo real |
-| **Firebase Storage** | fotos de comunidades e anexos de imagem |
 | **WebRTC** | voz, webcam e compartilhamento de tela entre participantes |
 | **GitHub Actions** | regressões, testes, build e pipeline de release |
 | **electron-updater** | atualização automática do aplicativo |
 
 ## Segurança e privacidade
 
-O projeto usa autenticação Firebase com e-mail verificado e regras específicas para restringir o acesso aos dados e uploads. O Firebase Storage valida usuário, propriedade do caminho, tipo de arquivo e tamanho antes de aceitar imagens.
+O projeto usa autenticação Firebase com e-mail verificado e regras específicas para Firestore e Realtime Database. A mídia das chamadas utiliza WebRTC, evitando transformar o Firebase em servidor de áudio ou vídeo.
 
-A mídia das chamadas utiliza WebRTC. Isso evita transformar o Firebase em servidor de áudio ou vídeo e mantém a arquitetura mais adequada para grupos pequenos.
+A Mingrx 3.1 não inicializa Firebase Storage e não oferece upload de imagens em chat/DM. Isso mantém a arquitetura de produção compatível com o plano Spark adotado pelo projeto.
 
-Antes de uma versão oficial ser publicada, o CI executa regressões de interface, Cloud, Firebase Rules, mídia, convites e fluxos reais do renderer Electron.
+Antes de uma versão oficial ser publicada, o CI executa regressões de interface, Cloud, Firebase Rules, convites, social e fluxos reais do renderer Electron.
 
 ## Instalação
 
-A versão oficial para Windows será disponibilizada em **GitHub Releases**:
+A versão oficial para Windows é disponibilizada em **GitHub Releases**:
 
 **[Baixar a versão mais recente](https://github.com/rafaelmingroni/mingrx-app/releases/latest)**
 
@@ -181,9 +188,9 @@ Mingrx-Setup-x.x.x-x64.exe.blockmap
 latest.yml
 ```
 
-O `latest.yml` informa ao aplicativo qual é a versão disponível. O blockmap permite atualização diferencial quando suportada pelo updater.
+O `latest.yml` informa ao aplicativo qual versão está disponível. O blockmap permite atualização diferencial quando suportada pelo updater.
 
-Quem estiver numa versão compatível do Banana Cord poderá migrar para Mingrx mantendo a mesma identidade interna de instalação usada pelo Windows.
+Quem estiver numa versão compatível do Banana Cord ou Mingrx recebe a atualização mantendo a mesma identidade interna de instalação usada pelo Windows.
 
 ## Convites
 
@@ -199,7 +206,7 @@ Por compatibilidade, links antigos continuam podendo usar:
 bananacord://join/CODIGO
 ```
 
-A página pública de convite acompanha a nova identidade do Mingrx e direciona o usuário para o aplicativo ou para a release mais recente.
+A página pública de convite acompanha a identidade Mingrx e direciona o usuário para o aplicativo ou para a release mais recente.
 
 ## Estrutura do repositório
 
@@ -214,7 +221,6 @@ desktop/
 firebase/
 ├─ firestore.rules
 ├─ database.rules.json
-├─ storage.rules
 └─ firebase.json
 
 docs/
@@ -230,18 +236,20 @@ A branch de lançamento precisa passar por uma suíte que inclui:
 
 - validação JavaScript;
 - auditoria de dependências críticas;
-- regressão do rebrand Mingrx;
+- regressão da identidade Mingrx;
 - regressão de layout em múltiplas resoluções;
 - testes de chat e social;
-- testes de mídia e convites;
-- regras de segurança do Firestore, Realtime Database e Storage;
+- teste específico garantindo que Storage não volte ao runtime Spark;
+- regras de segurança do Firestore e Realtime Database;
 - interação real via Electron;
 - geração do instalador do Windows;
-- verificação de identidade do aplicativo e do artefato final.
+- verificação da identidade do aplicativo e do artefato final.
 
 ## Limitações atuais
 
-- o foco atual é Windows x64;
+- foco atual em Windows x64;
+- o plano oficial do backend é Firebase Spark;
+- upload de imagem em chat/DM não está disponível na 3.1;
 - chamadas foram desenhadas prioritariamente para grupos pequenos;
 - redes com NAT ou firewall muito restritivo podem exigir infraestrutura TURN dedicada;
 - qualidade e latência de voz e tela dependem da conexão entre os participantes;
@@ -249,16 +257,16 @@ A branch de lançamento precisa passar por uma suíte que inclui:
 
 ## Roadmap
 
-A evolução da V3 continua focada em quatro frentes:
+A evolução continua focada em quatro frentes:
 
 1. **experiência** — polimento visual e consistência de todas as telas;
 2. **leveza** — reduzir trabalho desnecessário no renderer e durante calls;
 3. **confiabilidade** — fortalecer testes de voz, tela, chat e auto-update;
-4. **produto** — tornar entrada, convite, comunidade e atualização cada vez mais simples para novos usuários.
+4. **produto** — evoluir recursos sem abandonar a proposta gratuita e simples do projeto.
 
 ## Histórico
 
-O projeto começou como **Banana Cord**, inicialmente com sessões dependentes de um host. A V2 trouxe contas, comunidades e persistência Cloud. A V3 transforma essa base em **Mingrx**, com identidade própria e uma experiência muito mais próxima do produto que o projeto pretende ser.
+O projeto começou como **Banana Cord**, inicialmente com sessões dependentes de um host. A V2 trouxe contas, comunidades e persistência Cloud. A V3 transformou essa base em **Mingrx**. A 3.1 consolida a arquitetura Spark-first para manter o produto funcional sem exigir billing do Firebase.
 
 ---
 

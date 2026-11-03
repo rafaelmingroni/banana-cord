@@ -5,19 +5,19 @@ app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
 const safeHandle = (name, fn) => { try { ipcMain.handle(name, fn); } catch {} };
 safeHandle('clipboard:write', async () => true);
-safeHandle('update:get-config', async () => ({ repoUrl:'',autoCheck:true,autoDownload:true,currentVersion:'2.1.0' }));
+safeHandle('update:get-config', async () => ({ repoUrl:'',autoCheck:true,autoDownload:true,currentVersion:'3.1.0' }));
 safeHandle('update:get-state', async () => ({ status:'idle',progress:0,message:'' }));
-safeHandle('banana-updater:get-state', async () => ({ phase:'idle',version:'2.1.0',percent:0 }));
-safeHandle('banana-updater:get-version', async () => '2.1.0');
+safeHandle('banana-updater:get-state', async () => ({ phase:'idle',version:'3.1.0',percent:0 }));
+safeHandle('banana-updater:get-version', async () => '3.1.0');
 safeHandle('banana-updater:check', async () => ({ ok:true }));
 safeHandle('banana-v21:get-settings', async () => ({idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false}));
 safeHandle('banana-v21:set-settings', async () => ({}));
 safeHandle('banana-v21:get-system-languages', async () => ['pt-BR']);
 
-const hardTimeout = setTimeout(() => { console.error('Mingrx media/invite E2E failed: hard timeout'); app.exit(1); }, 22000);
+const hardTimeout = setTimeout(() => { console.error('Mingrx Spark media/invite E2E failed: hard timeout'); app.exit(1); }, 28000);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function finish(code, message) { clearTimeout(hardTimeout); if (message) (code ? console.error : console.log)(message); setTimeout(() => app.exit(code), 50); }
-const fail = message => finish(1, `Mingrx media/invite E2E failed: ${message}`);
+const fail = message => finish(1, `Mingrx Spark media/invite E2E failed: ${message}`);
 
 app.whenReady().then(async () => {
   const win = new BrowserWindow({ show:false,width:1366,height:768,webPreferences:{nodeIntegration:true,contextIsolation:false,sandbox:false} });
@@ -41,7 +41,7 @@ app.whenReady().then(async () => {
           return this;
         }
       };
-      const server={id:'srv',name:'GZ E MINGRX',ownerId:'me',inviteCode:'MINGRX88',icon:'',memberRoles:{me:'owner',peer:'member'},categories:[],channels:[{id:'general',name:'geral',type:'text',categoryId:null,allowedRoles:[]}]};
+      const server={id:'srv',name:'GZ E MINGRX',ownerId:'me',inviteCode:'MINGRX88',icon:'',memberRoles:{me:'owner',peer:'member'},categories:[],channels:[{id:'general',name:'geral',type:'text',categoryId:null,allowedRoles:[]},{id:'voice',name:'Geral',type:'voice',categoryId:null,allowedRoles:[]}]};
       state.user={id:'me',name:'Rafael',status:'online',avatar:''};
       state.socket=fake; state.servers=[server]; state.selectedServer=server; state.selectedChannel=server.channels[0]; state.viewMode='server'; state.activeDmUserId=null;
       state.members=new Map([['me',{id:'me',name:'Rafael',role:'owner',status:'online',avatar:''}],['peer',{id:'peer',name:'Gustavo',role:'member',status:'online',avatar:''}]]);
@@ -51,8 +51,30 @@ app.whenReady().then(async () => {
       renderServers(); renderChannels(); renderMembers();
 
       const attach=document.getElementById('mingrxAttachBtn');
-      if(!attach) failures.push('composer attachment button missing');
-      if(!window.MingrxMedia?.encodeMedia || !window.MingrxInvite?.open) failures.push('Mingrx media/invite runtime missing');
+      if(attach) failures.push('chat/DM attachment button must not exist in Spark mode');
+      if(!window.MingrxMedia?.sparkMode || window.MingrxMedia?.chatImageUpload!==false) failures.push('Spark media runtime flags are incorrect');
+      if(!window.MingrxInvite?.open) failures.push('Mingrx invite runtime missing');
+      if(!window.Mingrx31UX?.repairCommunitySettings || !window.Mingrx31UX?.renderServerButtonsWithPhotos || !window.Mingrx31UX?.stopWatching || !window.Mingrx31UX?.repairVoiceList || !window.Mingrx31UX?.repairRemoteCard) failures.push('Mingrx 3.1 UX runtime missing');
+
+      // Persisted community icons must actually render in the horizontal server bar.
+      const serverIconData='data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEAAQAcJaQAA3AA/v89WAAAAA==';
+      server.icon=serverIconData;
+      upsertServer({...server,icon:serverIconData});
+      state.selectedServer=state.servers.find(s=>s.id==='srv');
+      renderServers();
+      const serverButton=document.querySelector('#serverList [data-server-id="srv"]');
+      if(!serverButton) failures.push('community server button missing after icon render');
+      if(!serverButton?.classList.contains('mingrx-community-button-has-photo')) failures.push('community server button did not enter photo mode');
+      if(!String(serverButton?.style.backgroundImage||'').includes('data:image/webp;base64')) failures.push('persisted community photo was not applied to server button');
+      if(String(serverButton?.textContent||'').trim()) failures.push('server initials remained visible over community photo');
+      const serverButtonSize=serverButton ? Math.round(serverButton.getBoundingClientRect().width) : 0;
+      if(serverButtonSize<40) failures.push('community photo button is still too small: '+serverButtonSize+'px');
+      server.icon='';
+      upsertServer({...server,icon:''});
+      state.selectedServer=state.servers.find(s=>s.id==='srv');
+      renderServers();
+      const fallbackButton=document.querySelector('#serverList [data-server-id="srv"]');
+      if((fallbackButton?.textContent||'').trim()!=='GZ') failures.push('community initials fallback broke after removing photo');
 
       // Invite must open immediately and old premium handler must be gone.
       const invite=document.getElementById('inviteBtn');
@@ -72,37 +94,95 @@ app.whenReady().then(async () => {
       if(!document.getElementById('mxInviteTempResult') || document.getElementById('mxInviteTempResult')?.classList.contains('hidden')) failures.push('temporary invite result missing');
       closeModal();
 
-      // Community settings must expose an actual photo control.
+      // Community photo remains available without Firebase Storage and must be visible in the correct place.
       document.getElementById('serverSettingsBtn')?.click();
-      await sleep(260);
-      if(!document.querySelector('.mingrx-community-photo-card')) failures.push('community photo card missing from settings');
-      if(![...document.querySelectorAll('.mingrx-community-photo-actions button')].some(b=>/foto/i.test(b.textContent))) failures.push('community photo action missing');
+      await sleep(420);
+      const settingsRoot=document.querySelector('#modalBody .v219-role-settings');
+      const photoCard=document.querySelector('#modalBody .mingrx-community-photo-card');
+      const modalCard=document.querySelector('#modal > .modal-card');
+      if(!photoCard) failures.push('community photo card missing from settings');
+      if(photoCard && photoCard.parentElement!==settingsRoot) failures.push('community photo card is not a top-level settings section');
+      if(photoCard?.dataset.mingrx31Placement!=='fixed') failures.push('community photo placement fix did not run');
+      if(!modalCard?.classList.contains('mingrx-server-settings-modal')) failures.push('community settings modal was not widened');
+      const choose=[...document.querySelectorAll('.mingrx-community-photo-actions button')].find(b=>/foto/i.test(b.textContent||'')&&!/remover/i.test(b.textContent||''));
+      if(!choose) failures.push('community photo choose action missing');
+      if(choose && getComputedStyle(choose).display==='none') failures.push('community photo choose action is hidden');
+      if(!(els.modalBody.textContent||'').includes('Spark')) failures.push('community photo UI does not explain Spark mode');
       closeModal();
+      await sleep(40);
+      if(document.querySelector('#modal > .modal-card')?.classList.contains('mingrx-server-settings-modal')) failures.push('wide settings modal class leaked after closing');
 
-      // Community image markers must render inline, not as raw marker text.
-      const marker=window.MingrxMedia.encodeMedia({url:'https://example.com/screenshot.webp',name:'print.webp',caption:'Olha esse print'});
+      // Voice rows must resolve names from current community membership, never a stale cached label.
+      state.viewMode='server';
+      state.selectedServer=server;
+      state.selectedChannel=server.channels[1];
+      state.voicePresence.set('voice',[
+        {socketId:'self-voice',userId:'me',user:{id:'me',name:'Comunidade',avatar:''},mediaState:{muted:false,camera:false,screen:false},speaking:false},
+        {socketId:'peer-voice',userId:'peer',user:{id:'peer',name:'Comunidade',avatar:''},mediaState:{muted:false,camera:false,screen:false},speaking:false}
+      ]);
+      const voiceWrap=document.createElement('div');
+      renderVoiceUsers(voiceWrap,'voice');
+      const voiceNames=[...voiceWrap.querySelectorAll('.voice-user-name')].map(el=>el.textContent.trim());
+      if(voiceNames[0]!=='Rafael' || voiceNames[1]!=='Gustavo') failures.push('voice names did not resolve from current member/profile identity: '+JSON.stringify(voiceNames));
+      const voiceEntries=state.voicePresence.get('voice')||[];
+      if(voiceEntries[0]?.user?.name!=='Rafael' || voiceEntries[1]?.user?.name!=='Gustavo') failures.push('voice presence cache kept stale community labels');
+
+      // Watching a stream must expose an explicit stop control and return to normal grid mode.
+      const fakeCard=document.createElement('div');
+      fakeCard.id='video-peer-e2e';
+      fakeCard.className='video-card is-sharing';
+      fakeCard.innerHTML='<div class="video-placeholder" style="display:none"><div class="avatar-video"></div></div><video style="display:block"></video><button class="expand-btn"></button><div class="video-label">Comunidade · compartilhando tela</div>';
+      els.videoGrid.appendChild(fakeCard);
+      state.ui.focusSharing=true;
+      state.ui.showAllOverride=false;
+      window.Mingrx31UX.markWatchingCard(fakeCard);
+      const stopButton=fakeCard.querySelector('.mingrx-stop-watching');
+      if(!stopButton || !/Parar de assistir/i.test(stopButton.textContent||'')) failures.push('stop-watching button missing on watched stream');
+      stopButton?.click();
+      await sleep(20);
+      if(fakeCard.querySelector('.mingrx-stop-watching')) failures.push('stop-watching button remained after stopping');
+      if(fakeCard.classList.contains('mingrx-watching-stream')) failures.push('watched stream marker remained after stopping');
+      if(state.ui.focusSharing!==false || state.ui.showAllOverride!==true) failures.push('stop-watching did not restore normal grid mode');
+
+      // When screen/camera state ends, any lingering WebRTC video track must not freeze the last frame.
+      const fakeVideo=fakeCard.querySelector('video');
+      fakeVideo.srcObject=new MediaStream();
+      fakeCard.classList.add('is-sharing');
+      fakeCard.querySelector('.video-placeholder').style.display='none';
+      fakeVideo.style.display='block';
+      const stalePeer={socketId:'peer-e2e',user:{id:'peer',name:'Comunidade',avatar:''},mediaState:{screen:false,camera:false,muted:false},remoteStream:new MediaStream()};
+      window.Mingrx31UX.repairRemoteCard(stalePeer);
+      if(fakeVideo.srcObject!==null) failures.push('ended remote screen kept a stale video srcObject');
+      if(fakeVideo.style.display!=='none') failures.push('ended remote screen kept the frozen video visible');
+      if(fakeCard.querySelector('.video-placeholder').style.display!=='grid') failures.push('ended remote screen did not restore avatar placeholder');
+      if(fakeCard.classList.contains('is-sharing')) failures.push('ended remote screen kept sharing class');
+      if((fakeCard.querySelector('.video-label')?.textContent||'').trim()!=='Gustavo') failures.push('remote video card kept stale community name after identity repair');
+      fakeCard.remove();
+
+      // Old 3.0 image markers still render for backwards compatibility, but no new upload UI exists.
+      const legacyMeta={u:'https://example.com/screenshot.webp',n:'print.webp',c:'Imagem antiga'};
+      const marker='[[MINGRX_IMAGE_V1:'+Buffer.from(JSON.stringify(legacyMeta),'utf8').toString('base64url')+']]';
       state.viewMode='server'; state.selectedServer=server; state.selectedChannel=server.channels[0];
       state.messagesByChannel.set('general',[{id:'img1',serverId:'srv',channelId:'general',authorId:'me',text:marker,at:Date.now(),reactions:{}}]);
       renderMessages(true); await sleep(30);
       const communityImage=document.querySelector('.mingrx-chat-image-card img');
-      if(!communityImage || !communityImage.src.includes('example.com/screenshot.webp')) failures.push('community inline image did not render');
-      if((els.messages.textContent||'').includes('MINGRX_IMAGE_V1')) failures.push('raw community media marker leaked to UI');
+      if(!communityImage || !communityImage.src.includes('example.com/screenshot.webp')) failures.push('legacy community inline image did not render');
+      if((els.messages.textContent||'').includes('MINGRX_IMAGE_V1')) failures.push('raw legacy media marker leaked to UI');
 
-      // Same marker travels through DM text; E2EE encrypts this text in the real cloud path.
       state.viewMode='dm'; state.activeDmUserId='peer'; state.selectedServer=null; state.selectedChannel=null;
       state.dmConversations=[{user:{id:'peer',name:'Gustavo',status:'online',avatar:''},lastMessage:null}];
       state.dmMessages.set('peer',[{id:'dmimg1',fromId:'me',toId:'peer',text:marker,at:Date.now(),reactions:{},e2ee:true}]);
       els.app.classList.add('dm-mode'); els.textView.classList.remove('hidden');
       renderDmMessages(true); await sleep(30);
       const dmImage=document.querySelector('.mingrx-chat-image-card img');
-      if(!dmImage || !dmImage.src.includes('example.com/screenshot.webp')) failures.push('DM inline image did not render');
-      if((els.messages.textContent||'').includes('MINGRX_IMAGE_V1')) failures.push('raw DM media marker leaked to UI');
+      if(!dmImage || !dmImage.src.includes('example.com/screenshot.webp')) failures.push('legacy DM inline image did not render');
+      if((els.messages.textContent||'').includes('MINGRX_IMAGE_V1')) failures.push('raw legacy DM media marker leaked to UI');
 
-      return {ok:failures.length===0,failures,elapsed,emitted:emitted.map(x=>x.event),attach:!!attach,inviteReplaced:invite?.dataset.mingrxInvite==='1'};
+      return {ok:failures.length===0,failures,elapsed,emitted:emitted.map(x=>x.event),attachPresent:!!attach,sparkMode:window.MingrxMedia?.sparkMode,inviteReplaced:invite?.dataset.mingrxInvite==='1',photoPlacement:photoCard?.dataset.mingrx31Placement||'',serverPhotoRendered:!!serverButton?.classList.contains('mingrx-community-button-has-photo'),serverButtonSize,voiceNames,stopWatchingTest:true,endedStreamCleanup:true};
     })();
   `, true);
 
   try { win.destroy(); } catch {}
   if (!result?.ok) return fail(JSON.stringify(result));
-  finish(0, `Mingrx media + invite Electron test: OK ${JSON.stringify(result)}`);
+  finish(0, `Mingrx Spark media + community photo + voice UX Electron test: OK ${JSON.stringify(result)}`);
 }).catch(error => fail(error?.stack || error?.message || String(error)));

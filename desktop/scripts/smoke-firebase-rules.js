@@ -90,6 +90,16 @@ async function main() {
     });
     await assertSucceeds(create.commit());
 
+    // Spark community photo: owner/admin can persist a compact data URL in the server document.
+    // This is the production replacement for Firebase Storage in Mingrx 3.1.
+    const testIcon = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEAAQAcJaQAA3AA/v89WAAAAA==';
+    await assertSucceeds(updateDoc(doc(ownerDb, 'servers', serverId), {
+      icon: testIcon,
+      updatedAt: serverTimestamp()
+    }));
+    const iconRead = await assertSucceeds(getDoc(doc(ownerDb, 'servers', serverId)));
+    if (iconRead.data()?.icon !== testIcon) throw new Error('Community icon did not persist in Firestore.');
+
     // O código exato do convite pode ser consultado, mas servidores/convites não podem ser enumerados.
     await assertSucceeds(getDoc(doc(memberDb, 'invites', inviteCode)));
     await assertFails(getDocs(collection(outsiderDb, 'invites')));
@@ -107,6 +117,9 @@ async function main() {
     });
     await assertSucceeds(join.commit());
     await assertSucceeds(getDoc(doc(memberDb, 'servers', serverId)));
+
+    // Ordinary member cannot change the community photo.
+    await assertFails(updateDoc(doc(memberDb, 'servers', serverId), { icon: testIcon + 'x' }));
 
     // Membro envia mensagem, mas não pode falsificar autor nem alterar identidade/metadados depois.
     const messageRef = doc(memberDb, 'servers', serverId, 'channels', 'general', 'messages', 'm1');
@@ -222,7 +235,7 @@ async function main() {
     await assertFails(set(ref(ownerRt, 'signaling/legacy-room/offer'), { sdp: 'legacy' }));
     await assertFails(get(ref(ownerRt, 'signaling/legacy-room')));
 
-    console.log('Banana Cord V2.0.15 Firebase Security Rules emulator test: OK');
+    console.log('Mingrx 3.1 Firebase Security Rules emulator test: OK');
   } finally {
     await env.cleanup();
   }
