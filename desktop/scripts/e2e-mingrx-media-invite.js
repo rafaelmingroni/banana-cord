@@ -14,7 +14,7 @@ safeHandle('banana-v21:get-settings', async () => ({idleSeconds:0,idleState:'act
 safeHandle('banana-v21:set-settings', async () => ({}));
 safeHandle('banana-v21:get-system-languages', async () => ['pt-BR']);
 
-const hardTimeout = setTimeout(() => { console.error('Mingrx Spark media/invite E2E failed: hard timeout'); app.exit(1); }, 26000);
+const hardTimeout = setTimeout(() => { console.error('Mingrx Spark media/invite E2E failed: hard timeout'); app.exit(1); }, 28000);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function finish(code, message) { clearTimeout(hardTimeout); if (message) (code ? console.error : console.log)(message); setTimeout(() => app.exit(code), 50); }
 const fail = message => finish(1, `Mingrx Spark media/invite E2E failed: ${message}`);
@@ -54,7 +54,27 @@ app.whenReady().then(async () => {
       if(attach) failures.push('chat/DM attachment button must not exist in Spark mode');
       if(!window.MingrxMedia?.sparkMode || window.MingrxMedia?.chatImageUpload!==false) failures.push('Spark media runtime flags are incorrect');
       if(!window.MingrxInvite?.open) failures.push('Mingrx invite runtime missing');
-      if(!window.Mingrx31UX?.repairCommunitySettings || !window.Mingrx31UX?.stopWatching || !window.Mingrx31UX?.repairVoiceList || !window.Mingrx31UX?.repairRemoteCard) failures.push('Mingrx 3.1 UX runtime missing');
+      if(!window.Mingrx31UX?.repairCommunitySettings || !window.Mingrx31UX?.renderServerButtonsWithPhotos || !window.Mingrx31UX?.stopWatching || !window.Mingrx31UX?.repairVoiceList || !window.Mingrx31UX?.repairRemoteCard) failures.push('Mingrx 3.1 UX runtime missing');
+
+      // Persisted community icons must actually render in the horizontal server bar.
+      const serverIconData='data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEAAQAcJaQAA3AA/v89WAAAAA==';
+      server.icon=serverIconData;
+      upsertServer({...server,icon:serverIconData});
+      state.selectedServer=state.servers.find(s=>s.id==='srv');
+      renderServers();
+      const serverButton=document.querySelector('#serverList [data-server-id="srv"]');
+      if(!serverButton) failures.push('community server button missing after icon render');
+      if(!serverButton?.classList.contains('mingrx-community-button-has-photo')) failures.push('community server button did not enter photo mode');
+      if(!String(serverButton?.style.backgroundImage||'').includes('data:image/webp;base64')) failures.push('persisted community photo was not applied to server button');
+      if(String(serverButton?.textContent||'').trim()) failures.push('server initials remained visible over community photo');
+      const serverButtonSize=serverButton ? Math.round(serverButton.getBoundingClientRect().width) : 0;
+      if(serverButtonSize<40) failures.push('community photo button is still too small: '+serverButtonSize+'px');
+      server.icon='';
+      upsertServer({...server,icon:''});
+      state.selectedServer=state.servers.find(s=>s.id==='srv');
+      renderServers();
+      const fallbackButton=document.querySelector('#serverList [data-server-id="srv"]');
+      if((fallbackButton?.textContent||'').trim()!=='GZ') failures.push('community initials fallback broke after removing photo');
 
       // Invite must open immediately and old premium handler must be gone.
       const invite=document.getElementById('inviteBtn');
@@ -158,11 +178,11 @@ app.whenReady().then(async () => {
       if(!dmImage || !dmImage.src.includes('example.com/screenshot.webp')) failures.push('legacy DM inline image did not render');
       if((els.messages.textContent||'').includes('MINGRX_IMAGE_V1')) failures.push('raw legacy DM media marker leaked to UI');
 
-      return {ok:failures.length===0,failures,elapsed,emitted:emitted.map(x=>x.event),attachPresent:!!attach,sparkMode:window.MingrxMedia?.sparkMode,inviteReplaced:invite?.dataset.mingrxInvite==='1',photoPlacement:photoCard?.dataset.mingrx31Placement||'',voiceNames,stopWatchingTest:true,endedStreamCleanup:true};
+      return {ok:failures.length===0,failures,elapsed,emitted:emitted.map(x=>x.event),attachPresent:!!attach,sparkMode:window.MingrxMedia?.sparkMode,inviteReplaced:invite?.dataset.mingrxInvite==='1',photoPlacement:photoCard?.dataset.mingrx31Placement||'',serverPhotoRendered:!!serverButton?.classList.contains('mingrx-community-button-has-photo'),serverButtonSize,voiceNames,stopWatchingTest:true,endedStreamCleanup:true};
     })();
   `, true);
 
   try { win.destroy(); } catch {}
   if (!result?.ok) return fail(JSON.stringify(result));
-  finish(0, `Mingrx Spark media + invite + voice UX Electron test: OK ${JSON.stringify(result)}`);
+  finish(0, `Mingrx Spark media + community photo + voice UX Electron test: OK ${JSON.stringify(result)}`);
 }).catch(error => fail(error?.stack || error?.message || String(error)));
