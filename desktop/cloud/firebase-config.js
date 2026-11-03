@@ -1,6 +1,6 @@
-// Banana Cord v2 Cloud
-// Runtime values are injected into preview/release builds from GitHub Actions.
-// Public project metadata may stay here; apiKey/appId are injected at build time.
+// Mingrx Cloud production configuration.
+// Runtime values are injected into validation/release builds from GitHub Actions.
+// The Firebase project keeps its legacy technical ID during the 3.0 migration.
 module.exports = {
   apiKey: '',
   authDomain: 'banana-cord.firebaseapp.com',
