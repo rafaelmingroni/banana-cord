@@ -88,14 +88,14 @@
           'Interface visivel: ' + String(appShell()?.classList.contains('hidden') === false),
           'Cache Firestore: ' + String(window.MingrxCloudCacheMode || 'unknown'),
           'Data UTC: ' + new Date().toISOString()
-        ].join('\\n');
+        ].join(String.fromCharCode(10));
         try {
           require('electron').clipboard.writeText(safe);
           document.getElementById('cloudBootCopy').textContent = 'Diagnóstico copiado';
         } catch (error) {
           console.warn('Mingrx diagnostic copy failed:', error);
           const node = document.getElementById('cloudBootError');
-          if (node) node.textContent += '\\n' + safe;
+          if (node) node.textContent += String.fromCharCode(10) + safe;
         }
       });
       document.getElementById('cloudBootMemory')?.addEventListener('click', () => {
