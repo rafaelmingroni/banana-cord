@@ -2,7 +2,7 @@ name: Mingrx V3 Validation
 
 on:
   push:
-    branches: [v3.0.0-mingrx-rebrand, v3.0.0-mingrx-ui-polish, v3.1.0-spark-media-removal, hotfix/3.1.1-server-photo-voice-ui, hotfix/3.1.2-dm-permission-private-ui]
+    branches: [v3.0.0-mingrx-rebrand, v3.0.0-mingrx-ui-polish, v3.1.0-spark-media-removal, hotfix/3.1.1-server-photo-voice-ui, hotfix/3.1.2-dm-permission-private-ui, 'hotfix/3.1.4-*']
     paths:
       - "desktop/**"
       - "firebase/**"
@@ -115,21 +115,34 @@ jobs:
         working-directory: desktop
         run: npm run prepare:source
 
-      - name: Build Mingrx 3.1.2 release-candidate installer
+      - name: Build Mingrx release-candidate installer
         working-directory: desktop
         run: npm run dist:win -- --publish never
 
-      - name: Verify Mingrx 3.1.2 release-candidate installer
+      - name: Verify Mingrx release-candidate installer
         shell: pwsh
         run: |
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
-          if ($version -ne '3.1.2') { Write-Error "Release candidate esperado: 3.1.2, encontrado: $version"; exit 1 }
+          if ($version -notmatch '^3\\.1\\.[0-9]+
+          $exe = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe" | Select-Object -First 1
+          if (-not $exe) { Write-Error "Instalador Mingrx .exe não foi gerado."; exit 1 }
+          if ($exe.Length -lt 50000000) { Write-Error "Instalador Mingrx parece pequeno demais."; exit 1 }
+          Write-Host "Mingrx $version installer: $($exe.Name) - $($exe.Length) bytes"
+
+      - name: Upload Mingrx release-candidate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mingrx-Windows-${{ github.sha }}
+          path: desktop/dist/Mingrx-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 7
+) { Write-Error "Versão candidata inválida: $version"; exit 1 }
           $exe = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe" | Select-Object -First 1
           if (-not $exe) { Write-Error "Instalador Mingrx 3.1.2 .exe não foi gerado."; exit 1 }
           if ($exe.Length -lt 50000000) { Write-Error "Instalador Mingrx parece pequeno demais."; exit 1 }
           Write-Host "Mingrx $version installer: $($exe.Name) - $($exe.Length) bytes"
 
-      - name: Upload Mingrx 3.1.2 release-candidate artifact
+      - name: Upload Mingrx release-candidate artifact
         uses: actions/upload-artifact@v4
         with:
           name: Mingrx-3.1.2-Windows-${{ github.sha }}
