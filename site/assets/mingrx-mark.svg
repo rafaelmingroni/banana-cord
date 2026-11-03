@@ -1,1 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc"><title id="title">Mingrx</title><desc id="desc">Marca M do Mingrx</desc><defs><linearGradient id="g" x1="0" x2="1" y1="1" y2="0"><stop offset="0" stop-color="#6f3cff"/><stop offset="1" stop-color="#b05cff"/></linearGradient><filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="18" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="1024" height="1024" rx="250" fill="#0b0915"/><path d="M246 716V365c0-76 90-111 139-53l127 148 127-148c49-58 139-23 139 53v351" fill="none" stroke="url(#g)" stroke-width="126" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Mingrx">
+  <rect x="72" y="72" width="880" height="880" rx="220" fill="#0c0d11"/>
+  <path d="M252 716V360c0-72 84-106 132-52L512 452l128-144c48-54 132-20 132 52v356" fill="none" stroke="#7c5cff" stroke-width="124" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
