@@ -3,22 +3,37 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Convite Banana Cord</title>
+  <meta name="theme-color" content="#0b0c11">
+  <meta name="description" content="Abra um convite Mingrx e entre na comunidade pelo aplicativo para Windows.">
+  <title>Convite Mingrx</title>
   <style>
-    :root{--bg:#0d0f12;--panel:#181b20;--panel2:#20242a;--line:#32363e;--text:#f5f6f7;--muted:#9ca3ae;--banana:#f7c928;--banana2:#ffdf62}
-    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 50% 12%,#2a2511 0,#111318 36%,var(--bg) 70%);color:var(--text)}body{min-height:100vh;display:grid;place-items:center;padding:24px}.card{width:min(520px,100%);background:linear-gradient(160deg,#1e2126,#15171b);border:1px solid var(--line);border-radius:20px;padding:26px;box-shadow:0 28px 80px #0009}.brand{display:flex;align-items:center;gap:13px;margin-bottom:22px}.banana{font-size:42px;line-height:1}.brand h1{font-size:22px;margin:0;letter-spacing:-.3px}.brand p{margin:3px 0 0;color:var(--muted);font-size:13px}.invite{padding:18px;border:1px solid #514621;border-radius:14px;background:linear-gradient(145deg,#29250f,#1b1a16);margin-bottom:16px}.invite small{display:block;color:#bfb67f;font-size:11px;text-transform:uppercase;font-weight:800;letter-spacing:.8px}.invite strong{display:block;font-size:30px;letter-spacing:2.4px;color:#ffe37b;margin-top:7px}.status{color:#c8cbd1;line-height:1.5;font-size:14px;margin:12px 0 18px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.btn{display:grid;place-items:center;min-height:46px;border-radius:10px;text-decoration:none;font-weight:800;font-size:14px;border:1px solid #3b3f47;background:#25282e;color:#f5f6f7;cursor:pointer}.btn.primary{background:linear-gradient(180deg,var(--banana2),var(--banana));color:#17130a;border-color:#d6aa12}.hint{display:block;margin-top:16px;color:#777e89;font-size:11px;line-height:1.45;text-align:center}@media(max-width:520px){.card{padding:20px;border-radius:16px}.invite strong{font-size:25px}.actions{grid-template-columns:1fr}}
+    :root{--bg:#090a0f;--panel:#12141b;--panel2:#181b24;--line:#2b3040;--text:#f4f6fb;--muted:#8f97a7;--accent:#7c5cff;--accent2:#9d8cff}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}body{min-height:100vh;display:grid;place-items:center;padding:24px;overflow-x:hidden}
+    body:before,body:after{content:"";position:fixed;width:620px;height:620px;border-radius:50%;filter:blur(100px);pointer-events:none;opacity:.16}body:before{background:#7c5cff;top:-330px;right:-180px}body:after{background:#4530b8;left:-330px;bottom:-390px}
+    .shell{width:min(640px,100%);position:relative}.card{background:linear-gradient(155deg,rgba(24,27,36,.97),rgba(14,16,22,.98));border:1px solid var(--line);border-radius:28px;padding:30px;box-shadow:0 34px 100px #000a}
+    .brand{display:flex;align-items:center;gap:16px;margin-bottom:28px}.mark{width:60px;height:60px;border-radius:17px;background:#0c0d11;border:1px solid #343849;display:grid;place-items:center;box-shadow:inset 0 0 0 1px #ffffff05}.mark svg{width:42px;height:42px}.brand h1{font-size:25px;margin:0;letter-spacing:-.7px}.brand p{margin:5px 0 0;color:var(--muted);font-size:13px}.eyebrow{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:#aaa0e8;font-weight:800;margin-bottom:10px}.invite{padding:22px;border:1px solid #3b3653;border-radius:18px;background:linear-gradient(145deg,#1c1a28,#151720);margin-bottom:18px}.invite small{display:block;color:#969dae;font-size:11px;text-transform:uppercase;font-weight:800;letter-spacing:.9px}.invite strong{display:block;font-size:34px;letter-spacing:3px;color:#e8e3ff;margin-top:8px}.status{color:#c8ccd6;line-height:1.55;font-size:14px;margin:16px 0 20px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{display:grid;place-items:center;min-height:50px;border-radius:12px;text-decoration:none;font-weight:800;font-size:14px;border:1px solid #383d4b;background:#20232d;color:#f5f6f9;cursor:pointer;transition:transform .14s ease,border-color .14s ease,background .14s ease}.btn:hover{transform:translateY(-1px);border-color:#4a5163}.btn.primary{background:linear-gradient(180deg,var(--accent2),var(--accent));color:#fff;border-color:#8873ff}.hint{display:block;margin-top:18px;color:#747c8c;font-size:11px;line-height:1.55;text-align:center}.footer{text-align:center;color:#555d6b;font-size:11px;margin-top:18px}.footer b{color:#81899a;font-weight:700}
+    @media(max-width:560px){.card{padding:22px;border-radius:22px}.invite strong{font-size:27px}.actions{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  <main class="card">
-    <div class="brand"><div class="banana">🍌</div><div><h1>Banana Cord</h1><p>Convite para servidor privado</p></div></div>
-    <section class="invite"><small>Código do convite</small><strong id="code">—</strong></section>
-    <p id="status" class="status">Preparando seu convite…</p>
-    <div class="actions">
-      <a id="openApp" class="btn primary" href="#">Abrir Banana Cord</a>
-      <a id="download" class="btn" href="https://github.com/rafaelmingroni/banana-cord/releases/latest">Baixar Banana Cord</a>
-    </div>
-    <small class="hint">Se o Banana Cord já estiver instalado, este link abre o aplicativo. Caso contrário, você será direcionado para a versão mais recente.</small>
+  <main class="shell">
+    <section class="card">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 1024 1024"><path d="M252 716V360c0-72 84-106 132-52L512 452l128-144c48-54 132-20 132 52v356" fill="none" stroke="#7c5cff" stroke-width="124" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div><h1>Mingrx</h1><p>voice · chat · screen sharing</p></div>
+      </div>
+      <div class="eyebrow">Convite para comunidade</div>
+      <section class="invite"><small>Código do convite</small><strong id="code">—</strong></section>
+      <p id="status" class="status">Preparando seu convite…</p>
+      <div class="actions">
+        <a id="openApp" class="btn primary" href="#">Abrir Mingrx</a>
+        <a id="download" class="btn" href="https://github.com/rafaelmingroni/mingrx/releases/latest">Baixar Mingrx</a>
+      </div>
+      <small class="hint">Se o Mingrx já estiver instalado, o convite abre diretamente no aplicativo. Caso contrário, você pode baixar a versão mais recente para Windows.</small>
+    </section>
+    <div class="footer"><b>Mingrx</b> · Built to stay light while you play.</div>
   </main>
 <script>
 (() => {
@@ -34,27 +49,23 @@
   const download=document.getElementById('download');
   if(!valid){codeEl.textContent='INVÁLIDO';status.textContent='Esse link de convite não é válido.';open.style.display='none';return;}
   codeEl.textContent=code;
-  const deep=`bananacord://join/${encodeURIComponent(code)}`;
+  const deep=`mingrx://join/${encodeURIComponent(code)}`;
   open.href=deep;
-  status.textContent='Tentando abrir o Banana Cord…';
+  status.textContent='Tentando abrir o Mingrx…';
   let leftPage=false;
-  let downloadUrl='https://github.com/rafaelmingroni/banana-cord/releases/latest';
+  let downloadUrl='https://github.com/rafaelmingroni/mingrx/releases/latest';
   document.addEventListener('visibilitychange',()=>{if(document.hidden)leftPage=true});
-  fetch('https://api.github.com/repos/rafaelmingroni/banana-cord/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
+  fetch('https://api.github.com/repos/rafaelmingroni/mingrx/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
     .then(r=>r.ok?r.json():Promise.reject())
     .then(release=>{
-      const asset=(release.assets||[]).find(a=>/^Banana-Cord-Setup-.*-x64\.exe$/i.test(a.name));
+      const asset=(release.assets||[]).find(a=>/^Mingrx-Setup-.*-x64\.exe$/i.test(a.name));
       if(asset?.browser_download_url){downloadUrl=asset.browser_download_url;download.href=downloadUrl;}
     }).catch(()=>{});
   setTimeout(()=>{location.href=deep},180);
   setTimeout(()=>{
     if(leftPage||document.hidden)return;
-    status.textContent='O aplicativo não abriu? Vamos levar você para o download.';
+    status.textContent='O aplicativo não abriu? Você pode baixar a versão mais recente abaixo.';
   },1800);
-  setTimeout(()=>{
-    if(leftPage||document.hidden)return;
-    location.href=downloadUrl;
-  },3800);
 })();
 </script>
 </body>
