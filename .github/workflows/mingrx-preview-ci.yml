@@ -1,0 +1,129 @@
+name: Mingrx V3 Validation
+
+on:
+  push:
+    branches: [v3.0.0-mingrx-rebrand, v3.0.0-mingrx-ui-polish]
+    paths:
+      - "desktop/**"
+      - "firebase/**"
+      - ".github/workflows/mingrx-preview-ci.yml"
+      - ".github/workflows/release-windows.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mingrx-v3-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Setup Java for Firebase emulators
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install exact dependencies
+        working-directory: desktop
+        run: npm ci --no-audit --no-fund
+
+      - name: Critical production dependency audit
+        working-directory: desktop
+        run: npm run security:audit
+
+      - name: Prepare Mingrx source and icons
+        working-directory: desktop
+        run: npm run prepare:source
+
+      - name: Validate Mingrx brand and release identity
+        working-directory: desktop
+        run: npm run smoke:mingrx
+
+      - name: Validate JavaScript
+        shell: pwsh
+        run: |
+          node --check desktop/main-v120.js
+          node --check desktop/v21-main.js
+          node --check desktop/src/mingrx-shell.js
+          node --check desktop/src/mingrx-themes.js
+          node --check desktop/src/mingrx-polish.js
+          node --check desktop/src/mingrx-social-polish.js
+          node --check desktop/src/mingrx-mark-polish.js
+          node --check desktop/src/mingrx-final-fixes.js
+          node --check desktop/src/mingrx-regression-guard.js
+          node --check desktop/src/mingrx-media.js
+          node --check desktop/src/mingrx-invite-fix.js
+          node --check desktop/src/mingrx-updater-compat.js
+          node --check desktop/tray.js
+          node --check desktop/scripts/generate-icons.js
+          node --check desktop/scripts/verify-built-icon.js
+          node --check desktop/scripts/smoke-mingrx-rebrand.js
+          node --check desktop/scripts/smoke-mingrx-polish.js
+          node --check desktop/scripts/smoke-mingrx-media.js
+          node --check desktop/scripts/e2e-mingrx-layout.js
+          node --check desktop/scripts/e2e-mingrx-social.js
+          node --check desktop/scripts/e2e-mingrx-branding.js
+          node --check desktop/scripts/e2e-mingrx-media-invite.js
+          node --check desktop/scripts/e2e-v2-release.js
+
+      - name: Cloud and UI regression suite
+        working-directory: desktop
+        run: npm run smoke:cloud
+
+      - name: Firebase security rules regression
+        working-directory: desktop
+        run: npm run smoke:rules
+
+      - name: Electron interaction suite
+        working-directory: desktop
+        run: npm run smoke:e2e-v2
+
+      - name: Inject production Firebase config for release-candidate build
+        working-directory: desktop
+        env:
+          BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
+        run: node scripts/inject-firebase-config.js
+
+      - name: Verify Firebase runtime config is present
+        working-directory: desktop
+        shell: pwsh
+        run: |
+          node -e "const c=require('./cloud/firebase-config.js'); if(!c.apiKey||!c.authDomain||!c.projectId||!c.appId||!c.storageBucket){console.error('Firebase runtime config/storage bucket missing'); process.exit(1)}; console.log('Firebase runtime config + storage bucket: OK')"
+
+      - name: Rebuild prepared source with production config
+        working-directory: desktop
+        run: npm run prepare:source
+
+      - name: Build Mingrx 3.0 release-candidate installer
+        working-directory: desktop
+        run: npm run dist:win -- --publish never
+
+      - name: Verify Mingrx 3.0 release-candidate installer
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem "desktop/dist/Mingrx-Setup-3.0.0-*.exe" | Select-Object -First 1
+          if (-not $exe) { Write-Error "Instalador Mingrx 3.0 .exe não foi gerado."; exit 1 }
+          if ($exe.Length -lt 50000000) { Write-Error "Instalador Mingrx parece pequeno demais."; exit 1 }
+          Write-Host "Mingrx 3.0 installer: $($exe.Name) - $($exe.Length) bytes"
+
+      - name: Upload Mingrx 3.0 release-candidate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mingrx-3.0-Windows-${{ github.sha }}
+          path: desktop/dist/Mingrx-Setup-3.0.0-*.exe
+          if-no-files-found: error
+          retention-days: 7

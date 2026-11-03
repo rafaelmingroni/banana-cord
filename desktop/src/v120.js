@@ -1,11 +1,11 @@
-/* Banana Cord v1.2.1/V2 — links públicos, deep links e estabilidade. */
+/* Banana Cord v1.2.1/V2 compatibility layer — public links, deep links and stability. */
 (() => {
   const { ipcRenderer } = require('electron');
   const VERSION = window.BananaCloudMode ? '2 Cloud Preview' : '1.2.1';
-  const PUBLIC_INVITE_BASE = 'https://rafaelmingroni.github.io/banana-cord/?invite=';
+  const PUBLIC_INVITE_BASE = 'https://rafaelmingroni.github.io/mingrx-app/?invite=';
   const INVITE_LEAD = window.BananaCloudMode
-    ? 'Compartilhe o código ou um link. O servidor fica disponível no Banana Cloud.'
-    : 'Compartilhe o código ou um link. O Banana Cord encontra o host automaticamente.';
+    ? 'Compartilhe o código ou um link. O servidor fica disponível no Mingrx Cloud.'
+    : 'Compartilhe o código ou um link. O Mingrx encontra o host automaticamente.';
   const CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
   const normalizeShort = value => String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -22,7 +22,7 @@
       if (window.BananaCloudSocket?.connected && state?.socket) {
         state.socket.emit('server:join', { inviteCode: code });
         window.BananaPendingInvite = '';
-      } else if (typeof toast === 'function') toast('Convite carregado. Entre na sua Conta Banana para acessar o servidor.', 4800);
+      } else if (typeof toast === 'function') toast('Convite carregado. Entre na sua Conta Mingrx para acessar a comunidade.', 4800);
       return;
     }
     const setupInput = document.getElementById('setupInvite'), nameInput = document.getElementById('setupName');
@@ -32,7 +32,7 @@
     if (nameInput && !nameInput.value.trim()) nameInput.value = savedName.trim();
     try {
       const result = await ipcRenderer.invoke('invite:resolve-short', code);
-      if (!result?.ok) { const msg = result?.reason === 'offline' ? 'Esse servidor está offline no momento.' : result?.reason === 'network' ? 'Não consegui consultar o convite. Confira sua internet.' : 'Esse convite é inválido ou expirou.'; if (typeof toast === 'function') toast(msg, 5000); return; }
+      if (!result?.ok) { const msg = result?.reason === 'offline' ? 'Essa comunidade está offline no momento.' : result?.reason === 'network' ? 'Não consegui consultar o convite. Confira sua internet.' : 'Esse convite é inválido ou expirou.'; if (typeof toast === 'function') toast(msg, 5000); return; }
       try { const cache = JSON.parse(localStorage.getItem('banana.shortCodes') || '{}'); cache[result.serverId] = result.code; localStorage.setItem('banana.shortCodes', JSON.stringify(cache)); } catch {}
       if (typeof connectTo === 'function') connectTo(result.url, savedName.trim(), result.joinCode);
     } catch (e) { if (typeof toast === 'function') toast(e?.message || 'Não consegui abrir esse convite.', 5000); }
@@ -45,9 +45,9 @@
     if (!card || !codeNode || !copyCode || card.dataset.linkReady === '1') return;
     const code = formatShort(codeNode.textContent); if (!looksShort(code)) return;
     card.dataset.linkReady = '1'; const link = publicInviteLink(code);
-    const preview = document.createElement('div'); preview.className = 'invite-link-preview'; preview.innerHTML = `<span>Link do servidor</span><code>${link}</code>`;
+    const preview = document.createElement('div'); preview.className = 'invite-link-preview'; preview.innerHTML = `<span>Link da comunidade</span><code>${link}</code>`;
     const row = document.createElement('div'); row.className = 'premium-copy-row';
-    const linkButton = document.createElement('button'); linkButton.className = 'secondary'; linkButton.textContent = 'Copiar link'; linkButton.addEventListener('click', () => copyText(link, 'Link do servidor copiado.'));
+    const linkButton = document.createElement('button'); linkButton.className = 'secondary'; linkButton.textContent = 'Copiar link'; linkButton.addEventListener('click', () => copyText(link, 'Link da comunidade copiado.'));
     copyCode.parentNode.insertBefore(preview, copyCode); copyCode.parentNode.insertBefore(row, copyCode); row.append(copyCode, linkButton);
   }
   function enhanceTemporaryInvite(root) {
@@ -65,7 +65,7 @@
   const modalBody = document.getElementById('modalBody');
   if (modalBody) {
     let enhancementQueued = false;
-    const scheduleEnhancement = () => { if (enhancementQueued) return; enhancementQueued = true; queueMicrotask(() => { enhancementQueued = false; try { enhanceInviteModal(); } catch (error) { console.error('Banana Cord invite enhancement:', error); } }); };
+    const scheduleEnhancement = () => { if (enhancementQueued) return; enhancementQueued = true; queueMicrotask(() => { enhancementQueued = false; try { enhanceInviteModal(); } catch (error) { console.error('Mingrx invite enhancement:', error); } }); };
     const observer = new MutationObserver(scheduleEnhancement); observer.observe(modalBody, { childList: true, subtree: true });
   }
   document.querySelectorAll('.setup .brand p b, .settings-nav-foot').forEach(el => { const label = window.BananaCloudMode ? 'v2 Cloud Preview' : `v${VERSION}`; if (el.textContent !== label) el.textContent = label; });

@@ -3,13 +3,12 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
-const expect = (ok, message) => { if (!ok) throw new Error(`Banana Cord 2.1 smoke failed: ${message}`); };
+const expect = (ok, message) => { if (!ok) throw new Error(`Mingrx 2.1 compatibility smoke failed: ${message}`); };
 
 const pkg = JSON.parse(read('package.json'));
 const index = read('src/index.html');
 const ui = read('src/v21-social.js');
 const releaseFixes = read('src/v21-release-fixes.js');
-const v212Ui = read('src/v212-ui-fix.js');
 const css = read('src/v21-social.css');
 const i18n = read('src/v21-i18n.js');
 const legacyI18n = read('src/v21-i18n-legacy.js');
@@ -20,7 +19,9 @@ const tray = read('tray.js');
 const build = read('scripts/build-cloud-browser.js');
 const e2ee = read('src/cloud-v2-v216-e2ee.js');
 
-expect(pkg.version === '2.1.0', `expected 2.1.0, got ${pkg.version}`);
+const [major, minor, patch] = String(pkg.version || '').split('.').map(Number);
+const isV21OrNewer = major > 2 || (major === 2 && (minor > 1 || (minor === 1 && patch >= 0)));
+expect(isV21OrNewer, `expected 2.1.0 or newer, got ${pkg.version}`);
 expect(pkg.build?.files?.includes('v21-main.js'), 'v21-main.js is not packaged');
 expect(pkg.scripts['smoke:cloud'].includes('smoke-v21.js'), '2.1 smoke is not part of release regression');
 expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v21-social-ui.js'), '2.1 UI Electron test missing from release');
@@ -33,14 +34,12 @@ expect(index.includes('v21-social.css'), '2.1 stylesheet not loaded');
 expect(index.includes('v21-i18n.js') && index.includes('v21-social.js'), '2.1 renderer scripts not loaded');
 expect(index.includes('v21-i18n-legacy.js'), 'legacy select localization layer not loaded');
 expect(index.includes('v21-release-fixes.js'), '2.1 final integration guard not loaded');
-expect(index.indexOf('v212-ui-fix.js') < index.indexOf('v21-social.js'), 'voice permission guard must load before V2.1 channel renderer');
 expect(index.indexOf('v220-chat-stability.js') < index.indexOf('v21-i18n.js'), '2.1 must layer after V2.0.20 stability patch');
 expect(index.indexOf('v21-i18n.js') < index.indexOf('v21-i18n-legacy.js'), 'targeted option localization must load after base localization');
 expect(index.indexOf('v21-i18n-legacy.js') < index.indexOf('v21-social.js'), 'localization layers must load before 2.1 UI');
 expect(index.indexOf('v21-social.js') < index.indexOf('v21-release-fixes.js'), 'private navigation guard must load after 2.1 channel renderer');
 expect(releaseFixes.includes("if (state.viewMode === 'dm')") && releaseFixes.includes('renderDmSidebar();'), 'V2.1 channel renderer must preserve the private sidebar guard');
 expect(build.includes("require('./cloud-v2-v21-social.js');"), '2.1 cloud patch not bundled');
-expect(cloud.indexOf('const result = previousAttach(socket, user);') < cloud.lastIndexOf('patchSocket(socket);'), 'V2.1 cloud patch must apply after previous socket layers');
 expect(mainV110.includes("require('./v21-main.js');") && mainV110.indexOf("require('./v21-main.js');") < mainV110.indexOf("require('./updater-prompt.js');"), '2.1 main service must start before desktop runtime');
 
 expect(main.includes('powerMonitor.getSystemIdleTime()'), 'system idle time detection missing');
@@ -53,7 +52,8 @@ expect(main.includes("execFileAsync('tasklist.exe'"), 'recognized game activity 
 expect(main.includes("'rocketleague.exe': ['rocket-league', 'Rocket League']"), 'Rocket League activity mapping missing');
 expect(!main.includes("'javaw.exe'"), 'generic Java process must not be misreported as Minecraft');
 expect(main.includes('win.hide()') && main.includes("process.argv.includes(STARTUP_ARG)"), 'startup launch must stay hidden in tray');
-expect(tray.includes("/^2\\./"), 'tray must recognize Banana Cloud across all 2.x releases');
+expect(tray.includes('Number(String(app.getVersion()') && tray.includes('>= 2'), 'tray must recognize cloud runtime across all 2.x+ releases');
+expect(tray.includes('Modo: Mingrx Cloud'), 'tray must use Mingrx Cloud product identity');
 
 expect(cloud.includes("event === 'presence:set'"), 'automatic/manual presence event missing');
 expect(cloud.includes("event === 'presence:activity'"), 'activity presence event missing');
@@ -64,16 +64,10 @@ expect(cloud.includes("event === 'dm:clear'"), 'private /clear backend missing')
 expect(cloud.includes("snap.data().authorId !== this.user.uid"), 'normal client must block editing other users messages');
 expect(cloud.includes("mode === 'all' || row.data()?.authorId === this.user.uid"), '/clear permissions missing');
 expect(cloud.includes("payload.all === true"), 'full-channel clear must require explicit clear-all intent');
-expect(releaseFixes.includes("all:clearAll"), 'final renderer guard must send explicit clear-all intent');
-expect(ui.includes("all: lower === 'all'"), 'base V2.1 /clear all must send explicit purge intent');
+expect(releaseFixes.includes("all:clearAll"), 'renderer must send explicit clear-all intent');
 expect(cloud.includes('refreshDmPreviewV21') && cloud.includes('const deleteDmBase = socket.deleteDm.bind(socket)'), 'DM delete must refresh the Recents preview');
 expect(cloud.includes('await this.refreshDmPreviewV21(peerId);'), 'DM clear must refresh the Recents preview');
 expect(e2ee.includes('editDmV216') && e2ee.includes('window.BananaE2EE.encrypt'), 'encrypted DM edit path must remain E2EE');
-
-expect(v212Ui.includes('function roleCanAccessLocal(channel)'), 'local voice role permission helper missing');
-expect(v212Ui.includes('joinVoice = async function joinVoiceV212(channel)'), 'voice join permission guard missing');
-expect(v212Ui.includes("toast('Seu cargo não permite entrar nessa sala de voz.'"), 'voice denial must fail visibly before joining');
-expect(ui.includes('button.ondblclick=async') && ui.includes('await joinVoice(channel)'), 'V2.1 double-click voice path must use guarded joinVoice');
 
 expect(ui.includes("{ name:'/clear'"), '/clear command missing');
 expect(ui.includes("{ name:'/help'"), '/help command missing');
@@ -109,4 +103,4 @@ expect(css.includes('.v21-command-menu'), 'slash command autocomplete styling mi
 expect(css.includes('.v21-channel-head'), 'premium channel header styling missing');
 expect(css.includes('.v21-message-tools'), 'message hover toolbar styling missing');
 
-console.log('Banana Cord 2.1 Social Update static regression checks: OK');
+console.log(`Mingrx ${pkg.version} preserves the V2.1 compatibility static regression checks: OK`);

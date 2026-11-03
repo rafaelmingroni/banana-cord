@@ -1,6 +1,8 @@
 const { app, BrowserWindow } = require('electron');
 
-const SCHEME = 'bananacord';
+const PRIMARY_SCHEME = 'mingrx';
+const LEGACY_SCHEME = 'bananacord';
+const ACCEPTED_SCHEMES = new Set([PRIMARY_SCHEME, LEGACY_SCHEME]);
 let pendingCode = '';
 
 function normalizeCode(value) {
@@ -9,17 +11,16 @@ function normalizeCode(value) {
 
 function parseDeepLink(value) {
   const raw = String(value || '').trim();
-  if (!raw.toLowerCase().startsWith(`${SCHEME}://`)) return '';
-  try {
-    const u = new URL(raw);
-    const fromPath = u.pathname.split('/').filter(Boolean).pop() || '';
-    const fromQuery = u.searchParams.get('code') || u.searchParams.get('invite') || '';
-    const candidate = u.hostname.toLowerCase() === 'join' ? fromPath : (fromQuery || fromPath || u.hostname);
-    const code = normalizeCode(candidate);
-    return [8, 12].includes(code.length) ? code : '';
-  } catch {
-    return '';
-  }
+  let u;
+  try { u = new URL(raw); }
+  catch { return ''; }
+  const scheme = String(u.protocol || '').replace(':', '').toLowerCase();
+  if (!ACCEPTED_SCHEMES.has(scheme)) return '';
+  const fromPath = u.pathname.split('/').filter(Boolean).pop() || '';
+  const fromQuery = u.searchParams.get('code') || u.searchParams.get('invite') || '';
+  const candidate = u.hostname.toLowerCase() === 'join' ? fromPath : (fromQuery || fromPath || u.hostname);
+  const code = normalizeCode(candidate);
+  return [8, 12].includes(code.length) ? code : '';
 }
 
 function findDeepLink(argv = []) {
@@ -73,7 +74,9 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
-    try { app.setAsDefaultProtocolClient(SCHEME); } catch {}
+    try { app.setAsDefaultProtocolClient(PRIMARY_SCHEME); } catch {}
+    // Keep old bananacord:// invites valid during the preview migration.
+    try { app.setAsDefaultProtocolClient(LEGACY_SCHEME); } catch {}
     const initialCode = findDeepLink(process.argv);
     if (initialCode) setTimeout(() => dispatchInvite(initialCode), 450);
   });

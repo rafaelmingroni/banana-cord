@@ -1,4 +1,4 @@
-/* Banana Cord V2.0.7 onboarding + friend search UI. */
+/* Mingrx compatibility layer for the V2.0.7 onboarding + friend search UI. */
 (() => {
   if (window.__bananaV207SocialUiFix) return;
   window.__bananaV207SocialUiFix = true;
@@ -6,16 +6,20 @@
   const style = document.createElement('style');
   style.textContent = `
     .v207-onboarding-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
-    .v207-onboarding-actions button,.v207-friend-search button{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
-    .v207-primary{background:#f5c542;color:#181200}.v207-secondary{background:#24262c;color:#fff;border:1px solid #3a3d45!important}
+    .v207-onboarding-actions button,.v207-friend-search button{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;transition:background-color .14s ease,border-color .14s ease,color .14s ease,transform .14s ease}
+    .v207-primary{background:var(--mx-accent,#7c5cff);color:var(--mx-on-accent,#fff)}
+    .v207-primary:hover{filter:brightness(1.06)}
+    .v207-secondary{background:var(--mx-panel-3,#1a1d27);color:var(--mx-text,#fff);border:1px solid var(--mx-line,#2a2d38)!important}
+    .v207-secondary:hover{background:var(--mx-hover,#222530)}
     .v207-friend-search{display:grid;grid-template-columns:1fr auto;gap:8px;margin:12px 0}
-    .v207-friend-search input{min-width:0;border-radius:9px;border:1px solid #3b3f48;background:#17191e;color:#fff;padding:10px 12px}
+    .v207-friend-search input{min-width:0;border-radius:9px;border:1px solid var(--mx-line,#3b3f48);background:var(--mx-bg,#17191e);color:var(--mx-text,#fff);padding:10px 12px}
     .v207-friend-results{display:flex;flex-direction:column;gap:8px;max-height:330px;overflow:auto}
-    .v207-friend-row{display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;background:#1f2127}
+    .v207-friend-row{display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;background:var(--mx-panel-2,#1f2127)}
     .v207-friend-row .avatar{flex:0 0 auto}.v207-friend-row .v207-user-copy{flex:1;min-width:0}
     .v207-friend-row b,.v207-friend-row small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .v207-friend-row small{opacity:.65;margin-top:2px}.v207-friend-row button{background:#f5c542;color:#181200}
-    .v207-dm-add-friend{width:100%;margin:8px 0 2px;padding:9px 10px;border-radius:9px;border:1px solid #3a3d45;background:#252830;color:#fff;font-weight:700;cursor:pointer}
+    .v207-friend-row small{opacity:.65;margin-top:2px}.v207-friend-row button{background:var(--mx-accent,#7c5cff);color:var(--mx-on-accent,#fff)}
+    .v207-dm-add-friend{width:100%;margin:8px 0 2px;padding:9px 10px;border-radius:9px;border:1px solid var(--mx-line,#3a3d45);background:var(--mx-panel-3,#252830);color:var(--mx-text,#fff);font-weight:700;cursor:pointer}
+    .v207-mingrx-mark{width:68px;height:68px;display:block;margin:0 auto 12px;object-fit:contain}
   `;
   document.head.appendChild(style);
 
@@ -23,7 +27,7 @@
     openModal(`
       <div class="simple-modal-head">
         <h2>Adicionar amigo</h2>
-        <p>Procure pelo nome de usuário. Não é preciso estar no mesmo servidor.</p>
+        <p>Procure pelo nome de usuário. Não é preciso estar na mesma comunidade.</p>
       </div>
       <div class="v207-friend-search">
         <input id="v207FriendQuery" maxlength="32" autocomplete="off" placeholder="Nome do usuário">
@@ -96,7 +100,6 @@
     newDm?.insertAdjacentElement('afterend', button);
   };
 
-  // "Nova mensagem" includes accepted friends even when they do not share a server.
   openNewDmModal = function openNewDmModalV207() {
     const byId = new Map();
     for (const user of [...state.members.values()]) if (user?.id && user.id !== state.user?.id) byId.set(user.id, user);
@@ -104,7 +107,7 @@
       for (const user of (v1?.social?.friends || [])) if (user?.id && user.id !== state.user?.id) byId.set(user.id, user);
     } catch {}
     const candidates = [...byId.values()];
-    openModal(`<div class="simple-modal-head"><h2>Nova mensagem</h2><p>Escolha um amigo ou alguém do servidor atual.</p></div><div class="dm-picker">${candidates.map(u=>`<button class="dm-picker-row" data-user="${escapeHtml(u.id)}"><span class="dm-picker-avatar avatar" data-avatar="${escapeHtml(u.id)}"></span><span><b>${escapeHtml(u.name)}</b><small>${STATUS_LABEL[u.status||'offline']||'Offline'}</small></span></button>`).join('')||'<p>Nenhum contato disponível. Use “Adicionar amigo” para procurar alguém pelo nome.</p>'}</div>`);
+    openModal(`<div class="simple-modal-head"><h2>Nova mensagem</h2><p>Escolha um amigo ou alguém da comunidade atual.</p></div><div class="dm-picker">${candidates.map(u=>`<button class="dm-picker-row" data-user="${escapeHtml(u.id)}"><span class="dm-picker-avatar avatar" data-avatar="${escapeHtml(u.id)}"></span><span><b>${escapeHtml(u.name)}</b><small>${STATUS_LABEL[u.status||'offline']||'Offline'}</small></span></button>`).join('')||'<p>Nenhum contato disponível. Use “Adicionar amigo” para procurar alguém pelo nome.</p>'}</div>`);
     for (const av of document.querySelectorAll('.dm-picker-avatar')) avatarStyle(av, byId.get(av.dataset.avatar));
     for (const button of document.querySelectorAll('.dm-picker-row')) button.onclick = () => {
       const user = byId.get(button.dataset.user); closeModal(); startDm(button.dataset.user, user);
@@ -115,7 +118,7 @@
   renderDmMessages = function renderDmMessagesV207(forceBottom = false) {
     renderDmMessagesBase(forceBottom);
     const emptyCopy = els.messages?.querySelector?.('.dm-conversation-empty span');
-    if (emptyCopy) emptyCopy.textContent = 'As mensagens ficam sincronizadas com segurança no Banana Cloud.';
+    if (emptyCopy) emptyCopy.textContent = 'As mensagens ficam sincronizadas com segurança no Mingrx Cloud.';
   };
 
   const showEmptyBase = showEmpty;
@@ -123,24 +126,19 @@
     showEmptyBase();
     if (state.servers?.length) return;
     els.emptyView.innerHTML = `
-      <div class="big-banana">🍌</div>
-      <h2>Bem-vindo ao Banana Cord</h2>
-      <p>Entre em um servidor para conversar com a galera, ou adicione um amigo pelo nome.</p>
+      <img class="v207-mingrx-mark" src="../assets/mingrx.svg" alt="Mingrx">
+      <h2>Bem-vindo ao Mingrx</h2>
+      <p>Crie ou entre em uma comunidade para começar, ou adicione um amigo pelo nome.</p>
       <div class="v207-onboarding-actions">
-        <button id="v207StartServer" class="v207-primary">＋ Criar ou entrar em um servidor</button>
+        <button id="v207StartServer" class="v207-primary">＋ Comunidades</button>
         <button id="v207StartFriend" class="v207-secondary">👤 Adicionar amigo</button>
       </div>`;
-    document.getElementById('v207StartServer')?.addEventListener('click', () => els.addServerBtn?.click());
+    document.getElementById('v207StartServer')?.addEventListener('click', () => {
+      if (typeof window.MingrxOpenCommunity === 'function') window.MingrxOpenCommunity();
+      else document.getElementById('addServerBtn')?.click();
+    });
     document.getElementById('v207StartFriend')?.addEventListener('click', openFriendSearch);
   };
-
-  // Replace the legacy host-era copy in the + modal. The delegated create/join handlers
-  // from app.js remain in place, so only the explanatory UI changes here.
-  els.addServerBtn?.addEventListener('click', event => {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    openModal(`<h2>Criar ou entrar em servidor</h2><p>Servidores do Banana Cord ficam salvos no Banana Cloud e continuam disponíveis sem depender do PC de um dono ficar online.</p><label>Nome do novo servidor</label><input id="newServerName" maxlength="40" placeholder="Banana Gang"><button id="createServerNow">Criar servidor</button><div class="divider"><span>ou</span></div><label>Código de convite</label><input id="joinCode" maxlength="16" placeholder="A1B2C3D4"><button id="joinServerNow">Entrar pelo código</button>`);
-  }, true);
 
   queueMicrotask(() => {
     if (!state?.servers?.length && !document.getElementById('app')?.classList.contains('hidden')) showEmpty();

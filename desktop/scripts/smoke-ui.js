@@ -22,9 +22,13 @@ for (const file of ['main-v120.js','main-v110.js','rendezvous.js','tray.js','upd
 
 const isStableV1 = pkg.version === '1.2.1';
 const isV2 = /^2\.\d+\.\d+(?:-cloud\.\d+)?$/.test(pkg.version);
-assert(isStableV1 || isV2, 'package version must be stable v1.2.1 or a valid v2 version');
+const isV3 = /^3\.\d+\.\d+$/.test(pkg.version);
+const isCloudLine = isV2 || isV3;
+const isMingrx = String(pkg.build?.productName || '').toLowerCase().includes('mingrx');
+assert(isStableV1 || isCloudLine, 'package version must be stable v1.2.1 or a valid v2/v3 version');
 assert(pkg.main === 'main-v120.js', 'deep-link entry must remain enabled during cloud migration');
 assert((pkg.build?.protocols || []).some(p => (p.schemes || []).includes('bananacord')), 'bananacord:// protocol registration missing');
+if (isMingrx) assert((pkg.build?.protocols || []).some(p => (p.schemes || []).includes('mingrx')), 'mingrx:// protocol registration missing');
 assert(!/p[oó]s-beta/i.test(index), 'index.html must not show pós-beta');
 assert(index.includes('v101-fix.js'), 'renderer stability guard must be loaded');
 assert(index.includes('v110.js') && index.includes('v120.js'), 'v1.1 and v1.2 renderers must remain loaded during migration');
@@ -37,21 +41,21 @@ if (isV2) {
   assert(!hotfix.includes('Cloud Preview'), 'preview version label must not ship in official V2 guard');
 }
 assert(!hotfix.includes("VERSION = '1.1.1'"), 'stability guard must not pin an old version');
-assert(tray.includes('banana-tray.png'), 'dedicated tray icon missing');
+assert(tray.includes(isMingrx ? 'mingrx-tray.png' : 'banana-tray.png'), 'dedicated tray icon missing');
 assert(index.includes('ABCD-EFGH'), 'short invite compatibility missing');
-assert(v120.includes('https://rafaelmingroni.github.io/banana-cord/?invite='), 'public invite link base missing');
+assert(v120.includes('https://rafaelmingroni.github.io/mingrx-app/?invite='), 'public Mingrx invite link base missing');
 assert(v120.includes("ipcRenderer.on('invite:deep-link'"), 'renderer deep-link listener missing');
 assert(v120.includes('lead && lead.textContent !== INVITE_LEAD'), 'invite lead must be idempotent inside MutationObserver');
 assert(v120.includes('enhancementQueued'), 'invite MutationObserver must coalesce DOM changes');
 assert(!v120.includes('if (lead) lead.textContent ='), 'unconditional invite lead mutation can freeze the renderer');
 
-if (isV2) {
+if (isCloudLine) {
   const cloudBundle = 'cloud-browser/cloud-v2-all.browser.js';
-  assert(index.includes(cloudBundle), 'v2 unified cloud browser bundle missing');
-  assert(index.includes('cloud-v2-legacy-bridge.js'), 'v2 stable UI compatibility bridge missing');
+  assert(index.includes(cloudBundle), 'unified cloud browser bundle missing');
+  assert(index.includes('cloud-v2-legacy-bridge.js'), 'stable UI compatibility bridge missing');
   assert(index.includes('cloud-v2-runtime-fixes.css'), 'cloud runtime UX stylesheet missing');
   assert(index.includes('cloud-v2-runtime-fixes.js'), 'cloud runtime UX script missing');
-  assert(index.includes('cloud-v2-release-fixes.js'), 'official V2 release fix layer missing');
+  assert(index.includes('cloud-v2-release-fixes.js'), 'cloud release fix layer missing');
   assert(index.indexOf(cloudBundle) < index.indexOf('cloud-v2-runtime-fixes.js'), 'runtime fixes must load after unified cloud bundle');
   assert(index.indexOf('cloud-v2-runtime-fixes.js') < index.indexOf('cloud-v2-release-fixes.js'), 'release fixes must load last');
   assert(runtimeCss.includes('overflow-y:auto') && runtimeCss.includes('height:min(680px,86vh)'), 'settings scroll fix missing');
@@ -63,11 +67,11 @@ if (isV2) {
   assert(runtimeFix.includes("new MutationObserver") && runtimeFix.includes("modalBody.querySelector('.settings-shell')"), 'notification tab must inject for direct settings gear handler');
   assert(releaseFix.includes("bindStateSound(document.getElementById('muteBtn')") && releaseFix.includes("'mute', 'unmute'"), 'mute button sound regression guard missing');
   assert(releaseFix.includes("bindStateSound(document.getElementById('deafenBtn')") && releaseFix.includes("'deafen', 'undeafen'"), 'deafen button sound regression guard missing');
-  assert(!index.includes('cloud-v2-home.js'), 'simplified cloud home must not replace v1.2.1 UI');
+  assert(!index.includes('cloud-v2-home.js'), 'simplified cloud home must not replace mature UI');
   assert(!index.includes('cloud-v2.browser.js') && !index.includes('cloud-v2-auth-fix.browser.js') && !index.includes('cloud-v2-socket.browser.js'), 'legacy split Firebase bundles must not return');
   assert(index.indexOf('v1.js') < index.indexOf('cloud-v2-legacy-bridge.js'), 'cloud bridge must load after mature v1 renderer');
   assert(index.indexOf('cloud-v2-legacy-bridge.js') < index.indexOf('v110.js'), 'cloud mode must be active before invite extensions');
   assert(index.indexOf('v120.js') < index.indexOf(cloudBundle), 'unified Firebase cloud layer must load after stable renderers');
 }
 
-console.log(`Banana Cord v${pkg.version} UI smoke test: OK`);
+console.log(`${isMingrx ? 'Mingrx' : 'Banana Cord'} v${pkg.version} UI smoke test: OK`);

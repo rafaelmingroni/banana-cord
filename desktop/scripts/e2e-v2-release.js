@@ -4,12 +4,44 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
 
-ipcMain.handle('update:get-config', async () => ({ repoUrl: 'https://github.com/rafaelmingroni/banana-cord', autoCheck: true, autoDownload: true, currentVersion: '2.0.0' }));
+ipcMain.handle('update:get-config', async () => ({ repoUrl: 'https://github.com/rafaelmingroni/mingrx-app', autoCheck: true, autoDownload: true, currentVersion: '3.0.0' }));
 ipcMain.handle('update:get-state', async () => ({ status: 'idle', progress: 0, message: '' }));
 ipcMain.handle('clipboard:write', async () => true);
+ipcMain.handle('banana-updater:get-state', async () => ({ phase: 'idle', version: '3.0.0', percent: 0, transferred: 0, total: 0, error: '' }));
+ipcMain.handle('banana-updater:get-version', async () => '3.0.0');
+ipcMain.handle('banana-updater:check', async () => ({ ok: true }));
+
+let socialSettings = {
+  idleSeconds: 0,
+  idleState: 'active',
+  activity: null,
+  settings: {
+    shareActivity: true,
+    autoAwayMinutes: 5,
+    startup: { supported: true, enabled: true, registered: true }
+  },
+  startupLaunch: false
+};
+ipcMain.handle('banana-v21:get-settings', async () => socialSettings);
+ipcMain.handle('banana-v21:set-settings', async (_event, next = {}) => {
+  socialSettings = {
+    ...socialSettings,
+    settings: {
+      ...socialSettings.settings,
+      shareActivity: next.shareActivity ?? socialSettings.settings.shareActivity,
+      autoAwayMinutes: next.autoAwayMinutes ?? socialSettings.settings.autoAwayMinutes,
+      startup: {
+        ...socialSettings.settings.startup,
+        enabled: next.startupEnabled ?? socialSettings.settings.startup.enabled
+      }
+    }
+  };
+  return socialSettings;
+});
+ipcMain.handle('banana-v21:get-system-languages', async () => ['pt-BR', 'en-US']);
 
 const hardTimeout = setTimeout(() => {
-  console.error('V2 release E2E failed: hard timeout');
+  console.error('Mingrx release E2E failed: hard timeout');
   app.exit(1);
 }, 20000);
 
@@ -18,7 +50,7 @@ function finish(code, message) {
   if (message) (code === 0 ? console.log : console.error)(message);
   setTimeout(() => app.exit(code), 50);
 }
-function fail(message) { finish(1, `V2 release E2E failed: ${message}`); }
+function fail(message) { finish(1, `Mingrx release E2E failed: ${message}`); }
 
 app.whenReady().then(async () => {
   const win = new BrowserWindow({
@@ -28,14 +60,20 @@ app.whenReady().then(async () => {
     webPreferences: { nodeIntegration: true, contextIsolation: false, sandbox: false, autoplayPolicy: 'no-user-gesture-required' }
   });
 
+  win.webContents.on('console-message', (_event, _level, message) => {
+    if (String(message || '').startsWith('[MINGRX-E2E]')) console.log(message);
+  });
+
   await win.loadFile(path.join(__dirname, '..', 'src', 'index.html'));
 
   const result = await Promise.race([
     win.webContents.executeJavaScript(`
       (async () => {
         const sleep = ms => new Promise(r => setTimeout(r, ms));
+        const mark = value => console.log('[MINGRX-E2E] ' + value);
         const emitted = [];
         const handlers = new Map();
+        mark('start');
         const fake = {
           connected: true,
           on(event, fn) { if (!handlers.has(event)) handlers.set(event, new Set()); handlers.get(event).add(fn); return this; },
@@ -64,23 +102,37 @@ app.whenReady().then(async () => {
         window.BananaLegacy.attachSocket(fake, { uid: 'u-e2e', displayName: 'E2E User', emailVerified: true });
         fake.trigger('auth:ready', { user: { id: 'u-e2e', name: 'E2E User', status: 'online', avatar: '' }, servers: [] });
         await sleep(60);
+        mark('auth-ready');
 
         if (document.getElementById('app')?.classList.contains('hidden')) return { ok: false, reason: 'app shell remained hidden after auth' };
 
-        document.getElementById('profileBtn')?.click();
+        const profile = document.getElementById('profileBtn');
+        if (!profile) return { ok:false, reason:'profileBtn missing' };
+        mark('profile-before');
+        profile.click();
+        mark('profile-click-returned');
+        queueMicrotask(() => mark('profile-microtask'));
         await sleep(120);
+        mark('settings-open-clicked');
         const shell = document.querySelector('#modalBody .settings-shell');
         if (!shell) return { ok: false, reason: 'settings did not open' };
-        const versionFoot = document.querySelector('.settings-nav-foot')?.textContent || '';
-        if (versionFoot !== 'v2.0.0') return { ok: false, reason: 'official version label incorrect: ' + versionFoot };
+        const legacyVersionFoot = document.querySelector('.settings-nav-foot');
+        if (legacyVersionFoot) return { ok: false, reason: 'legacy settings version footer still visible' };
+        const versionFoot = document.querySelector('.mingrx-settings-version')?.textContent?.trim() || '';
+        if (versionFoot !== 'Mingrx 3.0.0') return { ok: false, reason: 'Mingrx version label incorrect: ' + versionFoot };
+        if (!document.querySelector('.mingrx-settings-brand')) return { ok: false, reason: 'Mingrx settings brand missing' };
+        mark('settings-shell-ok');
 
         const tabs = ['tabProfile','tabAudio','tabVideo','tabGeneral','tabDiag','tabNotifications','tabUpdates'];
         for (const id of tabs) {
           const tab = document.getElementById(id);
           if (!tab) return { ok: false, reason: 'settings tab missing: ' + id };
+          mark('tab-before:' + id);
           tab.click(); await sleep(45);
+          mark('tab-after:' + id);
           if (!(document.getElementById('settingsArea')?.textContent || '').trim()) return { ok: false, reason: 'empty settings tab: ' + id };
         }
+        mark('tabs-ok');
 
         document.getElementById('tabVideo')?.click(); await sleep(60);
         const scroller = document.querySelector('.settings-content');
@@ -88,6 +140,7 @@ app.whenReady().then(async () => {
         if (!scroller || !['auto','scroll'].includes(getComputedStyle(scroller).overflowY) || range <= 0) return { ok: false, reason: 'settings scroll regression' };
         scroller.scrollTop = range; await sleep(20);
         if (scroller.scrollTop < Math.max(1, range - 2)) return { ok: false, reason: 'settings cannot reach bottom' };
+        mark('scroll-ok');
 
         document.getElementById('tabNotifications')?.click(); await sleep(50);
         for (const id of ['soundMaster','soundCall','soundPeople','soundMute','soundDeafen','soundDm','soundVolume','testNotificationSound','saveNotificationSounds']) {
@@ -98,6 +151,7 @@ app.whenReady().then(async () => {
         document.getElementById('saveNotificationSounds').click();
         await sleep(20);
         document.getElementById('modalClose')?.click();
+        mark('notifications-ok');
 
         const played = [];
         if (!window.BananaNotificationSounds) return { ok: false, reason: 'notification sound engine missing' };
@@ -108,29 +162,44 @@ app.whenReady().then(async () => {
         state.voice.muted = false;
         state.voice.deafened = false;
 
+        mark('voice-controls-before');
         document.getElementById('muteBtn')?.click(); await sleep(25);
         document.getElementById('muteBtn')?.click(); await sleep(25);
         document.getElementById('deafenBtn')?.click(); await sleep(25);
         document.getElementById('deafenBtn')?.click(); await sleep(25);
+        mark('voice-controls-after');
         if (!played.includes('mute') || !played.includes('unmute')) return { ok: false, reason: 'mute/unmute button sounds did not fire: ' + played.join(',') };
         if (!played.includes('deafen') || !played.includes('undeafen')) return { ok: false, reason: 'deafen button sounds did not fire: ' + played.join(',') };
 
         state.voice.screen = { getTracks: () => [], getAudioTracks: () => [], getVideoTracks: () => [] };
         if (typeof addLocalCard !== 'function' || typeof updateLocalVideo !== 'function') return { ok: false, reason: 'local video renderer missing' };
+        mark('self-share-before');
         addLocalCard(); updateLocalVideo(); await sleep(20);
+        mark('self-share-after');
         const localCard = document.getElementById('video-local');
         const localVideo = localCard?.querySelector('video');
         if (!localCard?.classList.contains('self-share-safe') || localVideo?.style.display !== 'none' || localVideo?.srcObject) return { ok: false, reason: 'self-share recursion guard failed' };
         state.voice.screen = null; updateLocalVideo();
         state.voice.channelId = null; state.voice.serverId = null;
 
-        document.getElementById('addServerBtn')?.click(); await sleep(30);
+        mark('create-server-before');
+        const addButton = document.getElementById('addServerBtn');
+        if (!addButton) return { ok:false, reason:'addServerBtn missing' };
+        addButton.click();
+        mark('create-server-click-returned');
+        queueMicrotask(() => mark('create-server-microtask'));
+        await sleep(30);
+        mark('create-server-modal');
         const input = document.getElementById('newServerName');
         const create = document.getElementById('createServerNow');
         if (!input || !create) return { ok: false, reason: 'create server modal missing' };
-        input.value = 'Servidor E2E'; create.click(); await sleep(70);
+        input.value = 'Servidor E2E'; create.click();
+        mark('create-server-submit-returned');
+        await sleep(70);
+        mark('create-server-after');
         if (!emitted.some(x => x.event === 'server:create' && x.payload?.name === 'Servidor E2E')) return { ok: false, reason: 'server:create was not emitted' };
 
+        mark('complete');
         return { ok: true, versionFoot, tabs, played, settingsScrollRange: range, selfShareSafe: true };
       })();
     `, true),
@@ -138,7 +207,7 @@ app.whenReady().then(async () => {
   ]);
 
   if (!result?.ok) return fail(result?.reason || 'unknown renderer failure');
-  console.log('Banana Cord V2.0.0 release Electron interaction test: OK');
+  console.log('Mingrx 3.0 Electron interaction test: OK');
   console.log(JSON.stringify(result));
   try { win.destroy(); } catch {}
   finish(0);

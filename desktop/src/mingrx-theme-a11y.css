@@ -1,0 +1,5 @@
+/* Theme foreground tokens chosen to keep normal button text readable (WCAG AA target). */
+:root,html[data-mingrx-theme="midnight"],html[data-mingrx-theme="system"][data-mingrx-system="dark"]{--mx-on-accent:#080808}
+html[data-mingrx-theme="pearl"],html[data-mingrx-theme="system"][data-mingrx-system="light"]{--mx-on-accent:#ffffff}
+html[data-mingrx-theme="crimson"],html[data-mingrx-theme="ocean"],html[data-mingrx-theme="forest"],html[data-mingrx-theme="mono"]{--mx-on-accent:#111111}
+.composer button,#joinVoiceBtn,.modal-card .action,.v21-confirm-actions .action,.mingrx-theme-card.active .mingrx-theme-check{color:var(--mx-on-accent)!important}

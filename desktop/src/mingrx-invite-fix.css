@@ -1,0 +1,33 @@
+/* Mingrx invite — synchronous, non-blocking modal. */
+.mingrx-invite{width:min(560px,calc(100vw - 48px));display:grid;gap:15px;color:var(--mx-text)}
+.mingrx-invite-head{display:grid;gap:5px;padding-right:28px}
+.mingrx-invite-kicker{font-size:9px;font-weight:850;letter-spacing:.09em;text-transform:uppercase;color:var(--mx-accent)}
+.mingrx-invite-head h2{margin:0;font-size:20px;letter-spacing:-.035em;color:var(--mx-text)}
+.mingrx-invite-head p{margin:0;color:var(--mx-muted);font-size:10.5px;line-height:1.5}
+.mingrx-invite-code{display:grid;gap:8px;padding:15px;border:1px solid var(--mx-accent-border);border-radius:12px;background:var(--mx-accent-soft)}
+.mingrx-invite-code>span{color:var(--mx-muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.065em}
+.mingrx-invite-code>strong{font-size:25px;letter-spacing:.12em;color:var(--mx-text);font-variant-numeric:tabular-nums;user-select:all}
+.mingrx-invite-actions{display:flex;gap:7px;flex-wrap:wrap}
+.mingrx-invite-actions button,.mingrx-temp-row button,.mingrx-invite-copy-link{
+  width:auto!important;margin:0!important;padding:8px 11px!important;border-radius:8px!important;border:1px solid var(--mx-line)!important;
+  background:var(--mx-panel-2)!important;color:var(--mx-text-2)!important;font-size:10px!important;font-weight:780!important;box-shadow:none!important
+}
+.mingrx-invite-actions button.primary{background:var(--mx-accent)!important;border-color:var(--mx-accent)!important;color:var(--mx-on-accent,#fff)!important}
+.mingrx-invite-actions button:hover,.mingrx-temp-row button:hover,.mingrx-invite-copy-link:hover{background:var(--mx-hover)!important;color:var(--mx-text)!important}
+.mingrx-invite-link-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:11px;border:1px solid var(--mx-line);border-radius:10px;background:var(--mx-panel)}
+.mingrx-invite-link-card code{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mx-text-2);font:10.5px/1.4 Consolas,monospace}
+.mingrx-temp-card{display:grid;gap:10px;padding:13px;border:1px solid var(--mx-line);border-radius:11px;background:var(--mx-panel)}
+.mingrx-temp-card b{font-size:11.5px;color:var(--mx-text)}
+.mingrx-temp-card small{display:block;margin-top:2px;color:var(--mx-muted);font-size:9.5px;line-height:1.45}
+.mingrx-temp-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.mingrx-temp-row select{min-width:0;height:36px;padding:0 9px;border:1px solid var(--mx-line);border-radius:8px;background:var(--mx-input);color:var(--mx-text-2);font-size:10px}
+.mingrx-temp-result{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;align-items:center;padding:10px;border:1px solid var(--mx-accent-border);border-radius:9px;background:var(--mx-accent-soft)}
+.mingrx-temp-result strong{font-size:16px;letter-spacing:.1em;color:var(--mx-text);user-select:all}
+.mingrx-temp-result small{grid-column:1;color:var(--mx-muted)}
+.mingrx-temp-result button{grid-column:2;grid-row:1/span 2}
+.mingrx-invite-note{margin:0!important;color:var(--mx-muted)!important;font-size:9.5px!important;line-height:1.5!important}
+@media(max-width:560px){
+  .mingrx-invite{width:calc(100vw - 28px)}
+  .mingrx-invite-link-card,.mingrx-temp-row{grid-template-columns:1fr}
+  .mingrx-invite-copy-link,.mingrx-temp-row button{width:100%!important}
+}

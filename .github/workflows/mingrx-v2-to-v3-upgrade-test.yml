@@ -1,0 +1,144 @@
+name: Mingrx V2 to V3 Upgrade Validation
+
+on:
+  push:
+    branches: [v3.0.0-mingrx-ui-polish]
+    paths:
+      - ".github/workflows/mingrx-v2-to-v3-upgrade-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  upgrade-test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Mingrx V3 branch
+        uses: actions/checkout@v4
+        with:
+          ref: v3.0.0-mingrx-ui-polish
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install exact dependencies from lockfile
+        working-directory: desktop
+        run: npm ci --no-audit --no-fund
+
+      - name: Inject production Firebase config
+        working-directory: desktop
+        env:
+          BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
+        run: node scripts/inject-firebase-config.js
+
+      - name: Verify old Banana Cord update endpoint still resolves after repository rename
+        shell: pwsh
+        run: |
+          $legacyUrl = 'https://api.github.com/repos/rafaelmingroni/banana-cord/releases/latest'
+          $raw = & curl.exe -sS -D - -o NUL -H 'Accept: application/vnd.github+json' -H 'User-Agent: Mingrx-Upgrade-Test' $legacyUrl
+          if ($LASTEXITCODE -ne 0) { Write-Error 'Could not query legacy GitHub updater endpoint.'; exit 1 }
+          $statusText = [string](@($raw | Where-Object { $_ -match '^HTTP/' } | Select-Object -First 1) | Select-Object -First 1)
+          $location = ([string](@($raw | Where-Object { $_ -match '^location:' } | Select-Object -First 1) | Select-Object -First 1)) -replace '^location:\s*',''
+          if ($statusText -match '\s(301|302|307|308)\s') {
+            if ($location -notmatch '(rafaelmingroni/mingrx-app|repositories/1437911767)') {
+              Write-Host ($raw -join "`n")
+              Write-Error "Legacy repository redirects somewhere unexpected: $location"
+              exit 1
+            }
+            Write-Host "Legacy updater redirect preserved: $location"
+          } elseif ($statusText -notmatch '\s200\s') {
+            Write-Host ($raw -join "`n")
+            Write-Error "Legacy updater endpoint returned unexpected status: $statusText"
+            exit 1
+          }
+
+          $body = & curl.exe -sSL -H 'Accept: application/vnd.github+json' -H 'User-Agent: Mingrx-Upgrade-Test' $legacyUrl
+          if ($LASTEXITCODE -ne 0) { Write-Error 'Could not follow legacy updater redirect.'; exit 1 }
+          $release = ($body -join "`n") | ConvertFrom-Json
+          if ([string]$release.html_url -notmatch 'github.com/rafaelmingroni/mingrx-app/releases/') {
+            Write-Error "Legacy updater did not resolve to mingrx-app release: $($release.html_url)"
+            exit 1
+          }
+          Write-Host "Legacy updater resolves to current repository release: $($release.tag_name)"
+
+      - name: Download official Banana Cord 2.1.0 installer
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          New-Item -ItemType Directory -Force migration | Out-Null
+          gh release download v2.1.0 --repo $env:GITHUB_REPOSITORY --pattern 'Banana-Cord-Setup-2.1.0-x64.exe' --dir migration
+          $v2 = Get-Item 'migration/Banana-Cord-Setup-2.1.0-x64.exe'
+          if ($v2.Length -lt 50000000) { Write-Error 'V2 installer looks invalid.'; exit 1 }
+          Write-Host "V2 installer: $($v2.Length) bytes"
+
+      - name: Build private Mingrx 3.0 installer
+        working-directory: desktop
+        run: npm run dist:win -- --publish never
+
+      - name: Install V2 and capture Windows identity
+        shell: pwsh
+        run: |
+          $v2 = (Resolve-Path 'migration/Banana-Cord-Setup-2.1.0-x64.exe').Path
+          Start-Process -FilePath $v2 -ArgumentList '/S' -Wait
+          Start-Sleep -Seconds 3
+          Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -match 'Banana|Mingrx' } | Stop-Process -Force -ErrorAction SilentlyContinue
+          $entries = @(Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -match 'Banana Cord|Mingrx' })
+          if ($entries.Count -ne 1) {
+            $entries | Format-List PSChildName,DisplayName,DisplayVersion,InstallLocation,UninstallString
+            Write-Error "Expected exactly one Banana Cord/Mingrx uninstall entry after V2 install, got $($entries.Count)."
+            exit 1
+          }
+          $entry = $entries[0]
+          [pscustomobject]@{
+            RegistryKey = $entry.PSChildName
+            DisplayName = $entry.DisplayName
+            DisplayVersion = $entry.DisplayVersion
+            InstallLocation = $entry.InstallLocation
+            UninstallString = $entry.UninstallString
+          } | ConvertTo-Json | Set-Content migration/v2-identity.json -Encoding UTF8
+          Write-Host "V2 identity: $($entry.PSChildName) | $($entry.DisplayName) | $($entry.DisplayVersion)"
+
+      - name: Install Mingrx V3 over V2 and verify in-place migration
+        shell: pwsh
+        run: |
+          $v3 = Get-ChildItem 'desktop/dist/Mingrx-Setup-3.0.0-*.exe' | Select-Object -First 1
+          if (-not $v3) { Write-Error 'Mingrx 3.0 installer was not generated.'; exit 1 }
+          Start-Process -FilePath $v3.FullName -ArgumentList '/S' -Wait
+          Start-Sleep -Seconds 3
+          Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -match 'Banana|Mingrx' } | Stop-Process -Force -ErrorAction SilentlyContinue
+
+          $before = Get-Content migration/v2-identity.json | ConvertFrom-Json
+          $entries = @(Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -match 'Banana Cord|Mingrx' })
+          if ($entries.Count -ne 1) {
+            $entries | Format-List PSChildName,DisplayName,DisplayVersion,InstallLocation,UninstallString
+            Write-Error "V3 created a parallel app: expected one uninstall entry, got $($entries.Count)."
+            exit 1
+          }
+          $after = $entries[0]
+          if ($after.PSChildName -ne $before.RegistryKey) {
+            Write-Error "Windows uninstall identity changed: V2=$($before.RegistryKey), V3=$($after.PSChildName)"
+            exit 1
+          }
+          if ([string]$after.DisplayName -notmatch 'Mingrx') {
+            Write-Error "Final installed product is not branded Mingrx: $($after.DisplayName)"
+            exit 1
+          }
+          if ([string]$after.DisplayVersion -ne '3.0.0') {
+            Write-Error "Installed version is not 3.0.0: $($after.DisplayVersion)"
+            exit 1
+          }
+          Write-Host "Upgrade identity preserved: $($after.PSChildName)"
+          Write-Host "Installed product: $($after.DisplayName) $($after.DisplayVersion)"
+
+      - name: Upload migration evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: mingrx-v2-to-v3-upgrade-evidence
+          path: |
+            migration/v2-identity.json
+            desktop/dist/latest.yml
+          if-no-files-found: error

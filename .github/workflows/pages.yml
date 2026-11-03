@@ -1,4 +1,4 @@
-name: Deploy Banana Cord invite page
+name: Deploy Mingrx invite page
 
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Upload invite page
+      - name: Upload Mingrx invite page
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs

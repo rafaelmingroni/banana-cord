@@ -4,7 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss: http://127.0.0.1:* ws://127.0.0.1:* http://localhost:* ws://localhost:*; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none';" />
-<title>Banana Cord</title>
+<title>Mingrx</title>
+<script src="mingrx-theme-bootstrap.js"></script>
 <link rel="stylesheet" href="styles.css" />
 <link rel="stylesheet" href="v1.css" />
 <link rel="stylesheet" href="v110.css" />
@@ -16,22 +17,33 @@
 <link rel="stylesheet" href="v219-details.css" />
 <link rel="stylesheet" href="v220-chat-stability.css" />
 <link rel="stylesheet" href="v21-social.css" />
+<link rel="stylesheet" href="mingrx-rebrand.css" />
+<link rel="stylesheet" href="mingrx-community.css" />
+<link rel="stylesheet" href="mingrx-themes.css" />
+<link rel="stylesheet" href="mingrx-theme-a11y.css" />
+<link rel="stylesheet" href="mingrx-polish.css" />
+<link rel="stylesheet" href="mingrx-social-polish.css" />
+<link rel="stylesheet" href="mingrx-mark-polish.css" />
+<link rel="stylesheet" href="mingrx-final-fixes.css" />
+<link rel="stylesheet" href="mingrx-regression-guard.css" />
+<link rel="stylesheet" href="mingrx-media.css" />
+<link rel="stylesheet" href="mingrx-invite-fix.css" />
 </head>
-<body>
-<!-- Compatibilidade interna da UI v1.2.1. Na V2 este fluxo nunca é exibido ao usuário. -->
+<body class="mingrx-ui">
+<!-- Legacy compatibility only. This flow is hidden in the cloud product. -->
 <div id="setup" class="setup hidden" aria-hidden="true">
   <input id="setupName" maxlength="32" tabindex="-1" />
   <input id="setupInvite" placeholder="ABCD-EFGH" tabindex="-1" />
-  <input id="setupUrl" value="banana-cloud://firebase" tabindex="-1" />
+  <input id="setupUrl" value="Mingrx Cloud" tabindex="-1" />
   <button id="hostBtn" type="button" tabindex="-1"></button>
   <button id="connectBtn" type="button" tabindex="-1"></button>
   <div id="hostProgress" class="host-progress hidden"></div>
 </div>
 
 <div id="app" class="app hidden">
-  <aside class="servers"><button id="homeServer" class="server-icon home-server active" title="Mensagens privadas"><img class="home-banana-img" src="../assets/banana-cord.png" alt="Banana Cord"><span id="dmUnreadBadge" class="dm-unread-badge hidden">0</span></button><div id="serverList"></div><button id="addServerBtn" class="server-icon add" title="Criar ou entrar em servidor">+</button></aside>
-  <aside class="sidebar"><div class="server-title"><strong id="serverName">Banana Cord</strong><div class="server-actions"><button id="inviteBtn" class="icon-btn" title="Convidar">🔗</button><button id="serverSettingsBtn" class="icon-btn" title="Configurações do servidor">⚙</button></div></div><div id="channels" class="channels"></div><div class="voice-controls hidden" id="voiceControls"><div class="voice-state"><span class="dot"></span><div><b>Voz conectada</b><small id="voiceChannelName">Geral</small></div></div><div class="control-row"><button id="muteBtn" title="Microfone">🎤</button><button id="deafenBtn" title="Ensurdecer">🎧</button><button id="cameraBtn" title="Câmera">📹</button><button id="screenBtn" title="Compartilhar tela">🖥️</button><button id="hangupBtn" class="danger" title="Sair">📞</button></div></div><div class="profile-bar"><div id="myAvatar" class="avatar">?</div><div class="profile-text"><b id="myName">Usuário</b><small><span class="online-dot"></span> <span id="myStatusText">Online</span> · <span id="ping">-- ms</span></small></div><button id="profileBtn" class="icon-btn" title="Perfil e configurações">⚙️</button></div></aside>
-  <main class="main"><header><span id="channelIcon">#</span><b id="channelName">geral</b><span id="channelDesc">Conversa do servidor</span><span id="connectionBadge" class="connection-badge">conectado</span><button id="updateBadge" class="update-badge hidden" title="Atualização do Banana Cord">⬇ Atualização</button></header><section id="emptyView" class="empty-view"><img class="big-banana-img" src="../assets/banana-cord.png" alt=""><h2>Banana Cord</h2><p>Crie ou entre em um servidor pelo botão +.</p></section><section id="textView" class="text-view hidden"><div id="messages" class="messages"></div><form id="messageForm" class="composer"><input id="messageInput" autocomplete="off" maxlength="2000" placeholder="Mensagem" /><button>Enviar</button></form></section><section id="voiceView" class="voice-view hidden"><div class="voice-top"><div><h2 id="voiceTitle">Sala de voz</h2><p id="voiceSubtitle">Conecte-se para conversar.</p></div><div class="voice-top-actions"><button id="reconnectVoiceBtn" class="secondary-mini hidden" title="Reconectar chamada">↻ Reconectar</button><button id="hideCamsBtn" class="secondary-mini hidden" title="Ocultar webcams e focar compartilhamento">👁 Câmeras</button><button id="joinVoiceBtn">Entrar na voz</button></div></div><div id="videoGrid" class="video-grid"></div></section></main>
+  <aside class="servers"><button id="homeServer" class="server-icon home-server active" title="Início e mensagens"><img class="home-banana-img" src="../assets/mingrx.svg" alt="Mingrx"><span id="dmUnreadBadge" class="dm-unread-badge hidden">0</span></button><div id="serverList"></div><button id="addServerBtn" class="server-icon add" title="Criar ou entrar em uma comunidade">+</button></aside>
+  <aside class="sidebar"><div class="server-title"><strong id="serverName">Mingrx</strong><div class="server-actions"><button id="inviteBtn" class="icon-btn" title="Convidar">🔗</button><button id="serverSettingsBtn" class="icon-btn" title="Configurações da comunidade">⚙</button></div></div><div id="channels" class="channels"></div><div class="voice-controls hidden" id="voiceControls"><div class="voice-state"><span class="dot"></span><div><b>Voz conectada</b><small id="voiceChannelName">Geral</small></div></div><div class="control-row"><button id="muteBtn" title="Microfone">🎤</button><button id="deafenBtn" title="Ensurdecer">🎧</button><button id="cameraBtn" title="Câmera">📹</button><button id="screenBtn" title="Compartilhar tela">🖥️</button><button id="hangupBtn" class="danger" title="Sair">📞</button></div></div><div class="profile-bar"><div id="myAvatar" class="avatar">?</div><div class="profile-text"><b id="myName">Usuário</b><small><span class="online-dot"></span> <span id="myStatusText">Online</span> · <span id="ping">-- ms</span></small></div><button id="profileBtn" class="icon-btn" title="Perfil e configurações">⚙️</button></div></aside>
+  <main class="main"><header><span id="channelIcon">#</span><b id="channelName">geral</b><span id="channelDesc">Conversa da comunidade</span><span id="connectionBadge" class="connection-badge">conectado</span><button id="updateBadge" class="update-badge hidden" title="Atualização do Mingrx">⬇ Atualização</button></header><section id="emptyView" class="empty-view"><img class="big-banana-img" src="../assets/mingrx.svg" alt="Mingrx"><h2>Mingrx</h2><p>Crie ou entre em uma comunidade pelo botão +.</p></section><section id="textView" class="text-view hidden"><div id="messages" class="messages"></div><form id="messageForm" class="composer"><input id="messageInput" autocomplete="off" maxlength="2000" placeholder="Mensagem" /><button aria-label="Enviar">Enviar</button></form></section><section id="voiceView" class="voice-view hidden"><div class="voice-top"><div><h2 id="voiceTitle">Sala de voz</h2><p id="voiceSubtitle">Conecte-se para conversar.</p></div><div class="voice-top-actions"><button id="reconnectVoiceBtn" class="secondary-mini hidden" title="Reconectar chamada">↻ Reconectar</button><button id="hideCamsBtn" class="secondary-mini hidden" title="Ocultar webcams e focar compartilhamento">👁 Câmeras</button><button id="joinVoiceBtn">Entrar na voz</button></div></div><div id="videoGrid" class="video-grid"></div></section></main>
   <aside class="members"><h3>Membros</h3><div id="memberList"></div></aside>
 </div>
 <div id="modal" class="modal hidden"><div class="modal-card"><button id="modalClose" class="modal-close">×</button><div id="modalBody"></div></div></div><div id="toast" class="toast hidden"></div>
@@ -44,6 +56,7 @@
 <script src="v120.js"></script>
 <script src="v216-e2ee-client.js"></script>
 <script src="cloud-browser/cloud-v2-all.browser.js"></script>
+<script src="mingrx-polish.js"></script>
 <script src="cloud-v2-runtime-fixes.js"></script>
 <script src="cloud-v2-release-fixes.js"></script>
 <script src="screen-share-fix.js"></script>
@@ -67,5 +80,13 @@
 <script src="v21-i18n-legacy.js"></script>
 <script src="v21-social.js"></script>
 <script src="v21-release-fixes.js"></script>
+<script src="mingrx-shell.js"></script>
+<script src="mingrx-themes.js"></script>
+<script src="mingrx-social-polish.js"></script>
+<script src="mingrx-mark-polish.js"></script>
+<script src="mingrx-final-fixes.js"></script>
+<script src="mingrx-regression-guard.js"></script>
+<script src="mingrx-media.js"></script>
+<script src="mingrx-invite-fix.js"></script>
 </body>
 </html>

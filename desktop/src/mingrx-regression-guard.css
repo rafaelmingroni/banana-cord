@@ -1,0 +1,166 @@
+/* Mingrx regression guard — loaded last. These rules protect the release-critical surfaces. */
+
+/* Shell: legacy Banana layers used a 4-column Discord-like grid and v218 still
+   places .main in column 3. Mingrx has exactly two columns: navigation + content.
+   Explicit placement here prevents Chromium from creating an implicit ghost
+   column on any window size, DPI scale or responsive breakpoint. */
+body.mingrx-ui .app{
+  grid-template-columns:280px minmax(0,1fr)!important;
+  grid-template-rows:56px minmax(0,1fr)!important;
+  grid-auto-columns:0!important;
+  width:100%!important;
+  min-width:0!important;
+}
+body.mingrx-ui .app .servers{
+  grid-column:1 / -1!important;
+  grid-row:1!important;
+}
+body.mingrx-ui .app .sidebar{
+  grid-column:1!important;
+  grid-row:2!important;
+}
+body.mingrx-ui .app .main,
+body.mingrx-ui .app.dm-mode .main{
+  grid-column:2!important;
+  grid-row:2!important;
+  justify-self:stretch!important;
+  align-self:stretch!important;
+  width:auto!important;
+  max-width:none!important;
+  min-width:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+body.mingrx-ui .app .main>header,
+body.mingrx-ui .app .empty-view,
+body.mingrx-ui .app .text-view,
+body.mingrx-ui .app .voice-view{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  align-self:stretch!important;
+}
+
+/* Private/DM: preserve a readable navigation column without stealing space from chat. */
+body.mingrx-ui .app.dm-mode{
+  grid-template-columns:296px minmax(0,1fr)!important;
+}
+body.mingrx-ui .app.dm-mode .sidebar{
+  width:296px!important;
+  min-width:296px!important;
+  max-width:296px!important;
+  overflow:hidden!important;
+}
+body.mingrx-ui .app.dm-mode .channels{
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  padding:12px!important;
+  overflow-x:hidden!important;
+}
+body.mingrx-ui .app.dm-mode .dm-sidebar,
+body.mingrx-ui .app.dm-mode .v214-private-sidebar{
+  display:flex!important;
+  flex-direction:column!important;
+  flex:1 1 auto!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+}
+body.mingrx-ui .app.dm-mode .v214-private-intro,
+body.mingrx-ui .app.dm-mode .v1-dm-tools,
+body.mingrx-ui .app.dm-mode .v207-dm-add-friend,
+body.mingrx-ui .app.dm-mode .v214-private-request,
+body.mingrx-ui .app.dm-mode .v1-friend-quick,
+body.mingrx-ui .app.dm-mode .dm-conversation-list{
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+}
+body.mingrx-ui .app.dm-mode .v214-private-sidebar .v1-dm-tools{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:8px!important;
+}
+body.mingrx-ui .app.dm-mode .v214-private-sidebar .v1-dm-tools button,
+body.mingrx-ui .app.dm-mode .v214-private-sidebar .v207-dm-add-friend{
+  min-width:0!important;
+  white-space:normal!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+}
+body.mingrx-ui .app.dm-mode .v214-private-intro b,
+body.mingrx-ui .app.dm-mode .v214-private-intro span,
+body.mingrx-ui .app.dm-mode .v214-private-request span{
+  word-break:normal!important;
+  overflow-wrap:break-word!important;
+}
+
+/* Auth: no Banana yellow/black fallback is allowed to win. */
+body.mingrx-ui .cloud-gate{
+  background:
+    radial-gradient(circle at 50% 8%,color-mix(in srgb,var(--mx-accent) 14%,transparent),transparent 38%),
+    var(--mx-bg)!important;
+  color:var(--mx-text)!important;
+}
+body.mingrx-ui .cloud-brand{justify-content:center!important;text-align:center!important}
+body.mingrx-ui .cloud-brand img[src*="banana"]{display:none!important}
+body.mingrx-ui .cloud-panel{
+  background:var(--mx-panel)!important;
+  border-color:var(--mx-line)!important;
+  color:var(--mx-text)!important;
+  box-shadow:var(--mx-shadow)!important;
+}
+body.mingrx-ui .cloud-tabs{background:var(--mx-panel-2)!important}
+body.mingrx-ui .cloud-tabs button{background:transparent!important;color:var(--mx-muted)!important}
+body.mingrx-ui .cloud-tabs button.active{background:var(--mx-panel-3)!important;color:var(--mx-text)!important}
+body.mingrx-ui .cloud-form input{
+  background:var(--mx-input)!important;
+  border-color:var(--mx-line)!important;
+  color:var(--mx-text)!important;
+}
+body.mingrx-ui .cloud-form input:focus{
+  border-color:var(--mx-accent)!important;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--mx-accent) 12%,transparent)!important;
+}
+body.mingrx-ui .cloud-form button.primary,
+body.mingrx-ui .cloud-actions .primary{
+  background:var(--mx-accent)!important;
+  color:var(--mx-on-accent,#fff)!important;
+  border-color:var(--mx-accent)!important;
+}
+body.mingrx-ui .cloud-form button.primary:hover,
+body.mingrx-ui .cloud-actions .primary:hover{background:var(--mx-accent-hover)!important}
+body.mingrx-ui .cloud-panel code{background:var(--mx-panel-2)!important;color:var(--mx-accent)!important}
+body.mingrx-ui .cloud-spinner{border-color:var(--mx-line)!important;border-top-color:var(--mx-accent)!important}
+
+/* Settings: legacy brand/version nodes are removed by JS; hide them defensively before removal. */
+body.mingrx-ui .settings-shell .settings-brand,
+body.mingrx-ui .settings-shell .settings-nav-foot,
+body.mingrx-ui .settings-shell .version-label{
+  display:none!important;
+}
+body.mingrx-ui .settings-shell img[src*="banana-cord"]{display:none!important}
+
+/* Responsive widths are based on the actual content viewport, not a specific monitor. */
+@media(max-width:1100px){
+  body.mingrx-ui .app{grid-template-columns:264px minmax(0,1fr)!important}
+  body.mingrx-ui .app .sidebar{width:264px!important;min-width:264px!important;max-width:264px!important}
+  body.mingrx-ui .app.dm-mode{grid-template-columns:276px minmax(0,1fr)!important}
+  body.mingrx-ui .app.dm-mode .sidebar{width:276px!important;min-width:276px!important;max-width:276px!important}
+}
+@media(max-width:900px){
+  body.mingrx-ui .app{grid-template-columns:244px minmax(0,1fr)!important}
+  body.mingrx-ui .app .sidebar{width:244px!important;min-width:244px!important;max-width:244px!important}
+  body.mingrx-ui .app.dm-mode{grid-template-columns:256px minmax(0,1fr)!important}
+  body.mingrx-ui .app.dm-mode .sidebar{width:256px!important;min-width:256px!important;max-width:256px!important}
+}
+@media(max-width:760px){
+  body.mingrx-ui .app{grid-template-columns:226px minmax(0,1fr)!important}
+  body.mingrx-ui .app .sidebar{width:226px!important;min-width:226px!important;max-width:226px!important}
+  body.mingrx-ui .app.dm-mode{grid-template-columns:238px minmax(0,1fr)!important}
+  body.mingrx-ui .app.dm-mode .sidebar{width:238px!important;min-width:238px!important;max-width:238px!important}
+  body.mingrx-ui .app.dm-mode .v214-private-sidebar .v1-dm-tools{grid-template-columns:1fr!important}
+}

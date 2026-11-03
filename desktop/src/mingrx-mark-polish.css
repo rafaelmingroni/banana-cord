@@ -1,0 +1,8 @@
+/* Surface-specific sizing for theme-aware Mingrx marks. */
+.mingrx-surface-mark{display:inline-grid;place-items:center;flex:0 0 auto}
+.mingrx-surface-mark svg{width:100%;height:100%;display:block}
+.empty-view .mingrx-empty-mark{width:64px;height:64px;margin:0 auto 10px}
+.v214-private-home .mingrx-private-mark{width:92px;height:92px;margin:0 auto 14px}
+.mingrx-community-head .mingrx-community-mark{width:44px;height:44px}
+.banana-updater-logo .mingrx-updater-mark,.banana-updater-install-logo .mingrx-updater-mark{width:64px;height:64px}
+.cloud-home-logo .mingrx-cloud-home-mark{width:36px;height:36px}
