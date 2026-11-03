@@ -206,8 +206,14 @@
 
     watchServerRefs() {
       const q = query(collection(this.db, 'users', this.user.uid, 'serverRefs'), orderBy('joinedAt', 'asc'));
-      const off = onSnapshot(q, async snap => {
+      const off = onSnapshot(q, { includeMetadataChanges: true }, async snap => {
         try {
+          // Cached snapshots can render previously known servers but must not
+          // claim backend connectivity until a server-origin snapshot arrives.
+          window.BananaLegacy?.setConnection?.(!snap.metadata.fromCache);
+          window.BananaCloudBootStage = snap.metadata.fromCache
+            ? 'server-list-cache'
+            : 'server-list-online';
           const ids = snap.docs.map(d => d.id);
           const previous = new Set(this.knownServerIds);
           const isInitial = !this.initialRefsReady;
@@ -250,6 +256,7 @@
           this.receive('app:error', this.friendly(error));
         }
       }, error => {
+        window.BananaLegacy?.setConnection?.(false);
         window.BananaCloudBootIssue = { stage: 'server-list', code: String(error?.code || 'unknown') };
         console.error('Mingrx Cloud server refs listener:', error);
         this.receive('app:error', this.friendly(error));
