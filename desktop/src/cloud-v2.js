@@ -57,7 +57,7 @@
     sendEmailVerification, sendPasswordResetEmail, updateProfile
   } = require('firebase/auth');
   const {
-    initializeFirestore, persistentLocalCache, persistentSingleTabManager,
+    initializeFirestore, persistentLocalCache, persistentSingleTabManager, memoryLocalCache,
     collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc,
     query, orderBy, limit, onSnapshot, serverTimestamp, where, getDocs,
     writeBatch
@@ -70,12 +70,19 @@
   setPersistence(auth, browserLocalPersistence).catch(console.warn);
 
   let db;
+  // Opt-in, one-session diagnostic. Does NOT delete IndexedDB cache or any
+  // pending/offline writes. It isolates damaged/locked persistent caches.
+  const diagnoseMemoryCache = sessionStorage.getItem('mingrx.cloud.diagnosticMemoryCache') === '1';
+  window.MingrxCloudCacheMode = diagnoseMemoryCache ? 'memory-diagnostic' : 'persistent';
   try {
     db = initializeFirestore(firebaseApp, {
-      localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() })
+      localCache: diagnoseMemoryCache
+        ? memoryLocalCache()
+        : persistentLocalCache({ tabManager: persistentSingleTabManager() })
     });
   } catch (e) {
     console.warn('Banana Cloud: cache persistente indisponível, usando cache normal.', e?.message || e);
+    window.MingrxCloudCacheMode = 'fallback-memory';
     const { getFirestore } = require('firebase/firestore');
     db = getFirestore(firebaseApp);
   }
@@ -181,6 +188,7 @@
   $('cloudVerifyLogout')?.addEventListener('click', () => signOut(auth));
 
   let presenceCleanup = null;
+  let syncedUid = '';
   function attachPresence(user) {
     presenceCleanup?.();
     if (!realtime || !user) return;
@@ -206,6 +214,9 @@
     // Always keep one visible auth state until the verified app shell is ready.
     gate.classList.remove('hidden');
     if (!user) {
+      syncedUid = '';
+      presenceCleanup?.();
+      presenceCleanup = null;
       hide('cloudVerify'); hide('cloudLoading'); show('cloudAuth');
       window.BananaCloud.ready = false;
       return;
@@ -217,8 +228,14 @@
       return;
     }
     hide('cloudAuth'); hide('cloudVerify'); show('cloudLoading');
-    try { await ensureProfile(user); attachPresence(user); }
-    catch (err) { console.error('Banana Cloud profile:', err); }
+
+    // Authentication and verified-token recovery must never wait for a
+    // Firestore write. On a restricted/stale connection, setDoc can remain
+    // pending indefinitely. The release recovery handler validates the token
+    // before replaying the ready event.
+    // Preserve the legacy fallback if the separate release recovery script
+    // fails to initialize. With it loaded, its capture listener immediately
+    // reopens the gate while refreshing verified credentials.
     hide('cloudLoading'); gate.classList.add('hidden');
     window.BananaCloud.ready = true;
     window.dispatchEvent(new CustomEvent('banana:cloud-ready', { detail: { uid: user.uid, user } }));
@@ -309,6 +326,28 @@
     createServer, listenMyServers, listenChannelMessages, sendChannelMessage,
     sendDM, listenDM, updateMessage, deleteMessage, dmThreadId
   };
+
+  // Once the release guard confirms email_verified in the refreshed ID token,
+  // synchronize the profile and presence independently from opening the UI.
+  // Firestore permissions or connectivity must not strand a verified account.
+  window.addEventListener('banana:cloud-ready', event => {
+    if (!event.detail?.__tokenRefreshed) return;
+    const user = auth.currentUser;
+    if (!user?.emailVerified || user.uid !== event.detail.uid) return;
+    if (syncedUid === user.uid) return;
+    syncedUid = user.uid;
+    try { attachPresence(user); } catch (error) {
+      console.warn('Mingrx Cloud presence startup:', error);
+    }
+    void ensureProfile(user).catch(error => {
+      syncedUid = '';
+      console.error('Mingrx Cloud profile sync:', error);
+      window.BananaCloudBootIssue = {
+        stage: 'profile-sync',
+        code: String(error?.code || 'unknown')
+      };
+    });
+  });
 
   onAuthStateChanged(auth, handleUser);
 })();

@@ -34,6 +34,20 @@
   bindStateSound(document.getElementById('deafenBtn'), 'deafened', 'soundDeafen', 'deafen', 'undeafen');
 
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+  function withAuthDeadline(promise, stage, timeoutMs = 12000) {
+    let timer;
+    return Promise.race([
+      Promise.resolve(promise),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          const error = new Error('O Firebase não respondeu durante ' + stage + '. Verifique a conexão e copie o diagnóstico.');
+          error.code = 'auth/timeout';
+          window.BananaCloudBootIssue = { stage, code: error.code };
+          reject(error);
+        }, timeoutMs);
+      })
+    ]).finally(() => clearTimeout(timer));
+  }
   const gate = () => document.getElementById('cloudGate');
   const authPanel = () => document.getElementById('cloudAuth');
   const verifyPanel = () => document.getElementById('cloudVerify');
@@ -57,12 +71,39 @@
       actions = document.createElement('div');
       actions.id = 'cloudBootActions';
       actions.className = 'cloud-actions hidden';
-      actions.innerHTML = '<button id="cloudBootRetry" class="primary" type="button">Tentar novamente</button><button id="cloudBootLogout" type="button">Usar outra conta</button>';
+      actions.innerHTML = '<button id="cloudBootRetry" class="primary" type="button">Tentar novamente</button><button id="cloudBootCopy" type="button">Copiar diagnóstico</button><button id="cloudBootMemory" type="button">Testar sem cache local</button><button id="cloudBootLogout" type="button">Usar outra conta</button>';
       loading.appendChild(actions);
 
       document.getElementById('cloudBootRetry')?.addEventListener('click', () => {
         const user = window.BananaCloud?.auth?.currentUser;
         if (user) recoverVerifiedBoot(user, { source: 'retry' });
+      });
+      document.getElementById('cloudBootCopy')?.addEventListener('click', () => {
+        const issue = window.BananaCloudBootIssue || {};
+        const safe = [
+          'Mingrx Cloud startup diagnostic',
+          'Etapa: ' + String(issue.stage || window.BananaCloudBootStage || 'unknown'),
+          'Codigo: ' + String(issue.code || 'unknown'),
+          'E-mail verificado: ' + String(!!window.BananaCloud?.auth?.currentUser?.emailVerified),
+          'Interface visivel: ' + String(appShell()?.classList.contains('hidden') === false),
+          'Cache Firestore: ' + String(window.MingrxCloudCacheMode || 'unknown'),
+          'Data UTC: ' + new Date().toISOString()
+        ].join(String.fromCharCode(10));
+        try {
+          require('electron').clipboard.writeText(safe);
+          document.getElementById('cloudBootCopy').textContent = 'Diagnóstico copiado';
+        } catch (error) {
+          console.warn('Mingrx diagnostic copy failed:', error);
+          const node = document.getElementById('cloudBootError');
+          if (node) node.textContent += String.fromCharCode(10) + safe;
+        }
+      });
+      document.getElementById('cloudBootMemory')?.addEventListener('click', () => {
+        // This only changes the Firestore client cache for this renderer
+        // session. It neither clears IndexedDB nor signs out the user.
+        try { sessionStorage.setItem('mingrx.cloud.diagnosticMemoryCache', '1'); }
+        catch (error) { console.warn('Mingrx diagnostic cache toggle:', error); }
+        location.reload();
       });
       document.getElementById('cloudBootLogout')?.addEventListener('click', () => window.BananaCloud?.signOut?.());
     }
@@ -125,7 +166,10 @@
     const text = loadingPanel()?.querySelector('p');
     if (text) text.textContent = 'Não foi possível concluir o login.';
     if (ui) {
-      ui.error.textContent = friendlyBootError(error);
+      const issue = window.BananaCloudBootIssue || {};
+      const stage = String(issue.stage || window.BananaCloudBootStage || 'auth-recovery');
+      const code = String(issue.code || error?.code || 'timeout');
+      ui.error.textContent = friendlyBootError(error) + ' [Etapa: ' + stage + '; código: ' + code + ']';
       ui.error.classList.remove('hidden');
       ui.actions.classList.remove('hidden');
     }
@@ -146,9 +190,10 @@
     if (!user || recoveryRunning) return;
     recoveryRunning = true;
     showBootLoading();
+    window.BananaCloudBootStage = 'auth-reload';
 
     try {
-      await user.reload();
+      await withAuthDeadline(user.reload(), 'auth-reload');
       if (!user.emailVerified) {
         showVerificationState(user);
         return;
@@ -156,7 +201,8 @@
 
       // Critical: refresh the ID token so Firestore/RTDB rules see
       // request.auth.token.email_verified === true immediately.
-      const token = await user.getIdTokenResult(true);
+      window.BananaCloudBootStage = 'token-refresh';
+      const token = await withAuthDeadline(user.getIdTokenResult(true), 'token-refresh');
       if (token?.claims?.email_verified !== true) {
         const stale = new Error('A sessão autenticada ainda não recebeu a confirmação do e-mail.');
         stale.code = 'auth/email-verification-token-stale';
@@ -169,6 +215,7 @@
       // A second attempt is useful if the first request failed while the old
       // token was still in flight.
       for (let attempt = 0; attempt < 2; attempt += 1) {
+        window.BananaCloudBootStage = 'socket-boot-attempt-' + (attempt + 1);
         window.dispatchEvent(new CustomEvent('banana:cloud-ready', {
           detail: {
             ...detail,

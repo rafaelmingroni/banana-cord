@@ -106,11 +106,36 @@
 
     async start() {
       if (!this.user?.emailVerified) throw new Error('Faça login com um e-mail verificado.');
-      await this.ensurePublicProfile();
-      await this.startSession();
+
+      // Authentication is sufficient to display the app shell. Do not wait for
+      // Firestore profile writes or an RTDB session write to release the UI:
+      // these services can be delayed or blocked independently of Firebase Auth.
+      this.receive('auth:ready', {
+        user: {
+          id: this.user.uid,
+          name: this.user.displayName || this.user.email?.split('@')[0] || 'Usuário',
+          avatar: '', customStatus: '', status: 'online'
+        },
+        servers: []
+      });
+      window.BananaCloudBootStage = 'shell-ready';
+
+      const guarded = (stage, promise) => Promise.resolve(promise).catch(error => {
+        console.error('Mingrx Cloud startup ' + stage + ':', error);
+        window.BananaCloudBootIssue = {
+          stage,
+          code: String(error?.code || 'unknown'),
+          category: /permission/i.test(String(error?.code || '')) ? 'permissions' : 'connectivity-or-service'
+        };
+        this.receive('app:error', this.friendly(error));
+      });
+
+      window.BananaCloudBootStage = 'server-list-listening';
+      this.watchServerRefs();
       this.watchPresence();
       this.watchSignals();
-      this.watchServerRefs();
+      void guarded('public-profile', this.ensurePublicProfile());
+      void guarded('realtime-session', this.startSession());
       window.BananaCloudSocket = this;
     }
 
@@ -181,8 +206,14 @@
 
     watchServerRefs() {
       const q = query(collection(this.db, 'users', this.user.uid, 'serverRefs'), orderBy('joinedAt', 'asc'));
-      const off = onSnapshot(q, async snap => {
+      const off = onSnapshot(q, { includeMetadataChanges: true }, async snap => {
         try {
+          // Cached snapshots can render previously known servers but must not
+          // claim backend connectivity until a server-origin snapshot arrives.
+          window.BananaLegacy?.setConnection?.(snap.metadata?.fromCache !== true);
+          window.BananaCloudBootStage = snap.metadata?.fromCache === true
+            ? 'server-list-cache'
+            : 'server-list-online';
           const ids = snap.docs.map(d => d.id);
           const previous = new Set(this.knownServerIds);
           const isInitial = !this.initialRefsReady;
@@ -193,14 +224,7 @@
           // able to reach the shell, including a new account with zero servers.
           if (isInitial) {
             this.initialRefsReady = true;
-            this.receive('auth:ready', {
-              user: {
-                id: this.user.uid,
-                name: this.user.displayName || this.user.email?.split('@')[0] || 'Usuário',
-                avatar: '', customStatus: '', status: 'online'
-              },
-              servers: []
-            });
+            window.BananaCloudBootStage = 'server-list-loaded';
           }
 
           const servers = (await Promise.all(ids.map(serverId =>
@@ -232,6 +256,8 @@
           this.receive('app:error', this.friendly(error));
         }
       }, error => {
+        window.BananaLegacy?.setConnection?.(false);
+        window.BananaCloudBootIssue = { stage: 'server-list', code: String(error?.code || 'unknown') };
         console.error('Mingrx Cloud server refs listener:', error);
         this.receive('app:error', this.friendly(error));
       });
@@ -597,7 +623,12 @@
       started = false;
       lastBootError = error;
       console.error('Banana Cloud socket boot:', error);
-      try { await socket?.disconnect?.(); } catch (cleanupError) {
+      try {
+        await Promise.race([
+          Promise.resolve(socket?.disconnect?.()),
+          new Promise(resolve => setTimeout(resolve, 1800))
+        ]);
+      } catch (cleanupError) {
         console.warn('Banana Cloud socket cleanup:', cleanupError);
       }
       if (activeSocket === socket) activeSocket = null;
@@ -619,7 +650,14 @@
     started = false;
     activeSocket = null;
     if (stale) {
-      try { await stale.disconnect(); } catch (error) {
+      try {
+        // A backend outage can also strand sessionOwners removal. Recovery
+        // must never wait indefinitely for old RTDB cleanup.
+        await Promise.race([
+          Promise.resolve(stale.disconnect()),
+          new Promise(resolve => setTimeout(resolve, 1800))
+        ]);
+      } catch (error) {
         console.warn('Banana Cloud restart cleanup:', error);
       }
       if (window.BananaCloudSocket === stale) window.BananaCloudSocket = null;

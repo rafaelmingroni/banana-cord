@@ -78,7 +78,10 @@
     if (user?.displayName && els.setupName) els.setupName.value = user.displayName;
     els.setup?.classList.add('hidden');
     bindSocket(socket);
-    setConnection(true);
+    // Authenticated UI is available before Firestore/RTDB confirm sync.
+    // Do not present a green connected badge until the server snapshot
+    // confirms communication with the actual backend.
+    setConnection(false);
     window.BananaCloudSocket = socket;
   }
 
