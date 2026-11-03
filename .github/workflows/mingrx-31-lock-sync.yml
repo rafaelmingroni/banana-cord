@@ -2,7 +2,7 @@ name: Mingrx 3.1 Lock Sync
 
 on:
   push:
-    branches: [v3.1.0-spark-media-removal]
+    branches: [v3.1.0-spark-media-removal, hotfix/3.1.1-server-photo-voice-ui]
     paths:
       - "desktop/package.json"
       - ".github/workflows/mingrx-31-lock-sync.yml"
@@ -18,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: v3.1.0-spark-media-removal
+          ref: ${{ github.ref_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -43,5 +43,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add desktop/package-lock.json
-          git commit -m "chore: sync package lock for Mingrx 3.1"
-          git push origin HEAD:v3.1.0-spark-media-removal
+          git commit -m "chore: sync package lock for Mingrx 3.1.1"
+          git push origin HEAD:${{ github.ref_name }}
