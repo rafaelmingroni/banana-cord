@@ -72,6 +72,34 @@ body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-actions but
 body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-actions button:not(.hidden){display:inline-flex!important}
 body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-actions button.hidden{display:none!important}
 
+/* Community photos are real visual identities, not tiny initials. */
+body.mingrx-ui #serverList{gap:7px!important}
+body.mingrx-ui #serverList .server-icon.mingrx-community-button{
+  width:40px!important;
+  height:40px!important;
+  flex:0 0 40px!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border-radius:11px!important;
+  background-color:var(--mx-panel-3)!important;
+  background-size:cover!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  font-size:11px!important;
+  font-weight:800!important;
+}
+body.mingrx-ui #serverList .server-icon.mingrx-community-button-has-photo{
+  color:transparent!important;
+  border-color:#353947!important;
+}
+body.mingrx-ui #serverList .server-icon.mingrx-community-button-has-photo:hover{
+  border-color:#5c6173!important;
+}
+body.mingrx-ui #serverList .server-icon.mingrx-community-button-has-photo.active{
+  border-color:var(--mx-accent)!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--mx-accent) 28%,transparent)!important;
+}
+
 body.mingrx-ui .video-card.mingrx-watching-stream{
   outline:2px solid var(--mx-accent)!important;
   outline-offset:-2px;
