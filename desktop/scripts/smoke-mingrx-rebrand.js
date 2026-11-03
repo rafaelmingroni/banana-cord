@@ -8,6 +8,8 @@ const assert = (condition, message) => { if (!condition) throw new Error(message
 const html = read('src/index.html');
 const css = read('src/mingrx-rebrand.css');
 const shell = read('src/mingrx-shell.js');
+const polish = read('src/mingrx-polish.js');
+const updaterCompat = read('src/mingrx-updater-compat.js');
 const themesCss = read('src/mingrx-themes.css');
 const themeA11yCss = read('src/mingrx-theme-a11y.css');
 const themesJs = read('src/mingrx-themes.js');
@@ -15,6 +17,7 @@ const themeBootstrap = read('src/mingrx-theme-bootstrap.js');
 const svg = read('assets/mingrx.svg');
 const pkg = JSON.parse(read('package.json'));
 const tray = read('tray.js');
+const v21Main = read('v21-main.js');
 
 assert(html.includes('<title>Mingrx</title>'), 'Título do renderer não está com a marca Mingrx.');
 assert(html.includes('mingrx-rebrand.css'), 'Camada visual Mingrx não foi carregada.');
@@ -35,6 +38,10 @@ assert(shell.includes('openCommunityModal'), 'Entrada de comunidades não foi mi
 assert(shell.includes('#addServerBtn,#v207StartServer'), 'Shell Mingrx não intercepta todos os gatilhos legados de comunidade.');
 assert(shell.includes('replaceLegacyMarks'), 'Shell Mingrx não remove marcas visuais antigas do onboarding.');
 assert(shell.includes('.banana-updater-logo img'), 'Updater ainda pode exibir o ícone antigo.');
+assert(!shell.includes("chip.textContent = 'Preview'"), 'Shell final ainda exibe selo Preview.');
+assert(polish.includes("DISPLAY_VERSION = '3.0.0'"), 'Configurações não exibem a versão final Mingrx 3.0.0.');
+assert(!polish.includes('Preview · v2.1.0'), 'Texto legado de preview ainda existe na camada final.');
+assert(v21Main.includes("PRODUCT_NAME = 'Mingrx'"), 'Inicialização do Windows ainda não usa o nome final Mingrx.');
 
 assert(themeBootstrap.includes("'system'"), 'Tema Sistema não é inicializado antes do primeiro paint.');
 assert(themeBootstrap.includes('prefers-color-scheme: light'), 'Tema Sistema não acompanha o esquema do Windows.');
@@ -100,6 +107,9 @@ assert(pkg.build.artifactName === 'Mingrx-Setup-${version}-${arch}.${ext}', 'Nom
 assert(pkg.build.protocols?.[0]?.schemes?.includes('bananacord'), 'Compatibilidade com links bananacord:// foi removida.');
 assert(pkg.build.protocols?.[0]?.schemes?.includes('mingrx'), 'Novo protocolo mingrx:// não foi registrado.');
 assert(pkg.build.win.icon === 'assets/mingrx.ico', 'Build ainda não aponta para o ícone Mingrx.');
+assert(pkg.build.publish?.[0]?.owner === 'rafaelmingroni' && pkg.build.publish?.[0]?.repo === 'mingrx-app', 'Updater/build não aponta para rafaelmingroni/mingrx-app.');
+assert(updaterCompat.includes("OFFICIAL_UPDATE_REPO = 'mingrx-app'"), 'Camada de compatibilidade do updater não aponta para mingrx-app.');
+assert(updaterCompat.includes("['banana-cord', 'mingrx']"), 'Compatibilidade com feeds antigos do updater foi removida.');
 assert(pkg.scripts['smoke:mingrx'], 'Script smoke:mingrx não foi registrado.');
 assert(tray.includes('Abrir Mingrx'), 'Tray ainda não foi rebatizado para Mingrx.');
 assert(tray.includes("assets', 'mingrx-tray.png"), 'Tray não usa o ícone Mingrx.');
