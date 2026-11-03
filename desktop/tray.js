@@ -68,7 +68,7 @@ app.on('browser-window-created', (_event, win) => {
           title: 'Mingrx continua aberto',
           content: isCloudV2()
             ? 'A janela foi escondida. O Mingrx continua rodando na bandeja para manter presença, chamadas e notificações.'
-            : 'A janela foi escondida. O app continua rodando na bandeja — inclusive o servidor, se você estiver hospedando.',
+            : 'A janela foi escondida. O app continua rodando na bandeja.',
           iconType: 'info',
           largeIcon: true
         });
@@ -81,13 +81,15 @@ app.on('before-quit', () => { quitting = true; });
 app.on('second-instance', showWindow);
 
 app.whenReady().then(() => {
-  app.setAppUserModelId('com.mingrx.preview');
+  // Deliberately keep the stable Banana Cord application identity for the 3.0
+  // in-place migration. Visible product identity is Mingrx everywhere else.
+  app.setAppUserModelId('com.bananacord.app');
   try {
     const trayPath = path.join(__dirname, 'assets', 'mingrx-tray.png');
     const raw = nativeImage.createFromPath(trayPath);
     const icon = raw.isEmpty() ? raw : raw.resize({ width: 20, height: 20, quality: 'best' });
     tray = new Tray(icon);
-    tray.setToolTip('Mingrx Preview');
+    tray.setToolTip('Mingrx');
     tray.on('click', showWindow);
     tray.on('double-click', showWindow);
     rebuildMenu();
