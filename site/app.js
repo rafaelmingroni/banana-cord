@@ -11,8 +11,8 @@ fetch('https://api.github.com/repos/rafaelmingroni/mingrx-app/releases/latest',{
   .catch(()=>{})
   .finally(()=>downloadLinks.forEach(link=>delete link.dataset.loading));
 
-const timeLine=document.getElementById('timeLine');const returnCopy=document.querySelector('.return-copy');const hour=new Date().getHours();if(timeLine){timeLine.textContent=hour<5?'[ MADRUGADA · A CALL CONTINUA ]':hour<12?'[ BOM DIA · BORA PRA CALL ]':hour<18?'[ TARDE · VOZ · CHAT · TELA ]':'[ NOITE · SUA GALERA JÁ TÁ ON ]'}
-try{const returning=localStorage.getItem('mingrx-site-seen')==='1';if(returnCopy&&returning)returnCopy.textContent='Bom te ver de volta. A galera continua a um clique.';localStorage.setItem('mingrx-site-seen','1')}catch{}
+const timeLine=document.getElementById('timeLine');const returnCopy=document.querySelector('.return-copy');const hour=new Date().getHours();if(timeLine){timeLine.textContent=hour<5?'[ LATE NIGHT · STILL CONNECTED ]':hour<12?'[ MORNING · VOICE · CHAT · SCREEN ]':hour<18?'[ AFTERNOON · YOUR CREW · ONE PLACE ]':'[ NIGHT MODE · YOUR CREW IS ONLINE ]'}
+try{const returning=localStorage.getItem('mingrx-site-seen')==='1';if(returnCopy&&returning)returnCopy.textContent='Bom te ver de volta. O Mingrx continua a um clique.';localStorage.setItem('mingrx-site-seen','1')}catch{}
 
 const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;const reveals=[...document.querySelectorAll('.reveal')];if(reduceMotion||!('IntersectionObserver'in window)){reveals.forEach(el=>el.classList.add('is-visible'))}else{const observer=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target)}})},{threshold:.12,rootMargin:'0px 0px -45px 0px'});reveals.forEach(el=>observer.observe(el))}
 
