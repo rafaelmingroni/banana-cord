@@ -7,6 +7,7 @@ on:
       - "desktop/**"
       - "firebase/**"
       - ".github/workflows/mingrx-preview-ci.yml"
+      - ".github/workflows/release-windows.yml"
   workflow_dispatch:
 
 permissions:
