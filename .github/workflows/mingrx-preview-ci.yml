@@ -123,7 +123,7 @@ jobs:
         shell: pwsh
         run: |
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
-          if ($version -notmatch '^3\\.1\\.[0-9]+
+          if ($version -notmatch '^3[.]1[.][0-9]+$') { Write-Error "Versão candidata inválida: $version"; exit 1 }
           $exe = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe" | Select-Object -First 1
           if (-not $exe) { Write-Error "Instalador Mingrx .exe não foi gerado."; exit 1 }
           if ($exe.Length -lt 50000000) { Write-Error "Instalador Mingrx parece pequeno demais."; exit 1 }
@@ -134,18 +134,5 @@ jobs:
         with:
           name: Mingrx-Windows-${{ github.sha }}
           path: desktop/dist/Mingrx-Setup-*.exe
-          if-no-files-found: error
-          retention-days: 7
-) { Write-Error "Versão candidata inválida: $version"; exit 1 }
-          $exe = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe" | Select-Object -First 1
-          if (-not $exe) { Write-Error "Instalador Mingrx 3.1.2 .exe não foi gerado."; exit 1 }
-          if ($exe.Length -lt 50000000) { Write-Error "Instalador Mingrx parece pequeno demais."; exit 1 }
-          Write-Host "Mingrx $version installer: $($exe.Name) - $($exe.Length) bytes"
-
-      - name: Upload Mingrx release-candidate artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Mingrx-3.1.2-Windows-${{ github.sha }}
-          path: desktop/dist/Mingrx-Setup-3.1.2-*.exe
           if-no-files-found: error
           retention-days: 7
