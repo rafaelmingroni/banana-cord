@@ -37,26 +37,32 @@ jobs:
       - name: Verify old Banana Cord update endpoint still resolves after repository rename
         shell: pwsh
         run: |
-          $raw = & curl.exe -sS -D - -o NUL -H 'Accept: application/vnd.github+json' -H 'User-Agent: Mingrx-Upgrade-Test' 'https://api.github.com/repos/rafaelmingroni/banana-cord/releases/latest'
+          $legacyUrl = 'https://api.github.com/repos/rafaelmingroni/banana-cord/releases/latest'
+          $raw = & curl.exe -sS -D - -o NUL -H 'Accept: application/vnd.github+json' -H 'User-Agent: Mingrx-Upgrade-Test' $legacyUrl
           if ($LASTEXITCODE -ne 0) { Write-Error 'Could not query legacy GitHub updater endpoint.'; exit 1 }
-          $status = @($raw | Where-Object { $_ -match '^HTTP/' } | Select-Object -First 1)
-          $locationLine = @($raw | Where-Object { $_ -match '^location:' } | Select-Object -First 1)
-          $statusText = [string]($status | Select-Object -First 1)
+          $statusText = [string](@($raw | Where-Object { $_ -match '^HTTP/' } | Select-Object -First 1) | Select-Object -First 1)
+          $location = ([string](@($raw | Where-Object { $_ -match '^location:' } | Select-Object -First 1) | Select-Object -First 1)) -replace '^location:\s*',''
           if ($statusText -match '\s(301|302|307|308)\s') {
-            $location = ([string]($locationLine | Select-Object -First 1)) -replace '^location:\s*',''
-            if ($location -notmatch 'rafaelmingroni/mingrx-app') {
+            if ($location -notmatch '(rafaelmingroni/mingrx-app|repositories/1437911767)') {
               Write-Host ($raw -join "`n")
               Write-Error "Legacy repository redirects somewhere unexpected: $location"
               exit 1
             }
-            Write-Host "Legacy updater endpoint redirects to mingrx-app: $location"
-          } elseif ($statusText -match '\s200\s') {
-            Write-Host 'Legacy updater endpoint is still served successfully by GitHub.'
-          } else {
+            Write-Host "Legacy updater redirect preserved: $location"
+          } elseif ($statusText -notmatch '\s200\s') {
             Write-Host ($raw -join "`n")
             Write-Error "Legacy updater endpoint returned unexpected status: $statusText"
             exit 1
           }
+
+          $body = & curl.exe -sSL -H 'Accept: application/vnd.github+json' -H 'User-Agent: Mingrx-Upgrade-Test' $legacyUrl
+          if ($LASTEXITCODE -ne 0) { Write-Error 'Could not follow legacy updater redirect.'; exit 1 }
+          $release = ($body -join "`n") | ConvertFrom-Json
+          if ([string]$release.html_url -notmatch 'github.com/rafaelmingroni/mingrx-app/releases/') {
+            Write-Error "Legacy updater did not resolve to mingrx-app release: $($release.html_url)"
+            exit 1
+          }
+          Write-Host "Legacy updater resolves to current repository release: $($release.tag_name)"
 
       - name: Download official Banana Cord 2.1.0 installer
         shell: pwsh
