@@ -22,7 +22,8 @@ assert(nativeSocial.includes("collection(this.db, 'dmThreads'" ) || nativeSocial
 assert(nativeSocial.includes("event === 'friend:search'"), 'Friend search must remain supported.');
 assert(nativeSocial.includes("searchName"), 'Public profiles must maintain a normalized search name.');
 
-const [major, minor, patch] = String(pkg.version || '').split('.').map(Number);
-assert(major === 2 && (minor > 0 || patch >= 11), 'V2.0.11 regression must run on version 2.0.11 or newer.');
+const [major = 0, minor = 0, patch = 0] = String(pkg.version || '').split('-')[0].split('.').map(Number);
+const isAtLeast2011 = major > 2 || (major === 2 && (minor > 0 || (minor === 0 && patch >= 11)));
+assert(isAtLeast2011, 'V2.0.11 regression must run on version 2.0.11 or newer.');
 
-console.log(`Banana Cord ${pkg.version} social/DM single-runtime regression checks: OK`);
+console.log(`Mingrx ${pkg.version} social/DM single-runtime regression checks: OK`);
