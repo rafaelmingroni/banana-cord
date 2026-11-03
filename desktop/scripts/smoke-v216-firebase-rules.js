@@ -71,6 +71,18 @@ async function main() {
       });
     });
 
+    // Regression for Mingrx 3.1.1: watching an empty DM collection before the
+    // parent thread exists is denied by design. The 3.1.2 client must create the
+    // authorized parent thread first, then the exact same read is permitted.
+    const emptyMessages = collection(aliceDb, 'dmThreads', 'alice_bob', 'messages');
+    await assertFails(getDocs(emptyMessages));
+    await assertSucceeds(setDoc(doc(aliceDb, 'dmThreads', 'alice_bob'), {
+      participants: ['alice', 'bob'], updatedAt: serverTimestamp()
+    }));
+    await assertSucceeds(getDocs(emptyMessages));
+    await assertSucceeds(getDocs(collection(bobDb, 'dmThreads', 'alice_bob', 'messages')));
+    await assertFails(getDocs(collection(malloryDb, 'dmThreads', 'alice_bob', 'messages')));
+
     const makeThread = writeBatch(aliceDb);
     makeThread.set(doc(aliceDb, 'dmThreads', 'alice_bob'), {
       participants: ['alice', 'bob'], updatedAt: serverTimestamp(), lastMessage: { fromId: 'alice', toId: 'bob', at: Date.now(), e2ee: true }
@@ -103,13 +115,13 @@ async function main() {
       text: 'tentativa de downgrade para plaintext', editedAt: serverTimestamp()
     }));
 
-    console.log('Banana Cord V2.0.16 E2EE Firestore Rules test: OK');
+    console.log('Banana Cord V2.0.16 / Mingrx 3.1.2 E2EE Firestore Rules test: OK');
   } finally {
     await env.cleanup();
   }
 }
 
 main().catch(error => {
-  console.error('V2.0.16 E2EE rules test failed:', error);
+  console.error('V2.0.16 / Mingrx 3.1.2 E2EE rules test failed:', error);
   process.exit(1);
 });

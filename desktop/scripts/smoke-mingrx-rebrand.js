@@ -29,7 +29,7 @@ assert(html.includes('mingrx-theme-bootstrap.js'), 'Bootstrap de tema não está
 assert(html.includes('mingrx-themes.css'), 'Sistema de temas não está carregado.');
 assert(html.includes('mingrx-theme-a11y.css'), 'Foreground acessível dos temas não está carregado.');
 assert(html.includes('mingrx-themes.js'), 'Seletor de temas não está carregado.');
-assert(html.includes('mingrx-311-hotfix.js'), 'Hotfix Mingrx 3.1.1 não foi carregado por último.');
+assert(html.includes('mingrx-311-hotfix.js'), 'Hotfix Mingrx 3.1.1 não foi carregado.');
 assert(hotfix311.includes('Mingrx 3.1.1 hotfix'), 'Runtime do hotfix 3.1.1 não possui identidade esperada.');
 assert(html.includes('../assets/mingrx.svg'), 'Logo Mingrx não está no renderer inicial.');
 assert(!html.includes('>Banana Cord<'), 'Ainda existe Banana Cord visível no HTML principal.');
@@ -107,8 +107,8 @@ for (const theme of ['midnight','pearl','crimson','ocean','forest','mono']) {
 assert(svg.includes('viewBox="0 0 1024 1024"'), 'SVG oficial Mingrx precisa ser 1024x1024.');
 assert(svg.includes('#7c5cff'), 'Cor principal Mingrx ausente do SVG.');
 
-assert(pkg.version === '3.1.1', 'Hotfix Mingrx precisa estar em 3.1.1.');
-assert(lock.version === pkg.version && lock.packages?.['']?.version === pkg.version, 'package-lock precisa acompanhar a versão 3.1.1 do package.json.');
+assert(pkg.version === '3.1.2', 'Hotfix Mingrx precisa estar em 3.1.2.');
+assert(lock.version === pkg.version && lock.packages?.['']?.version === pkg.version, 'package-lock precisa acompanhar a versão 3.1.2 do package.json.');
 for (const name of Object.keys(pkg.dependencies || {})) {
   assert(name in (lock.packages?.['']?.dependencies || {}), `package-lock não contém a dependência ${name}.`);
 }
