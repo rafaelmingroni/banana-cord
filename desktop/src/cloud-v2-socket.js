@@ -623,7 +623,12 @@
       started = false;
       lastBootError = error;
       console.error('Banana Cloud socket boot:', error);
-      try { await socket?.disconnect?.(); } catch (cleanupError) {
+      try {
+        await Promise.race([
+          Promise.resolve(socket?.disconnect?.()),
+          new Promise(resolve => setTimeout(resolve, 1800))
+        ]);
+      } catch (cleanupError) {
         console.warn('Banana Cloud socket cleanup:', cleanupError);
       }
       if (activeSocket === socket) activeSocket = null;
@@ -645,7 +650,14 @@
     started = false;
     activeSocket = null;
     if (stale) {
-      try { await stale.disconnect(); } catch (error) {
+      try {
+        // A backend outage can also strand sessionOwners removal. Recovery
+        // must never wait indefinitely for old RTDB cleanup.
+        await Promise.race([
+          Promise.resolve(stale.disconnect()),
+          new Promise(resolve => setTimeout(resolve, 1800))
+        ]);
+      } catch (error) {
         console.warn('Banana Cloud restart cleanup:', error);
       }
       if (window.BananaCloudSocket === stale) window.BananaCloudSocket = null;
