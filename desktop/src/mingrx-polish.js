@@ -4,7 +4,8 @@
   window.__mingrxPolishLoaded = true;
 
   const BRAND = 'Mingrx';
-  const DISPLAY_VERSION = 'Preview · v2.1.0';
+  let DISPLAY_VERSION = 'v3.0.0';
+  try { DISPLAY_VERSION = `v${require('../package.json').version}`; } catch {}
 
   function markSvg(className = 'mingrx-inline-mark') {
     return `<span class="${className}" aria-hidden="true"><svg viewBox="0 0 1024 1024" role="presentation"><rect x="72" y="72" width="880" height="880" rx="220" fill="var(--mx-panel-3)"/><path d="M252 716V360c0-72 84-106 132-52L512 452l128-144c48-54 132-20 132 52v356" fill="none" stroke="var(--mx-accent)" stroke-width="124" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
@@ -50,12 +51,8 @@
     }
     MingrxNotification.prototype = NativeNotification.prototype;
     MingrxNotification.__mingrxWrapped = true;
-    try {
-      Object.defineProperty(MingrxNotification, 'permission', { configurable:true, get:() => NativeNotification.permission });
-    } catch {}
-    if (typeof NativeNotification.requestPermission === 'function') {
-      MingrxNotification.requestPermission = (...args) => NativeNotification.requestPermission(...args);
-    }
+    try { Object.defineProperty(MingrxNotification, 'permission', { configurable:true, get:() => NativeNotification.permission }); } catch {}
+    if (typeof NativeNotification.requestPermission === 'function') MingrxNotification.requestPermission = (...args) => NativeNotification.requestPermission(...args);
     window.Notification = MingrxNotification;
   }
 
@@ -178,7 +175,7 @@
       if (!nav.querySelector('.mingrx-settings-version')) {
         const version = document.createElement('div');
         version.className = 'mingrx-settings-version';
-        version.textContent = `${BRAND} ${DISPLAY_VERSION}`;
+        version.textContent = `${BRAND} · ${DISPLAY_VERSION}`;
         nav.appendChild(version);
       }
     }
@@ -232,16 +229,12 @@
   }
 
   const observer = new MutationObserver(records => {
-    for (const record of records) {
-      for (const node of record.addedNodes) schedule(node);
-    }
+    for (const record of records) for (const node of record.addedNodes) schedule(node);
   });
   observer.observe(document.body, { childList:true, subtree:true });
 
   const unread = document.getElementById('dmUnreadBadge');
-  if (unread) {
-    new MutationObserver(syncUnreadBadge).observe(unread, { childList:true, characterData:true, subtree:true, attributes:true, attributeFilter:['class'] });
-  }
+  if (unread) new MutationObserver(syncUnreadBadge).observe(unread, { childList:true, characterData:true, subtree:true, attributes:true, attributeFilter:['class'] });
 
   window.addEventListener('mingrx:theme-change', syncUnreadBadge);
   window.addEventListener('banana:i18n-changed', () => schedule(document.body));
