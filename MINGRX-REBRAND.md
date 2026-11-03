@@ -1,17 +1,39 @@
-# Mingrx — Rebrand Preview
+# Mingrx 3.0 — Public Migration
 
-This branch converts the Banana Cord 2.1 product experience into **Mingrx** while intentionally preserving the mature voice, screen sharing, chat, Firebase, E2EE and updater engines.
+Mingrx 3.0 is the public evolution of the project previously distributed as Banana Cord.
+
+## Product identity
+
+The user-facing product is now **Mingrx**:
+- application name: Mingrx
+- installer: `Mingrx-Setup-<version>-x64.exe`
+- Windows shortcuts and tray: Mingrx
+- primary invite protocol: `mingrx://`
+- documentation, release notes and public invite page: Mingrx
+
+## Migration compatibility
+
+A small number of legacy technical identifiers intentionally remain during the 3.0 migration. They are not user-facing branding.
+
+- `com.bananacord.app` remains the Windows application ID so existing installations upgrade in place.
+- `bananacord://` remains accepted temporarily so old invite links do not break.
+- the GitHub repository slug remains `banana-cord` for this migration release so installed 2.x clients keep finding `latest.yml` and the 3.0 installer.
+- internal `banana.*` localStorage keys and IPC/event names remain stable to preserve preferences, update state, E2EE material and compatibility with mature runtime modules.
+- the Firebase project keeps its existing technical project ID; renaming a Firebase project is not required for a product rebrand.
+
+## Data continuity
+
+On Windows, Mingrx 3.0 detects the existing Banana Cord user-data directory and reuses it for the migration release. This preserves Firebase login state, local preferences and the local encrypted key vault. Fresh Mingrx installations use the normal Mingrx profile path.
 
 ## Visual direction
-- Clean, smooth, premium and lightweight.
-- Graphite surfaces instead of high-contrast black blocks.
-- Violet is an accent, not a glow effect.
-- Horizontal space/community switcher instead of a Discord-style vertical server rail.
-- Members are contextual in a drawer instead of permanently occupying a fourth column.
-- Compact typography, restrained borders, short transitions and no decorative animation loops.
 
-## Preview safety
-The preview uses `com.mingrx.preview` and `Mingrx Preview`, so test installs do not overwrite stable Banana Cord installations. This is temporary. Production migration/updater compatibility will be handled only after the rebrand is approved.
+- clean, smooth and lightweight
+- graphite surfaces with restrained violet accents
+- theme-aware Mingrx marks
+- two-column shell with contextual member drawer
+- responsive private/social layout
+- no decorative animation loops or heavy effects that would compete with games
 
-## Compatibility principle
-Internal legacy identifiers can remain during the preview when renaming them would add risk without changing the user experience. User-facing product identity must be Mingrx.
+## Release rule
+
+Mingrx 3.0 is published only after the launch regression suite, Firebase rules emulators, real Electron interaction tests, multi-resolution layout sweep and Windows installer verification pass on the exact release commit.
