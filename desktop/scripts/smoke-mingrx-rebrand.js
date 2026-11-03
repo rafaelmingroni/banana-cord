@@ -10,6 +10,7 @@ const css = read('src/mingrx-rebrand.css');
 const shell = read('src/mingrx-shell.js');
 const polish = read('src/mingrx-polish.js');
 const regressionGuard = read('src/mingrx-regression-guard.js');
+const hotfix311 = read('src/mingrx-311-hotfix.js');
 const updaterCompat = read('src/mingrx-updater-compat.js');
 const themesCss = read('src/mingrx-themes.css');
 const themeA11yCss = read('src/mingrx-theme-a11y.css');
@@ -28,6 +29,8 @@ assert(html.includes('mingrx-theme-bootstrap.js'), 'Bootstrap de tema não está
 assert(html.includes('mingrx-themes.css'), 'Sistema de temas não está carregado.');
 assert(html.includes('mingrx-theme-a11y.css'), 'Foreground acessível dos temas não está carregado.');
 assert(html.includes('mingrx-themes.js'), 'Seletor de temas não está carregado.');
+assert(html.includes('mingrx-311-hotfix.js'), 'Hotfix Mingrx 3.1.1 não foi carregado por último.');
+assert(hotfix311.includes('Mingrx 3.1.1 hotfix'), 'Runtime do hotfix 3.1.1 não possui identidade esperada.');
 assert(html.includes('../assets/mingrx.svg'), 'Logo Mingrx não está no renderer inicial.');
 assert(!html.includes('>Banana Cord<'), 'Ainda existe Banana Cord visível no HTML principal.');
 
@@ -41,9 +44,9 @@ assert(shell.includes('#addServerBtn,#v207StartServer'), 'Shell Mingrx não inte
 assert(shell.includes('replaceLegacyMarks'), 'Shell Mingrx não remove marcas visuais antigas do onboarding.');
 assert(shell.includes('.banana-updater-logo img'), 'Updater ainda pode exibir o ícone antigo.');
 assert(!shell.includes("chip.textContent = 'Preview'"), 'Shell final ainda exibe selo Preview.');
-assert(polish.includes("DISPLAY_VERSION = '3.1.0'"), 'Configurações não exibem a versão final Mingrx 3.1.0.');
+assert(polish.includes("DISPLAY_VERSION = '3.1.0'"), 'Camada visual base da série 3.1 foi alterada inesperadamente.');
 assert(!polish.includes('Preview · v2.1.0'), 'Texto legado de preview ainda existe na camada final.');
-assert(regressionGuard.includes("const VERSION = '3.1.0'"), 'Guard final ainda não fixa a identidade visual em Mingrx 3.1.0.');
+assert(regressionGuard.includes("const VERSION = '3.1.0'"), 'Guard base da série 3.1 foi alterado inesperadamente.');
 assert(!regressionGuard.includes('Preview · v2.1.0'), 'Guard final ainda pode reintroduzir o selo Preview.');
 assert(v21Main.includes("PRODUCT_NAME = 'Mingrx'"), 'Inicialização do Windows ainda não usa o nome final Mingrx.');
 
@@ -104,8 +107,8 @@ for (const theme of ['midnight','pearl','crimson','ocean','forest','mono']) {
 assert(svg.includes('viewBox="0 0 1024 1024"'), 'SVG oficial Mingrx precisa ser 1024x1024.');
 assert(svg.includes('#7c5cff'), 'Cor principal Mingrx ausente do SVG.');
 
-assert(pkg.version === '3.1.0', 'Release Mingrx precisa estar em 3.1.0.');
-assert(lock.version === pkg.version && lock.packages?.['']?.version === pkg.version, 'package-lock precisa acompanhar a versão 3.1.0 do package.json.');
+assert(pkg.version === '3.1.1', 'Hotfix Mingrx precisa estar em 3.1.1.');
+assert(lock.version === pkg.version && lock.packages?.['']?.version === pkg.version, 'package-lock precisa acompanhar a versão 3.1.1 do package.json.');
 for (const name of Object.keys(pkg.dependencies || {})) {
   assert(name in (lock.packages?.['']?.dependencies || {}), `package-lock não contém a dependência ${name}.`);
 }
