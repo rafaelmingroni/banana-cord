@@ -26,7 +26,16 @@ assert(cloudFix.includes('socket.joinVoice = async function joinVoiceV212'), 'Vo
 assert(cloudFix.includes("event === 'dm:call:start'"), 'Cloud socket must expose private-call start.');
 assert(cloudFix.includes("event === 'dm:call:end'"), 'Cloud socket must expose private-call end.');
 
-const [major, minor, patch] = String(pkg.version || '').split('.').map(Number);
-assert(major === 2 && (minor > 0 || patch >= 12), 'V2.0.12 regression requires version 2.0.12 or newer.');
+const versionAtLeast = (actual, minimum) => {
+  const a = String(actual).split(/[.-]/).slice(0, 3).map(Number);
+  const b = String(minimum).split(/[.-]/).slice(0, 3).map(Number);
+  for (let i = 0; i < 3; i += 1) {
+    const av = Number.isFinite(a[i]) ? a[i] : 0;
+    const bv = Number.isFinite(b[i]) ? b[i] : 0;
+    if (av !== bv) return av > bv;
+  }
+  return true;
+};
+assert(versionAtLeast(pkg.version, '2.0.12'), 'V2.0.12 regression requires version 2.0.12 or newer.');
 
-console.log(`Banana Cord ${pkg.version} links/private navigation/voice hierarchy/private-call regression checks: OK`);
+console.log(`Mingrx ${pkg.version} links/private navigation/voice hierarchy/private-call regression checks: OK`);
