@@ -4,6 +4,8 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const main = read('main.js');
+const updaterPrompt = read('updater-prompt.js');
+const updaterCompat = read('src/mingrx-updater-compat.js');
 const index = read('src/index.html');
 const cloud = read('src/cloud-v2-v215-security-fix.js');
 const ui = read('src/v215-security-ui-fix.js');
@@ -15,7 +17,11 @@ function expect(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-expect(main.includes("const DEFAULT_UPDATE_REPO = 'https://github.com/rafaelmingroni/banana-cord'"), 'Official updater source must be pinned.');
+expect(main.includes("const DEFAULT_UPDATE_REPO = 'https://github.com/rafaelmingroni/banana-cord'"), 'Legacy updater source marker must remain detectable for compatibility rewriting.');
+expect(updaterPrompt.includes("require('./src/mingrx-updater-compat')"), 'Mingrx updater compatibility layer must load before the legacy updater code.');
+expect(updaterCompat.includes("const OFFICIAL_UPDATE_REPO = 'mingrx-app'"), 'Official Mingrx updater repository must be mingrx-app.');
+expect(updaterCompat.includes("LEGACY_UPDATE_REPOS = new Set(['banana-cord', 'mingrx'])"), 'Legacy updater repository names must be rewritten safely.');
+expect(ui.includes("const OFFICIAL_REPO = 'https://github.com/rafaelmingroni/mingrx-app'"), 'Renderer updater source must be pinned to mingrx-app.');
 expect(main.includes('setWindowOpenHandler'), 'Electron popup hardening is missing.');
 expect(main.includes('will-navigate'), 'Electron navigation guard is missing.');
 expect(main.includes('will-attach-webview'), 'Electron webview guard is missing.');
@@ -37,4 +43,4 @@ expect(database?.rules?.signaling?.['.read'] === false && database?.rules?.signa
 expect(database?.rules?.voiceRooms?.['.read'] === false, 'Voice room root enumeration must be blocked.');
 expect(database?.rules?.sessionOwners?.['.read'] === false, 'Session owner root enumeration must be blocked.');
 
-console.log('Banana Cord V2.0.15 security hardening regression checks: OK');
+console.log('Mingrx updater/security hardening regression checks: OK');
