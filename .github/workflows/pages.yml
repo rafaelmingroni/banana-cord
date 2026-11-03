@@ -1,10 +1,10 @@
-name: Deploy Mingrx invite page
+name: Deploy Mingrx site
 
 on:
   push:
     branches: [main]
     paths:
-      - "docs/**"
+      - "site/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -30,10 +30,10 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Upload Mingrx invite page
+      - name: Upload Mingrx site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: site
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
