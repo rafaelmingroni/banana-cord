@@ -78,13 +78,21 @@
 
     const request = sidebar.querySelector('.v214-private-request');
     if (request && current.incoming) {
-      request.innerHTML = `<span>${current.incoming} pedido${current.incoming === 1 ? '' : 's'} de amizade</span>${icon('arrow')}`;
-      request.setAttribute('aria-label', `${current.incoming} pedido${current.incoming === 1 ? '' : 's'} de amizade pendente${current.incoming === 1 ? '' : 's'}`);
+      const requestSignature = String(current.incoming);
+      if (request.dataset.mxObsidianSignature !== requestSignature) {
+        request.dataset.mxObsidianSignature = requestSignature;
+        request.innerHTML = `<span>${current.incoming} pedido${current.incoming === 1 ? '' : 's'} de amizade</span>${icon('arrow')}`;
+        request.setAttribute('aria-label', `${current.incoming} pedido${current.incoming === 1 ? '' : 's'} de amizade pendente${current.incoming === 1 ? '' : 's'}`);
+      }
     }
 
     const friendHeading = document.getElementById('v1FriendQuick')?.previousElementSibling;
     if (friendHeading?.classList?.contains('v214-private-section-title')) {
-      friendHeading.innerHTML = `<span>Amigos</span><small>${current.friends}</small>`;
+      const headingSignature = String(current.friends);
+      if (friendHeading.dataset.mxObsidianSignature !== headingSignature) {
+        friendHeading.dataset.mxObsidianSignature = headingSignature;
+        friendHeading.innerHTML = `<span>Amigos</span><small>${current.friends}</small>`;
+      }
     }
   }
 
@@ -93,8 +101,9 @@
     if (!home) return;
     const heading = home.querySelector('h2');
     const copy = home.querySelector('p');
-    if (heading) heading.textContent = 'Privado';
-    if (copy) copy.textContent = 'Encontre seus amigos, continue conversas recentes ou comece uma nova mensagem.';
+    if (heading && heading.textContent !== 'Privado') heading.textContent = 'Privado';
+    const privateCopy = 'Encontre seus amigos, continue conversas recentes ou comece uma nova mensagem.';
+    if (copy && copy.textContent !== privateCopy) copy.textContent = privateCopy;
     replaceButton(document.getElementById('v214HomeFriend'), 'userPlus', 'Adicionar amigo');
     replaceButton(document.getElementById('v214HomeMessage'), 'message', 'Nova mensagem');
     replaceButton(document.getElementById('v214HomeFriends'), 'users', 'Ver amigos');
