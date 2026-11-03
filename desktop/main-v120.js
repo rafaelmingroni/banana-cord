@@ -1,4 +1,30 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain, nativeImage } = require('electron');
+const fs = require('fs');
+const path = require('path');
+
+// Mingrx 3.0 is an in-place upgrade from Banana Cord. Keep the legacy Chromium
+// profile for existing installations so Firebase auth, local preferences and the
+// local E2EE vault survive the rebrand. Fresh installs use the normal Mingrx path.
+let legacyUserDataUsed = false;
+try {
+  const legacy = path.join(app.getPath('appData'), 'Banana Cord');
+  const current = app.getPath('userData');
+  if (path.resolve(legacy) !== path.resolve(current) && fs.existsSync(legacy)) {
+    app.setPath('userData', legacy);
+    legacyUserDataUsed = true;
+  }
+} catch (error) {
+  console.warn('Mingrx migration: could not inspect legacy userData path:', error?.message || error);
+}
+
+try { app.setName('Mingrx'); } catch {}
+try {
+  ipcMain.handle('mingrx:migration-info', () => ({
+    legacyUserDataUsed,
+    version: app.getVersion(),
+    brand: 'Mingrx'
+  }));
+} catch {}
 
 const PRIMARY_SCHEME = 'mingrx';
 const LEGACY_SCHEME = 'bananacord';
@@ -11,14 +37,14 @@ function normalizeCode(value) {
 
 function parseDeepLink(value) {
   const raw = String(value || '').trim();
-  let u;
-  try { u = new URL(raw); }
+  let url;
+  try { url = new URL(raw); }
   catch { return ''; }
-  const scheme = String(u.protocol || '').replace(':', '').toLowerCase();
+  const scheme = String(url.protocol || '').replace(':', '').toLowerCase();
   if (!ACCEPTED_SCHEMES.has(scheme)) return '';
-  const fromPath = u.pathname.split('/').filter(Boolean).pop() || '';
-  const fromQuery = u.searchParams.get('code') || u.searchParams.get('invite') || '';
-  const candidate = u.hostname.toLowerCase() === 'join' ? fromPath : (fromQuery || fromPath || u.hostname);
+  const fromPath = url.pathname.split('/').filter(Boolean).pop() || '';
+  const fromQuery = url.searchParams.get('code') || url.searchParams.get('invite') || '';
+  const candidate = url.hostname.toLowerCase() === 'join' ? fromPath : (fromQuery || fromPath || url.hostname);
   const code = normalizeCode(candidate);
   return [8, 12].includes(code.length) ? code : '';
 }
@@ -68,14 +94,28 @@ if (!gotLock) {
   });
 
   app.on('browser-window-created', (_event, win) => {
+    const applyBrand = () => {
+      try { win.setTitle('Mingrx'); } catch {}
+      try {
+        const icon = nativeImage.createFromPath(path.join(__dirname, 'assets', 'mingrx.ico'));
+        if (!icon.isEmpty()) win.setIcon(icon);
+      } catch {}
+    };
+    applyBrand();
+    win.webContents.on('page-title-updated', event => {
+      event.preventDefault();
+      applyBrand();
+    });
     win.webContents.once('did-finish-load', () => {
+      applyBrand();
       if (pendingCode) dispatchInvite(pendingCode);
     });
   });
 
   app.whenReady().then(() => {
+    try { app.setAppUserModelId('com.bananacord.app'); } catch {}
     try { app.setAsDefaultProtocolClient(PRIMARY_SCHEME); } catch {}
-    // Keep old bananacord:// invites valid during the preview migration.
+    // Keep bananacord:// working so old invites survive the public migration.
     try { app.setAsDefaultProtocolClient(LEGACY_SCHEME); } catch {}
     const initialCode = findDeepLink(process.argv);
     if (initialCode) setTimeout(() => dispatchInvite(initialCode), 450);
