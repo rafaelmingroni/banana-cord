@@ -57,7 +57,7 @@
     sendEmailVerification, sendPasswordResetEmail, updateProfile
   } = require('firebase/auth');
   const {
-    initializeFirestore, persistentLocalCache, persistentSingleTabManager,
+    initializeFirestore, persistentLocalCache, persistentSingleTabManager, memoryLocalCache,
     collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc,
     query, orderBy, limit, onSnapshot, serverTimestamp, where, getDocs,
     writeBatch
@@ -70,12 +70,19 @@
   setPersistence(auth, browserLocalPersistence).catch(console.warn);
 
   let db;
+  // Opt-in, one-session diagnostic. Does NOT delete IndexedDB cache or any
+  // pending/offline writes. It isolates damaged/locked persistent caches.
+  const diagnoseMemoryCache = sessionStorage.getItem('mingrx.cloud.diagnosticMemoryCache') === '1';
+  window.MingrxCloudCacheMode = diagnoseMemoryCache ? 'memory-diagnostic' : 'persistent';
   try {
     db = initializeFirestore(firebaseApp, {
-      localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() })
+      localCache: diagnoseMemoryCache
+        ? memoryLocalCache()
+        : persistentLocalCache({ tabManager: persistentSingleTabManager() })
     });
   } catch (e) {
     console.warn('Banana Cloud: cache persistente indisponível, usando cache normal.', e?.message || e);
+    window.MingrxCloudCacheMode = 'fallback-memory';
     const { getFirestore } = require('firebase/firestore');
     db = getFirestore(firebaseApp);
   }
