@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/rafaelmingroni/mingrx/releases/latest"><img alt="Release" src="https://img.shields.io/badge/release-3.0.0-7c5cff?style=flat-square"></a>
+  <a href="https://github.com/rafaelmingroni/mingrx-app/releases/latest"><img alt="Release" src="https://img.shields.io/badge/release-3.0.0-7c5cff?style=flat-square"></a>
   <img alt="Windows" src="https://img.shields.io/badge/Windows-x64-20232a?style=flat-square&logo=windows11&logoColor=white">
   <img alt="Electron" src="https://img.shields.io/badge/Electron-45-20232a?style=flat-square&logo=electron&logoColor=9feaf9">
   <img alt="Firebase" src="https://img.shields.io/badge/Firebase-Cloud-20232a?style=flat-square&logo=firebase&logoColor=ffca28">
@@ -159,7 +159,7 @@ Antes de uma versão oficial ser publicada, o CI executa regressões de interfac
 
 A versão oficial para Windows será disponibilizada em **GitHub Releases**:
 
-**[Baixar a versão mais recente](https://github.com/rafaelmingroni/mingrx/releases/latest)**
+**[Baixar a versão mais recente](https://github.com/rafaelmingroni/mingrx-app/releases/latest)**
 
 O instalador segue o padrão:
 
