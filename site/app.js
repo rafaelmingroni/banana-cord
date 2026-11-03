@@ -7,12 +7,12 @@ const year=document.getElementById('year');if(year)year.textContent=new Date().g
 const downloadLinks=[...document.querySelectorAll('.download-link')];downloadLinks.forEach(link=>link.dataset.loading='true');
 fetch('https://api.github.com/repos/rafaelmingroni/mingrx-app/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
   .then(r=>r.ok?r.json():Promise.reject(new Error('release unavailable')))
-  .then(release=>{const asset=(release.assets||[]).find(a=>/^Mingrx-Setup-.*-x64\.exe$/i.test(a.name));if(asset?.browser_download_url){downloadLinks.forEach(link=>{link.href=asset.browser_download_url;link.removeAttribute('target')})}const version=String(release.tag_name||'').replace(/^v/i,'');if(version){document.querySelectorAll('.release-note').forEach(note=>{note.textContent=`Mingrx ${version} · Windows 10/11 · Atualizações automáticas · Grátis`})}})
+  .then(release=>{const asset=(release.assets||[]).find(a=>/^Mingrx-Setup-.*-x64\.exe$/i.test(a.name));if(asset?.browser_download_url){downloadLinks.forEach(link=>{link.href=asset.browser_download_url;link.removeAttribute('target')})}const version=String(release.tag_name||'').replace(/^v/i,'');if(version){document.querySelectorAll('.release-note').forEach(note=>{note.textContent=`Mingrx ${version} · Windows 10/11 · Grátis na versão atual · Atualizações automáticas`})}})
   .catch(()=>{})
   .finally(()=>downloadLinks.forEach(link=>delete link.dataset.loading));
 
-const timeLine=document.getElementById('timeLine');const returnCopy=document.querySelector('.return-copy');const hour=new Date().getHours();if(timeLine){timeLine.textContent=hour<5?'[ LATE NIGHT · STILL CONNECTED ]':hour<12?'[ MORNING · VOICE · CHAT · SCREEN ]':hour<18?'[ AFTERNOON · YOUR CREW · ONE PLACE ]':'[ NIGHT MODE · YOUR CREW IS ONLINE ]'}
-try{const returning=localStorage.getItem('mingrx-site-seen')==='1';if(returnCopy&&returning)returnCopy.textContent='Bom te ver de volta. O Mingrx continua a um clique.';localStorage.setItem('mingrx-site-seen','1')}catch{}
+const timeLine=document.getElementById('timeLine');const returnCopy=document.querySelector('.return-copy');const hour=new Date().getHours();if(timeLine){timeLine.textContent=hour<5?'[ MADRUGADA · A CALL CONTINUA ]':hour<12?'[ BOM DIA · VOZ · MENSAGENS · TELA ]':hour<18?'[ BOA TARDE · SUA GALERA · UM LUGAR ]':'[ BOA NOITE · SUA GALERA ESTÁ ONLINE ]'}
+try{const returning=localStorage.getItem('mingrx-site-seen')==='1';if(returnCopy&&returning)returnCopy.textContent='Bom te ver de volta. Sua próxima call continua a um clique.';localStorage.setItem('mingrx-site-seen','1')}catch{}
 
 const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;const reveals=[...document.querySelectorAll('.reveal')];if(reduceMotion||!('IntersectionObserver'in window)){reveals.forEach(el=>el.classList.add('is-visible'))}else{const observer=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target)}})},{threshold:.12,rootMargin:'0px 0px -45px 0px'});reveals.forEach(el=>observer.observe(el))}
 
