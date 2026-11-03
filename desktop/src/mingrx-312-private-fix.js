@@ -11,8 +11,7 @@
     body.mingrx-ui .mingrx312-private-sidebar{padding-top:8px!important}
     body.mingrx-ui .mingrx312-private-sidebar>.channel-section-title:not(.v1-recent-title),
     body.mingrx-ui .mingrx312-private-sidebar>.v1-dm-tools,
-    body.mingrx-ui .mingrx312-private-sidebar>#v1FriendQuick,
-    body.mingrx-ui .mingrx312-private-sidebar>#v1FriendQuick + *{display:none!important}
+    body.mingrx-ui .mingrx312-private-sidebar>#v1FriendQuick{display:none!important}
     body.mingrx-ui .mingrx312-private-sidebar .v214-private-section-title:not(.v1-recent-title){display:none!important}
     body.mingrx-ui .mingrx312-private-nav{display:flex;flex-direction:column;gap:5px;margin:0 0 12px}
     body.mingrx-ui .mingrx312-private-nav button{width:100%;min-height:43px;display:flex;align-items:center;gap:11px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--mx-text,#e7edf6);padding:0 12px;font-size:13px;font-weight:800;text-align:left;cursor:pointer;transition:background .14s,border-color .14s,transform .14s}
