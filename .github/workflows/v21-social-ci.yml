@@ -1,17 +1,23 @@
-name: Banana Cord 2.1 Social Update Validation
+name: Mingrx Pull Request Validation
 
 on:
-  push:
-    branches: [v2.1.0-social-update]
+  pull_request:
+    branches: [main]
     paths:
       - "desktop/**"
       - "firebase/**"
-      - "RELEASE_NOTES-2.1.0.md"
-      - ".github/workflows/v21-social-ci.yml"
+      - "README.md"
+      - "RELEASE_NOTES-*.md"
+      - "docs/**"
+      - ".github/workflows/*.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: mingrx-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
@@ -24,6 +30,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
 
       - name: Setup Java for Firebase emulators
         uses: actions/setup-java@v4
@@ -39,74 +47,44 @@ jobs:
         working-directory: desktop
         run: npm run security:audit
 
-      - name: Prepare source
+      - name: Prepare Mingrx source
         working-directory: desktop
         run: npm run prepare:source
 
-      - name: Validate JavaScript
+      - name: Validate launch JavaScript
         shell: pwsh
         run: |
-          node --check desktop/v21-main.js
+          node --check desktop/main-v120.js
           node --check desktop/main-v110.js
+          node --check desktop/v21-main.js
           node --check desktop/tray.js
           node --check desktop/src/cloud-v2-v21-social.js
+          node --check desktop/src/cloud-v2-storage.js
+          node --check desktop/src/mingrx-media.js
+          node --check desktop/src/mingrx-invite-fix.js
+          node --check desktop/src/v217-premium-updater.js
           node --check desktop/src/v21-i18n.js
           node --check desktop/src/v21-i18n-legacy.js
           node --check desktop/src/v21-social.js
           node --check desktop/src/v21-release-fixes.js
           node --check desktop/scripts/smoke-v21.js
-          node --check desktop/scripts/e2e-v21-main.js
-          node --check desktop/scripts/e2e-v21-social-ui.js
-          node --check desktop/scripts/e2e-v21-submit-priority.js
-          node --check desktop/scripts/e2e-v21-language.js
-          node --check desktop/scripts/e2e-v21-private-guard.js
+          node --check desktop/scripts/smoke-mingrx-rebrand.js
+          node --check desktop/scripts/smoke-mingrx-media.js
+          node --check desktop/scripts/e2e-v2-release.js
+          node --check desktop/scripts/e2e-mingrx-media-invite.js
+
+      - name: Mingrx launch regression suite
+        working-directory: desktop
+        run: npm run smoke:mingrx
 
       - name: Full cloud and UI regression suite
         working-directory: desktop
         run: npm run smoke:cloud
 
-      - name: Firebase security rules emulator regression
+      - name: Firebase Firestore, Realtime Database and Storage rules
         working-directory: desktop
         run: npm run smoke:rules
 
       - name: Real Electron interaction suite
         working-directory: desktop
         run: npm run smoke:e2e-v2
-
-      - name: Inject production Firebase config for test installer
-        working-directory: desktop
-        env:
-          BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
-        run: node scripts/inject-firebase-config.js
-
-      - name: Rebuild prepared source with production config
-        working-directory: desktop
-        run: npm run prepare:source
-
-      - name: Build Windows test installer
-        working-directory: desktop
-        run: npm run dist:win -- --publish never
-
-      - name: Verify Windows test installer
-        shell: pwsh
-        run: |
-          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
-          $exe = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe" | Select-Object -First 1
-          $blockmap = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe.blockmap" | Select-Object -First 1
-          $latest = Get-Item "desktop/dist/latest.yml" -ErrorAction SilentlyContinue
-          if (-not $exe) { Write-Error "Instalador .exe não foi gerado."; exit 1 }
-          if ($exe.Length -lt 50000000) { Write-Error "Instalador parece pequeno demais."; exit 1 }
-          if (-not $blockmap) { Write-Error "Blockmap não foi gerado."; exit 1 }
-          if (-not $latest) { Write-Error "latest.yml não foi gerado."; exit 1 }
-          Write-Host "Test installer: $($exe.Name) - $($exe.Length) bytes"
-
-      - name: Upload Windows test installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: Banana-Cord-2.1.0-test-${{ github.sha }}
-          path: |
-            desktop/dist/Banana-Cord-Setup-2.1.0-*.exe
-            desktop/dist/Banana-Cord-Setup-2.1.0-*.exe.blockmap
-            desktop/dist/latest.yml
-          if-no-files-found: error
-          retention-days: 14
