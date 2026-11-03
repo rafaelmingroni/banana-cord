@@ -49,4 +49,9 @@ assert(configSource.includes('banana-cord.firebaseapp.com') || configSource.incl
 assert(configSource.includes('https://banana-cord-default-rtdb.firebaseio.com'), 'Realtime Database URL missing from build config');
 assert(firestoreRules.includes('email_verified') && firestoreRules.includes('dmThreads') && firestoreRules.includes('relationships') && firestoreRules.includes('invites'), 'Firestore security rules incomplete');
 assert(databaseRules.includes('email_verified') && databaseRules.includes('presence') && databaseRules.includes('voiceRooms') && databaseRules.includes('signals'), 'Realtime Database rules incomplete');
+const recovery = fs.readFileSync(path.join(root, 'src', 'cloud-v2-release-fixes.js'), 'utf8');
+assert(socket.includes('window.BananaCloudRestartBoot = async function restartCloudBoot()'), 'Cloud bootstrap must expose recovery for a stalled initial connection');
+assert(socket.includes('started = false;') && socket.includes('activeSocket = null;'), 'Cloud recovery must reset the incomplete socket');
+assert(recovery.includes('await window.BananaCloudRestartBoot()'), 'Cloud verified-session recovery must restart the stalled initial connection');
+assert(recovery.includes('await user.getIdTokenResult(true)'), 'Cloud recovery must refresh verified Firebase token');
 console.log(`Mingrx ${pkg.version} single-runtime cloud smoke test: OK`);
