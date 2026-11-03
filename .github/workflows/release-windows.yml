@@ -1,4 +1,4 @@
-name: Build and publish Mingrx for Windows
+name: Mingrx Windows Release
 
 on:
   push:
@@ -6,9 +6,6 @@ on:
     paths:
       - "desktop/**"
       - "firebase/**"
-      - "CHANGELOG.md"
-      - "RELEASE_NOTES-*.md"
-      - "README.md"
       - ".github/workflows/release-windows.yml"
   workflow_dispatch:
 
@@ -28,16 +25,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
 
       - name: Setup Java for Firebase emulators
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
 
-      - name: Install dependencies
+      - name: Install exact dependencies
         working-directory: desktop
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Critical production dependency audit
         working-directory: desktop
@@ -98,7 +97,10 @@ jobs:
           node --check desktop/src/mingrx-regression-guard.js
           node --check desktop/src/mingrx-media.js
           node --check desktop/src/mingrx-invite-fix.js
+          node --check desktop/src/mingrx-updater-compat.js
           node --check desktop/scripts/inject-firebase-config.js
+          node --check desktop/scripts/generate-icons.js
+          node --check desktop/scripts/verify-built-icon.js
           node --check desktop/scripts/smoke-cloud.js
           node --check desktop/scripts/smoke-cloud-parity.js
           node --check desktop/scripts/smoke-firebase-rules.js
@@ -169,6 +171,7 @@ jobs:
           if ($version -notmatch '^3\.') { Write-Error "Este workflow publica a linha Mingrx V3: $version"; exit 1 }
           if ($pkg.build.appId -ne 'com.bananacord.app') { Write-Error "appId histórico mudou; isso pode quebrar a atualização do Banana Cord para Mingrx."; exit 1 }
           if ($pkg.build.productName -ne 'Mingrx') { Write-Error "productName final precisa ser Mingrx."; exit 1 }
+          if ($pkg.build.publish[0].repo -ne 'mingrx-app') { Write-Error "Repositório de atualização precisa ser mingrx-app."; exit 1 }
           Write-Host "Mingrx official version: $version - upgrade identity preserved"
 
       - name: Prepare version tag
