@@ -182,30 +182,59 @@
     watchServerRefs() {
       const q = query(collection(this.db, 'users', this.user.uid, 'serverRefs'), orderBy('joinedAt', 'asc'));
       const off = onSnapshot(q, async snap => {
-        const ids = snap.docs.map(d => d.id);
-        const previous = new Set(this.knownServerIds);
-        const servers = (await Promise.all(ids.map(serverId => this.loadServer(serverId)))).filter(Boolean);
-        this.knownServerIds = new Set(ids);
-        for (const serverId of ids) this.watchServer(serverId);
-        for (const serverId of previous) if (!this.knownServerIds.has(serverId)) this.unwatchServer(serverId);
+        try {
+          const ids = snap.docs.map(d => d.id);
+          const previous = new Set(this.knownServerIds);
+          const isInitial = !this.initialRefsReady;
 
-        if (!this.initialRefsReady) {
-          this.initialRefsReady = true;
-          this.receive('auth:ready', { user: await this.publicUser(this.user.uid), servers });
-          if (this.pendingInvite) {
-            const pending = this.pendingInvite; this.pendingInvite = ''; window.BananaPendingInvite = '';
+          // Critical: never gate the entire app on server detail/profile reads.
+          // Firestore may deliver the authorized list promptly while one
+          // server read is slow, stale or unavailable. The user must still be
+          // able to reach the shell, including a new account with zero servers.
+          if (isInitial) {
+            this.initialRefsReady = true;
+            this.receive('auth:ready', {
+              user: {
+                id: this.user.uid,
+                name: this.user.displayName || this.user.email?.split('@')[0] || 'Usuário',
+                avatar: '', customStatus: '', status: 'online'
+              },
+              servers: []
+            });
+          }
+
+          const servers = (await Promise.all(ids.map(serverId =>
+            this.loadServer(serverId).catch(error => {
+              console.warn('Mingrx Cloud server read skipped:', serverId, error);
+              return null;
+            })
+          ))).filter(Boolean);
+          if (!this.connected) return;
+
+          this.knownServerIds = new Set(ids);
+          for (const serverId of ids) this.watchServer(serverId);
+          for (const serverId of previous) if (!this.knownServerIds.has(serverId)) this.unwatchServer(serverId);
+
+          const currentIds = new Set(ids);
+          for (const oldId of previous) if (!currentIds.has(oldId)) this.receive('server:removed', { serverId: oldId });
+          for (const server of servers) {
+            if (isInitial || !previous.has(server.id)) this.receive('server:joined', server);
+            else this.receive('server:updated', server);
+          }
+          if (isInitial && this.pendingInvite) {
+            const pending = this.pendingInvite;
+            this.pendingInvite = '';
+            window.BananaPendingInvite = '';
             setTimeout(() => this.emit('server:join', { inviteCode: pending }), 150);
           }
-          return;
+        } catch (error) {
+          console.error('Mingrx Cloud server refs processing:', error);
+          this.receive('app:error', this.friendly(error));
         }
-
-        const currentIds = new Set(ids);
-        for (const oldId of previous) if (!currentIds.has(oldId)) this.receive('server:removed', { serverId: oldId });
-        for (const server of servers) {
-          if (!previous.has(server.id)) this.receive('server:joined', server);
-          else this.receive('server:updated', server);
-        }
-      }, error => this.receive('app:error', this.friendly(error)));
+      }, error => {
+        console.error('Mingrx Cloud server refs listener:', error);
+        this.receive('app:error', this.friendly(error));
+      });
       this.cleanup.push(off);
     }
 
