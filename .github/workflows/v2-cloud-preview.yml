@@ -90,15 +90,15 @@ jobs:
         shell: pwsh
         run: |
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
-          $exe = Get-ChildItem "desktop/dist/Banana-Cord-Setup-$version-*.exe" | Select-Object -First 1
-          if (-not $exe) { Write-Error "V2 preview installer was not generated."; exit 1 }
-          if ($exe.Length -lt 50000000) { Write-Error "V2 preview installer is unexpectedly small."; exit 1 }
-          Write-Host "Banana Cord V2 preview installer OK: $($exe.Name)"
+          $exe = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe" | Select-Object -First 1
+          if (-not $exe) { Write-Error "Mingrx preview installer was not generated."; exit 1 }
+          if ($exe.Length -lt 50000000) { Write-Error "Mingrx preview installer is unexpectedly small."; exit 1 }
+          Write-Host "Banana Cord Mingrx preview installer OK: $($exe.Name)"
 
-      - name: Upload V2 preview installer
+      - name: Upload Mingrx preview installer
         uses: actions/upload-artifact@v4
         with:
-          name: Banana-Cord-V2-Cloud-Preview
-          path: desktop/dist/Banana-Cord-Setup-*.exe
+          name: Mingrx-Cloud-Preview
+          path: desktop/dist/Mingrx-Setup-*.exe
           if-no-files-found: error
           retention-days: 7
