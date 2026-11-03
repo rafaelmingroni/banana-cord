@@ -71,7 +71,7 @@
       actions = document.createElement('div');
       actions.id = 'cloudBootActions';
       actions.className = 'cloud-actions hidden';
-      actions.innerHTML = '<button id="cloudBootRetry" class="primary" type="button">Tentar novamente</button><button id="cloudBootCopy" type="button">Copiar diagnóstico</button><button id="cloudBootLogout" type="button">Usar outra conta</button>';
+      actions.innerHTML = '<button id="cloudBootRetry" class="primary" type="button">Tentar novamente</button><button id="cloudBootCopy" type="button">Copiar diagnóstico</button><button id="cloudBootMemory" type="button">Testar sem cache local</button><button id="cloudBootLogout" type="button">Usar outra conta</button>';
       loading.appendChild(actions);
 
       document.getElementById('cloudBootRetry')?.addEventListener('click', () => {
@@ -86,6 +86,7 @@
           'Codigo: ' + String(issue.code || 'unknown'),
           'E-mail verificado: ' + String(!!window.BananaCloud?.auth?.currentUser?.emailVerified),
           'Interface visivel: ' + String(appShell()?.classList.contains('hidden') === false),
+          'Cache Firestore: ' + String(window.MingrxCloudCacheMode || 'unknown'),
           'Data UTC: ' + new Date().toISOString()
         ].join('\\n');
         try {
@@ -96,6 +97,13 @@
           const node = document.getElementById('cloudBootError');
           if (node) node.textContent += '\\n' + safe;
         }
+      });
+      document.getElementById('cloudBootMemory')?.addEventListener('click', () => {
+        // This only changes the Firestore client cache for this renderer
+        // session. It neither clears IndexedDB nor signs out the user.
+        try { sessionStorage.setItem('mingrx.cloud.diagnosticMemoryCache', '1'); }
+        catch (error) { console.warn('Mingrx diagnostic cache toggle:', error); }
+        location.reload();
       });
       document.getElementById('cloudBootLogout')?.addEventListener('click', () => window.BananaCloud?.signOut?.());
     }
