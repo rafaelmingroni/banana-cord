@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { patchAutoUpdater } = require('./graceful-shutdown');
+const { OFFICIAL_UPDATE_OWNER, OFFICIAL_UPDATE_REPO } = require('./src/mingrx-updater-compat');
 
 patchAutoUpdater(autoUpdater);
 
@@ -10,8 +11,8 @@ autoUpdater.autoRunAppAfterInstall = true;
 
 autoUpdater.setFeedURL({
   provider: 'github',
-  owner: 'rafaelmingroni',
-  repo: 'banana-cord'
+  owner: OFFICIAL_UPDATE_OWNER,
+  repo: OFFICIAL_UPDATE_REPO
 });
 
 let lastExtraCheck = 0;
