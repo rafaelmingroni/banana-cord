@@ -14,7 +14,7 @@ safeHandle('banana-v21:get-settings', async () => ({idleSeconds:0,idleState:'act
 safeHandle('banana-v21:set-settings', async () => ({}));
 safeHandle('banana-v21:get-system-languages', async () => ['pt-BR']);
 
-const hardTimeout = setTimeout(() => { console.error('Mingrx Spark media/invite E2E failed: hard timeout'); app.exit(1); }, 22000);
+const hardTimeout = setTimeout(() => { console.error('Mingrx Spark media/invite E2E failed: hard timeout'); app.exit(1); }, 24000);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function finish(code, message) { clearTimeout(hardTimeout); if (message) (code ? console.error : console.log)(message); setTimeout(() => app.exit(code), 50); }
 const fail = message => finish(1, `Mingrx Spark media/invite E2E failed: ${message}`);
@@ -41,7 +41,7 @@ app.whenReady().then(async () => {
           return this;
         }
       };
-      const server={id:'srv',name:'GZ E MINGRX',ownerId:'me',inviteCode:'MINGRX88',icon:'',memberRoles:{me:'owner',peer:'member'},categories:[],channels:[{id:'general',name:'geral',type:'text',categoryId:null,allowedRoles:[]}]};
+      const server={id:'srv',name:'GZ E MINGRX',ownerId:'me',inviteCode:'MINGRX88',icon:'',memberRoles:{me:'owner',peer:'member'},categories:[],channels:[{id:'general',name:'geral',type:'text',categoryId:null,allowedRoles:[]},{id:'voice',name:'Geral',type:'voice',categoryId:null,allowedRoles:[]}]};
       state.user={id:'me',name:'Rafael',status:'online',avatar:''};
       state.socket=fake; state.servers=[server]; state.selectedServer=server; state.selectedChannel=server.channels[0]; state.viewMode='server'; state.activeDmUserId=null;
       state.members=new Map([['me',{id:'me',name:'Rafael',role:'owner',status:'online',avatar:''}],['peer',{id:'peer',name:'Gustavo',role:'member',status:'online',avatar:''}]]);
@@ -54,6 +54,7 @@ app.whenReady().then(async () => {
       if(attach) failures.push('chat/DM attachment button must not exist in Spark mode');
       if(!window.MingrxMedia?.sparkMode || window.MingrxMedia?.chatImageUpload!==false) failures.push('Spark media runtime flags are incorrect');
       if(!window.MingrxInvite?.open) failures.push('Mingrx invite runtime missing');
+      if(!window.Mingrx31UX?.repairCommunitySettings || !window.Mingrx31UX?.stopWatching) failures.push('Mingrx 3.1 UX runtime missing');
 
       // Invite must open immediately and old premium handler must be gone.
       const invite=document.getElementById('inviteBtn');
@@ -73,13 +74,41 @@ app.whenReady().then(async () => {
       if(!document.getElementById('mxInviteTempResult') || document.getElementById('mxInviteTempResult')?.classList.contains('hidden')) failures.push('temporary invite result missing');
       closeModal();
 
-      // Community photo remains available without Firebase Storage.
+      // Community photo remains available without Firebase Storage and must be visible in the correct place.
       document.getElementById('serverSettingsBtn')?.click();
-      await sleep(260);
-      if(!document.querySelector('.mingrx-community-photo-card')) failures.push('community photo card missing from settings');
-      if(![...document.querySelectorAll('.mingrx-community-photo-actions button')].some(b=>/foto/i.test(b.textContent))) failures.push('community photo action missing');
+      await sleep(420);
+      const settingsRoot=document.querySelector('#modalBody .v219-role-settings');
+      const photoCard=document.querySelector('#modalBody .mingrx-community-photo-card');
+      const modalCard=document.querySelector('#modal > .modal-card');
+      if(!photoCard) failures.push('community photo card missing from settings');
+      if(photoCard && photoCard.parentElement!==settingsRoot) failures.push('community photo card is not a top-level settings section');
+      if(photoCard?.dataset.mingrx31Placement!=='fixed') failures.push('community photo placement fix did not run');
+      if(!modalCard?.classList.contains('mingrx-server-settings-modal')) failures.push('community settings modal was not widened');
+      const choose=[...document.querySelectorAll('.mingrx-community-photo-actions button')].find(b=>/foto/i.test(b.textContent||'')&&!/remover/i.test(b.textContent||''));
+      if(!choose) failures.push('community photo choose action missing');
+      if(choose && getComputedStyle(choose).display==='none') failures.push('community photo choose action is hidden');
       if(!(els.modalBody.textContent||'').includes('Spark')) failures.push('community photo UI does not explain Spark mode');
       closeModal();
+      await sleep(40);
+      if(document.querySelector('#modal > .modal-card')?.classList.contains('mingrx-server-settings-modal')) failures.push('wide settings modal class leaked after closing');
+
+      // Watching a stream must expose an explicit stop control and return to normal grid mode.
+      const fakeCard=document.createElement('div');
+      fakeCard.id='video-peer-e2e';
+      fakeCard.className='video-card is-sharing';
+      fakeCard.innerHTML='<video></video><div class="video-label">Gustavo · compartilhando tela</div>';
+      els.videoGrid.appendChild(fakeCard);
+      state.ui.focusSharing=true;
+      state.ui.showAllOverride=false;
+      window.Mingrx31UX.markWatchingCard(fakeCard);
+      const stopButton=fakeCard.querySelector('.mingrx-stop-watching');
+      if(!stopButton || !/Parar de assistir/i.test(stopButton.textContent||'')) failures.push('stop-watching button missing on watched stream');
+      stopButton?.click();
+      await sleep(20);
+      if(fakeCard.querySelector('.mingrx-stop-watching')) failures.push('stop-watching button remained after stopping');
+      if(fakeCard.classList.contains('mingrx-watching-stream')) failures.push('watched stream marker remained after stopping');
+      if(state.ui.focusSharing!==false || state.ui.showAllOverride!==true) failures.push('stop-watching did not restore normal grid mode');
+      fakeCard.remove();
 
       // Old 3.0 image markers still render for backwards compatibility, but no new upload UI exists.
       const legacyMeta={u:'https://example.com/screenshot.webp',n:'print.webp',c:'Imagem antiga'};
@@ -100,11 +129,11 @@ app.whenReady().then(async () => {
       if(!dmImage || !dmImage.src.includes('example.com/screenshot.webp')) failures.push('legacy DM inline image did not render');
       if((els.messages.textContent||'').includes('MINGRX_IMAGE_V1')) failures.push('raw legacy DM media marker leaked to UI');
 
-      return {ok:failures.length===0,failures,elapsed,emitted:emitted.map(x=>x.event),attachPresent:!!attach,sparkMode:window.MingrxMedia?.sparkMode,inviteReplaced:invite?.dataset.mingrxInvite==='1'};
+      return {ok:failures.length===0,failures,elapsed,emitted:emitted.map(x=>x.event),attachPresent:!!attach,sparkMode:window.MingrxMedia?.sparkMode,inviteReplaced:invite?.dataset.mingrxInvite==='1',photoPlacement:photoCard?.dataset.mingrx31Placement||'',stopWatchingTest:true};
     })();
   `, true);
 
   try { win.destroy(); } catch {}
   if (!result?.ok) return fail(JSON.stringify(result));
-  finish(0, `Mingrx Spark media + invite Electron test: OK ${JSON.stringify(result)}`);
+  finish(0, `Mingrx Spark media + invite + UX Electron test: OK ${JSON.stringify(result)}`);
 }).catch(error => fail(error?.stack || error?.message || String(error)));
