@@ -1,141 +1,183 @@
-# 🍌 Banana Cord
+<p align="center">
+  <img src="docs/assets/mingrx-readme-banner.svg" alt="Mingrx — voice, chat and screen sharing" width="100%">
+</p>
 
-**Projeto pessoal de Rafael Mingroni.**
+<p align="center">
+  <a href="https://github.com/rafaelmingroni/mingrx-app/releases/latest"><img alt="Latest release" src="https://img.shields.io/badge/latest-stable%20release-20232a?style=flat-square"></a>
+  <img alt="Mingrx 3" src="https://img.shields.io/badge/Mingrx%203.0-in%20validation-7c5cff?style=flat-square">
+  <img alt="Windows" src="https://img.shields.io/badge/Windows-x64-20232a?style=flat-square&logo=windows11&logoColor=white">
+  <img alt="Electron" src="https://img.shields.io/badge/Electron-desktop-20232a?style=flat-square&logo=electron&logoColor=9feaf9">
+  <img alt="Firebase" src="https://img.shields.io/badge/Firebase-Cloud-20232a?style=flat-square&logo=firebase&logoColor=ffca28">
+  <img alt="WebRTC" src="https://img.shields.io/badge/WebRTC-voice%20%7C%20video%20%7C%20screen-20232a?style=flat-square">
+</p>
 
-Banana Cord é um aplicativo leve de comunicação para grupos pequenos de amigos, com servidores, canais de texto e voz, mensagens privadas, webcam e compartilhamento de tela. A prioridade continua sendo **baixo consumo durante jogos**, visual simples e uso direto.
+# Mingrx
 
-> **Versão atual: v2.0.0**
+**Mingrx é um aplicativo desktop de comunicação para amigos e pequenos grupos, criado para ser bonito, direto e leve enquanto você joga.**
 
-## 🚀 O que mudou na V2
+Ele reúne comunidades, chat, canais de voz, mensagens privadas, webcam e compartilhamento de tela em um aplicativo para Windows com foco em **baixo impacto durante jogos**.
 
-A V1 dependia de um usuário hospedar a sessão. Na V2 isso mudou: o Banana Cord passa a usar **contas e servidores persistentes no Banana Cloud**.
+> **Mingrx 3.0 está em validação antes do lançamento público.**  
+> O projeto nasceu como **Banana Cord** e está migrando para a nova identidade sem abandonar a compatibilidade das instalações existentes.
 
-Agora o fluxo é:
-1. abrir o Banana Cord;
-2. criar uma conta com e-mail e senha;
-3. verificar o e-mail;
-4. entrar na conta;
-5. criar um servidor ou entrar por convite;
-6. usar texto, voz, câmera e compartilhamento sem depender de um host específico ficar online.
+## O que é o Mingrx
 
-A mídia das calls continua em **WebRTC entre os participantes**, enquanto autenticação, servidores, mensagens, presença e sinalização usam Firebase.
+O objetivo é manter o essencial de um app de comunidade e call sem transformar o desktop em mais uma camada pesada sobre o jogo.
 
-## ✨ Recursos
+- comunidades persistentes;
+- canais de texto e voz;
+- mensagens privadas;
+- amigos, presença e perfis;
+- webcam;
+- compartilhamento de tela;
+- convites por link;
+- atualização automática;
+- interface pensada para ser rápida, limpa e discreta.
 
-### Conta e perfil
-- Cadastro por e-mail e senha
-- Verificação de e-mail
-- Login persistente
-- Logout e novo login
-- Recuperação/troca de senha pelo fluxo de conta
-- Nome, avatar e status
+## Mingrx 3.0
 
-### Servidores e canais
-- Servidores persistentes
-- Convites por código/link
-- Cargos: Dono, Administrador, Moderador e Membro
-- Categorias e canais
-- Canais de texto e voz
-- Permissões de acesso
+A V3 é a maior evolução do projeto até agora.
 
-### Chat e privado
-- Mensagens persistentes
-- Editar e excluir mensagens
-- Respostas, reações e @menções
-- Indicadores de não lidas
-- Mensagens privadas
-- Amigos, bloqueio e status
+### Nova identidade
 
-### Voz, câmera e tela
-- Voz WebRTC para grupos pequenos
-- Indicador de fala
-- Mute, deafen e push-to-talk
-- Volume individual
-- Seleção e teste de microfone
-- Seleção de saída de áudio
-- Webcam
-- Compartilhamento 720p/1080p e 30/60 FPS
-- Perfis de qualidade, fluidez e economia
-- RTT WebRTC exibido durante calls
-- Prévia local segura ao compartilhar a própria tela, evitando efeito espelho recursivo
+- marca **Mingrx** em toda a experiência visível;
+- novo logo e novo ícone;
+- direção visual em grafite e violeta;
+- temas de aparência;
+- navegação de comunidades mais compacta;
+- painel de membros contextual;
+- menos ruído visual e mais foco no conteúdo.
 
-### Notificações e sons
-- Sons de entrada/saída da chamada
-- Sons de pessoas entrando/saindo
-- Sons de mute/desmute
-- Sons de deafen/undeafen
-- Alerta de mensagem privada
-- Volume configurável e botão de teste
+### Chat e mídia
 
-### Configurações
-- Perfil
-- Áudio
-- Vídeo e tela
-- Geral
-- Diagnóstico
-- Notificações
-- Atualizações
+- anexos de imagem em canais;
+- imagens em mensagens privadas;
+- colar screenshots diretamente do clipboard;
+- compactação automática antes do upload;
+- visualização ampliada de imagens;
+- foto personalizada para comunidades;
+- Firebase Storage protegido por regras próprias.
 
-## 🚀 Instalação
+### Voz, vídeo e tela
 
-Baixe a versão mais recente em **Releases**:
+- voz por WebRTC;
+- mute, deafen e push-to-talk;
+- indicador de fala;
+- volume individual;
+- seleção e teste de microfone;
+- webcam;
+- compartilhamento de tela em 720p/1080p e 30/60 FPS;
+- monitoramento de RTT durante chamadas.
 
-https://github.com/rafaelmingroni/banana-cord/releases/latest
+## Arquitetura
 
-O instalador do Windows ainda não possui assinatura digital, então o SmartScreen pode exibir um aviso.
+<p align="center">
+  <img src="docs/assets/mingrx-cloud-banner.svg" alt="Arquitetura do Mingrx" width="100%">
+</p>
 
-O instalador oficial segue o padrão:
+| Camada | Responsabilidade |
+| --- | --- |
+| **Electron** | aplicativo desktop, interface, áudio, captura e integração com Windows |
+| **Firebase Authentication** | contas e verificação de identidade |
+| **Cloud Firestore** | comunidades, membros, canais, mensagens e DMs |
+| **Realtime Database** | presença e sinalização em tempo real |
+| **Firebase Storage** | fotos de comunidades e anexos de imagem |
+| **WebRTC** | voz, webcam e compartilhamento de tela |
+| **GitHub Actions** | testes, validações, build e pipeline de release |
+| **electron-updater** | atualização automática do aplicativo |
 
-`Banana-Cord-Setup-x.x.x-x64.exe`
+## Migração do Banana Cord
 
-## 🔄 Atualizações automáticas
+A mudança de marca foi planejada para preservar o caminho de atualização de quem já possui Banana Cord instalado.
 
-O Banana Cord usa GitHub Releases + `electron-updater`.
+O identificador interno de produção no Windows continua sendo:
 
-Quem já tem uma versão instalada recebe novas versões automaticamente. Quando uma Release nova é publicada, o aplicativo verifica a atualização, baixa em segundo plano e oferece **Reiniciar e instalar**.
+```text
+com.bananacord.app
+```
 
-Cada Release oficial publica:
-- `Banana-Cord-Setup-x.x.x-x64.exe`
-- `Banana-Cord-Setup-x.x.x-x64.exe.blockmap`
-- `latest.yml`
+Isso é proposital. O nome visível passa a ser **Mingrx**, mas manter essa identidade técnica reduz o risco de o Windows tratar a V3 como um segundo aplicativo separado.
 
-Isso permite migrar da linha 1.2.x para a V2 e, depois, receber futuras versões 2.1, 2.2 e assim por diante sem precisar baixar manualmente um instalador novo toda vez.
+O protocolo antigo `bananacord://` também continua aceito por compatibilidade, enquanto novos convites usam `mingrx://`.
 
-## 🔗 Convites
+## Instalação
 
-O instalador registra o protocolo `bananacord://`, permitindo que links de convite abram o aplicativo instalado.
+A release pública mais recente continua disponível em:
 
-A página pública de entrada continua em:
+**[GitHub Releases](https://github.com/rafaelmingroni/mingrx-app/releases/latest)**
 
-`https://rafaelmingroni.github.io/banana-cord/?invite=CODIGO`
+Quando a V3 concluir a validação, o instalador oficial seguirá o padrão:
 
-## ⚙️ Arquitetura V2
+```text
+Mingrx-Setup-3.0.0-x64.exe
+```
 
-- Electron no desktop
-- Firebase Authentication para contas
-- Firestore para servidores, membros, canais, mensagens e DMs
-- Firebase Realtime Database para presença e sinalização em tempo real
-- WebRTC para voz, webcam e compartilhamento de tela
-- GitHub Releases + `electron-updater` para atualizações automáticas
-- GitHub Actions para testes e publicação
+O instalador ainda não possui assinatura digital de código, então o Windows SmartScreen pode exibir um aviso.
 
-O workflow de lançamento executa testes de Cloud, regras de segurança Firebase, regressões de UI/convites e um teste real do renderer Electron antes de publicar o instalador.
+## Atualizações automáticas
 
-## ⚠️ Limitações atuais
+O Mingrx usa **GitHub Releases + electron-updater**.
 
-- Calls foram projetadas para grupos pequenos; a interface atual trabalha com até 5 participantes por sala
-- Redes com NAT/firewall muito restritivo podem exigir infraestrutura TURN dedicada no futuro
-- O instalador ainda não é assinado digitalmente
-- Qualidade e latência de voz/tela dependem da conexão entre os participantes
+Cada release oficial publica:
 
-## 📁 Estrutura
+```text
+Mingrx-Setup-x.x.x-x64.exe
+Mingrx-Setup-x.x.x-x64.exe.blockmap
+latest.yml
+```
 
-- `desktop/` — aplicativo Electron
-- `desktop/src/` — interface e camada Cloud
-- `firebase/` — regras de segurança e configuração dos emuladores
-- `docs/` — página pública de convite e documentação
-- `.github/workflows/` — validação, build e Releases
+A V3 está sendo preparada para continuar o fluxo de atualização das instalações existentes em vez de exigir uma reinstalação separada.
+
+## Segurança e privacidade
+
+O projeto usa autenticação Firebase com e-mail verificado e regras específicas para acesso aos dados e uploads.
+
+A mídia das chamadas usa WebRTC. Firestore e Realtime Database cuidam dos dados persistentes e da sinalização; áudio, vídeo e tela permanecem separados dessa camada sempre que possível.
+
+Antes de uma release pública, o pipeline valida:
+
+- JavaScript;
+- regressões Cloud e UI;
+- identidade visual Mingrx;
+- mídia e convites;
+- regras do Firestore, Realtime Database e Storage;
+- interações reais via Electron;
+- instalador e metadados de auto-update.
+
+## Estrutura do repositório
+
+```text
+desktop/                aplicativo Electron
+├─ assets/              identidade e ícones
+├─ scripts/             testes, E2E e helpers de build
+├─ server/              camada local/legada
+└─ src/                 renderer, UI, Cloud e camadas Mingrx
+
+firebase/               regras e configuração Firebase
+docs/                   documentação e página de convites
+.github/workflows/       CI, validações e releases
+```
+
+## Roadmap
+
+A evolução continua focada em quatro frentes:
+
+1. **experiência** — consistência visual e menos atrito;
+2. **leveza** — reduzir trabalho desnecessário durante jogos e calls;
+3. **confiabilidade** — fortalecer testes de voz, tela, chat e updater;
+4. **produto** — melhorar entrada, convite, comunidades e atualização.
+
+## Status da V3
+
+O desenvolvimento ativo da V3 acontece na branch:
+
+[`v3.0.0-mingrx-ui-polish`](https://github.com/rafaelmingroni/mingrx-app/tree/v3.0.0-mingrx-ui-polish)
+
+Ela só será incorporada integralmente à `main` depois de passar pela validação completa do CI e do instalador.
 
 ---
 
-Banana Cord é um projeto pessoal em desenvolvimento contínuo, criado para comunicação entre amigos com foco em leveza e simplicidade.
+<p align="center">
+  <img src="desktop/assets/mingrx.svg" alt="Mingrx logo" width="72">
+</p>
+<p align="center"><strong>Mingrx</strong><br>Built to stay light while you play.</p>
