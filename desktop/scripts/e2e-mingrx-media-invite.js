@@ -5,16 +5,16 @@ app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
 const safeHandle = (name, fn) => { try { ipcMain.handle(name, fn); } catch {} };
 safeHandle('clipboard:write', async () => true);
-safeHandle('update:get-config', async () => ({ repoUrl:'',autoCheck:true,autoDownload:true,currentVersion:'2.1.0' }));
+safeHandle('update:get-config', async () => ({ repoUrl:'',autoCheck:true,autoDownload:true,currentVersion:'3.0.0' }));
 safeHandle('update:get-state', async () => ({ status:'idle',progress:0,message:'' }));
-safeHandle('banana-updater:get-state', async () => ({ phase:'idle',version:'2.1.0',percent:0 }));
-safeHandle('banana-updater:get-version', async () => '2.1.0');
+safeHandle('banana-updater:get-state', async () => ({ phase:'idle',version:'3.0.0',percent:0 }));
+safeHandle('banana-updater:get-version', async () => '3.0.0');
 safeHandle('banana-updater:check', async () => ({ ok:true }));
 safeHandle('banana-v21:get-settings', async () => ({idleSeconds:0,idleState:'active',activity:null,settings:{shareActivity:true,autoAwayMinutes:5,startup:{enabled:false}},startupLaunch:false}));
 safeHandle('banana-v21:set-settings', async () => ({}));
 safeHandle('banana-v21:get-system-languages', async () => ['pt-BR']);
 
-const hardTimeout = setTimeout(() => { console.error('Mingrx media/invite E2E failed: hard timeout'); app.exit(1); }, 22000);
+const hardTimeout = setTimeout(() => { console.error('Mingrx media/invite E2E failed: hard timeout'); app.exit(1); }, 30000);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function finish(code, message) { clearTimeout(hardTimeout); if (message) (code ? console.error : console.log)(message); setTimeout(() => app.exit(code), 50); }
 const fail = message => finish(1, `Mingrx media/invite E2E failed: ${message}`);
@@ -53,6 +53,31 @@ app.whenReady().then(async () => {
       const attach=document.getElementById('mingrxAttachBtn');
       if(!attach) failures.push('composer attachment button missing');
       if(!window.MingrxMedia?.encodeMedia || !window.MingrxInvite?.open) failures.push('Mingrx media/invite runtime missing');
+
+      // Reproduce the exact class of file that the legacy 550 KB gate rejected.
+      // A deterministic noisy PNG is intentionally hard to compress at source,
+      // then Mingrx must resize/re-encode it below the community-icon target.
+      try {
+        const canvas=document.createElement('canvas');
+        canvas.width=1200; canvas.height=1200;
+        const ctx=canvas.getContext('2d');
+        const image=ctx.createImageData(canvas.width,canvas.height);
+        let seed=0x12345678;
+        for(let i=0;i<image.data.length;i+=4){
+          seed=(1664525*seed+1013904223)>>>0;
+          image.data[i]=seed&255;
+          image.data[i+1]=(seed>>>8)&255;
+          image.data[i+2]=(seed>>>16)&255;
+          image.data[i+3]=255;
+        }
+        ctx.putImageData(image,0,0);
+        const source=await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('png blob failed')),'image/png'));
+        if(source.size<=550000) failures.push('large-photo fixture did not exceed legacy 550 KB gate: '+source.size);
+        const compressed=await window.MingrxMedia.compressImage(source,{maxDimension:512,maxBytes:360*1024,minDimension:128});
+        if(!compressed?.blob || compressed.blob.size<=0 || compressed.blob.size>360*1024) failures.push('large community photo was not compressed below 360 KB: '+(compressed?.blob?.size||0));
+      } catch(error) {
+        failures.push('large-photo compression failed: '+(error?.message||error));
+      }
 
       // Invite must open immediately and old premium handler must be gone.
       const invite=document.getElementById('inviteBtn');
