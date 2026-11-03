@@ -229,6 +229,10 @@
     // Firestore write. On a restricted/stale connection, setDoc can remain
     // pending indefinitely. The release recovery handler validates the token
     // before replaying the ready event.
+    // Preserve the legacy fallback if the separate release recovery script
+    // fails to initialize. With it loaded, its capture listener immediately
+    // reopens the gate while refreshing verified credentials.
+    hide('cloudLoading'); gate.classList.add('hidden');
     window.BananaCloud.ready = true;
     window.dispatchEvent(new CustomEvent('banana:cloud-ready', { detail: { uid: user.uid, user } }));
   }
