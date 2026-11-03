@@ -217,9 +217,11 @@
       return;
     }
     hide('cloudAuth'); hide('cloudVerify'); show('cloudLoading');
-    try { await ensureProfile(user); attachPresence(user); }
-    catch (err) { console.error('Banana Cloud profile:', err); }
-    hide('cloudLoading'); gate.classList.add('hidden');
+
+    // Authentication and verified-token recovery must never wait for a
+    // Firestore write. On a restricted/stale connection, setDoc can remain
+    // pending indefinitely. The release recovery handler validates the token
+    // before replaying the ready event.
     window.BananaCloud.ready = true;
     window.dispatchEvent(new CustomEvent('banana:cloud-ready', { detail: { uid: user.uid, user } }));
   }
@@ -309,6 +311,29 @@
     createServer, listenMyServers, listenChannelMessages, sendChannelMessage,
     sendDM, listenDM, updateMessage, deleteMessage, dmThreadId
   };
+
+  // Once the release guard confirms email_verified in the refreshed ID token,
+  // synchronize the profile and presence independently from opening the UI.
+  // Firestore permissions or connectivity must not strand a verified account.
+  let syncedUid = '';
+  window.addEventListener('banana:cloud-ready', event => {
+    if (!event.detail?.__tokenRefreshed) return;
+    const user = auth.currentUser;
+    if (!user?.emailVerified || user.uid !== event.detail.uid) return;
+    if (syncedUid === user.uid) return;
+    syncedUid = user.uid;
+    try { attachPresence(user); } catch (error) {
+      console.warn('Mingrx Cloud presence startup:', error);
+    }
+    void ensureProfile(user).catch(error => {
+      syncedUid = '';
+      console.error('Mingrx Cloud profile sync:', error);
+      window.BananaCloudBootIssue = {
+        stage: 'profile-sync',
+        code: String(error?.code || 'unknown')
+      };
+    });
+  });
 
   onAuthStateChanged(auth, handleUser);
 })();
