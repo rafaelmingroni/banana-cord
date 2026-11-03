@@ -1,4 +1,4 @@
-/* Banana Cord V2.0.17 — premium in-app updater */
+/* Mingrx updater UI. Internal banana-updater IPC names remain for update compatibility. */
 (() => {
   const { ipcRenderer } = require('electron');
   const badge = document.getElementById('updateBadge');
@@ -10,10 +10,10 @@
   shell.innerHTML = `
     <div class="banana-updater-card" role="status" aria-live="polite">
       <div class="banana-updater-head">
-        <div class="banana-updater-logo"><img src="../assets/banana-cord.png" alt=""></div>
+        <div class="banana-updater-logo"><img src="../assets/mingrx.svg" alt=""></div>
         <div class="banana-updater-title-wrap">
-          <span class="banana-updater-kicker">BANANA CORD UPDATE</span>
-          <strong id="bananaUpdaterTitle">Atualizando Banana Cord</strong>
+          <span class="banana-updater-kicker">MINGRX UPDATE</span>
+          <strong id="bananaUpdaterTitle">Atualizando Mingrx</strong>
           <small id="bananaUpdaterSubtitle">Preparando...</small>
         </div>
         <button id="bananaUpdaterClose" class="banana-updater-close" type="button" title="Minimizar">×</button>
@@ -29,8 +29,7 @@
       <div id="bananaUpdaterRetryWrap" class="banana-updater-actions hidden">
         <button id="bananaUpdaterRetry" class="banana-updater-secondary" type="button">Tentar novamente</button>
       </div>
-    </div>
-  `;
+    </div>`;
   document.body.appendChild(shell);
 
   const overlay = document.createElement('div');
@@ -38,13 +37,12 @@
   overlay.className = 'banana-updater-overlay hidden';
   overlay.innerHTML = `
     <div class="banana-updater-installing">
-      <div class="banana-updater-install-logo"><img src="../assets/banana-cord.png" alt="Banana Cord"></div>
-      <span class="banana-updater-kicker">BANANA CORD</span>
+      <div class="banana-updater-install-logo"><img src="../assets/mingrx.svg" alt="Mingrx"></div>
+      <span class="banana-updater-kicker">MINGRX</span>
       <h2>Aplicando atualização...</h2>
-      <p>Estamos fechando sua sessão com segurança. O Banana Cord vai abrir novamente já atualizado.</p>
+      <p>Estamos fechando sua sessão com segurança. O Mingrx vai abrir novamente já atualizado.</p>
       <div class="banana-updater-install-line"><span></span></div>
-    </div>
-  `;
+    </div>`;
   document.body.appendChild(overlay);
 
   const title = document.getElementById('bananaUpdaterTitle');
@@ -60,7 +58,7 @@
   const retryBtn = document.getElementById('bananaUpdaterRetry');
   const closeBtn = document.getElementById('bananaUpdaterClose');
 
-  let currentState = { phase: 'idle', version: '', percent: 0 };
+  let currentState = { phase:'idle', version:'', percent:0 };
   let downloadNoticeShown = false;
   let autoHideTimer = null;
 
@@ -72,31 +70,17 @@
     if (bytes >= 1024) return `${(bytes / 1024).toFixed(0)} KB`;
     return `${Math.round(bytes)} B`;
   }
-
-  function showCard() {
-    shell.classList.remove('hidden');
-  }
-
-  function hideCard() {
-    shell.classList.add('hidden');
-  }
-
+  function showCard() { shell.classList.remove('hidden'); }
+  function hideCard() { shell.classList.add('hidden'); }
   function setBadge(text, ready = false) {
     badge.textContent = text;
     badge.classList.remove('hidden');
     badge.classList.toggle('ready', ready);
   }
-
-  function clearAutoHide() {
-    if (autoHideTimer) clearTimeout(autoHideTimer);
-    autoHideTimer = null;
-  }
-
+  function clearAutoHide() { if (autoHideTimer) clearTimeout(autoHideTimer); autoHideTimer = null; }
   function scheduleDownloadMinimize() {
     clearAutoHide();
-    autoHideTimer = setTimeout(() => {
-      if (currentState.phase === 'downloading') hideCard();
-    }, 5200);
+    autoHideTimer = setTimeout(() => { if (currentState.phase === 'downloading') hideCard(); }, 5200);
   }
 
   function render(rawState = {}) {
@@ -113,77 +97,47 @@
     badge.classList.remove('ready');
 
     if (phase === 'idle') {
-      clearAutoHide();
-      hideCard();
-      badge.classList.add('hidden');
-      return;
+      clearAutoHide(); hideCard(); badge.classList.add('hidden'); return;
     }
-
     if (phase === 'checking') {
       title.textContent = 'Verificando atualização';
-      subtitle.textContent = 'Procurando a versão mais recente...';
-      progress.style.width = '18%';
-      percent.textContent = '';
-      speed.textContent = '';
-      setBadge('↻ Verificando...');
-      showCard();
-      return;
+      subtitle.textContent = 'Procurando a versão mais recente do Mingrx...';
+      progress.style.width = '18%'; percent.textContent = ''; speed.textContent = '';
+      setBadge('↻ Verificando...'); showCard(); return;
     }
-
     if (phase === 'downloading') {
-      title.textContent = version ? `Baixando Banana Cord ${version}` : 'Baixando atualização';
+      title.textContent = version ? `Baixando Mingrx ${version}` : 'Baixando atualização';
       const transferred = formatBytes(currentState.transferred);
       const total = formatBytes(currentState.total);
-      subtitle.textContent = transferred && total ? `${transferred} de ${total} · você pode continuar usando normalmente` : 'Baixando em segundo plano · você pode continuar usando normalmente';
-      progress.style.width = `${pct}%`;
-      percent.textContent = `${pct}%`;
-      const rate = formatBytes(currentState.bytesPerSecond);
-      speed.textContent = rate ? `${rate}/s` : '';
+      subtitle.textContent = transferred && total
+        ? `${transferred} de ${total} · você pode continuar usando normalmente`
+        : 'Baixando em segundo plano · você pode continuar usando normalmente';
+      progress.style.width = `${pct}%`; percent.textContent = `${pct}%`;
+      const rate = formatBytes(currentState.bytesPerSecond); speed.textContent = rate ? `${rate}/s` : '';
       setBadge(`↓ ${pct}%`);
-      if (!downloadNoticeShown) {
-        downloadNoticeShown = true;
-        showCard();
-        scheduleDownloadMinimize();
-      }
+      if (!downloadNoticeShown) { downloadNoticeShown = true; showCard(); scheduleDownloadMinimize(); }
       return;
     }
-
     if (phase === 'ready') {
       clearAutoHide();
-      title.textContent = version ? `Banana Cord ${version} está pronto` : 'Atualização pronta';
-      subtitle.textContent = 'Reinicie quando quiser. A aplicação será feita silenciosamente.';
-      progress.style.width = '100%';
-      percent.textContent = '100%';
-      speed.textContent = 'Pronto para reiniciar';
-      actions.classList.remove('hidden');
-      setBadge('✓ Atualização pronta', true);
-      showCard();
-      return;
+      title.textContent = version ? `Mingrx ${version} está pronto` : 'Atualização pronta';
+      subtitle.textContent = 'Reinicie quando quiser. A atualização será aplicada silenciosamente.';
+      progress.style.width = '100%'; percent.textContent = '100%'; speed.textContent = 'Pronto para reiniciar';
+      actions.classList.remove('hidden'); setBadge('✓ Atualização pronta', true); showCard(); return;
     }
-
     if (phase === 'installing') {
-      clearAutoHide();
-      hideCard();
-      badge.classList.add('hidden');
-      return;
+      clearAutoHide(); hideCard(); badge.classList.add('hidden'); return;
     }
-
     if (phase === 'error') {
       clearAutoHide();
       title.textContent = 'Atualização pausada';
-      subtitle.textContent = 'Não foi possível concluir agora. Você pode continuar usando o Banana Cord normalmente.';
-      progressWrap.classList.add('hidden');
-      retryWrap.classList.remove('hidden');
-      setBadge('! Atualização');
-      showCard();
+      subtitle.textContent = 'Não foi possível concluir agora. Você pode continuar usando o Mingrx normalmente.';
+      progressWrap.classList.add('hidden'); retryWrap.classList.remove('hidden');
+      setBadge('! Atualização'); showCard();
     }
   }
 
-  badge.addEventListener('click', () => {
-    if (shell.classList.contains('hidden')) showCard();
-    else hideCard();
-  });
-
+  badge.addEventListener('click', () => shell.classList.contains('hidden') ? showCard() : hideCard());
   closeBtn.addEventListener('click', hideCard);
   laterBtn.addEventListener('click', hideCard);
   installBtn.addEventListener('click', () => {
@@ -199,19 +153,33 @@
   ipcRenderer.invoke('banana-updater:get-version').then(currentVersion => {
     const previousVersion = localStorage.getItem('banana.lastVersion') || '';
     localStorage.setItem('banana.lastVersion', String(currentVersion || ''));
+    const migratedToV3 = !!previousVersion && !/^3\./.test(previousVersion) && /^3\./.test(String(currentVersion || ''));
+    const alreadyWelcomed = localStorage.getItem('mingrx.rebrandWelcome.v3') === '1';
+
+    if (migratedToV3 && !alreadyWelcomed) {
+      localStorage.setItem('mingrx.rebrandWelcome.v3', '1');
+      setTimeout(() => {
+        if (currentState.phase !== 'idle') return;
+        title.textContent = 'Temos um novo nome: Mingrx ✦';
+        subtitle.textContent = 'Nova identidade, novas comunidades e mais recursos — com sua conta, conversas e configurações preservadas.';
+        progressWrap.classList.add('hidden');
+        actions.classList.add('hidden');
+        retryWrap.classList.add('hidden');
+        closeBtn.classList.remove('hidden');
+        showCard();
+        setTimeout(() => { if (currentState.phase === 'idle') hideCard(); }, 12000);
+      }, 1000);
+      return;
+    }
+
     if (!previousVersion || !currentVersion || previousVersion === currentVersion) return;
     setTimeout(() => {
       if (currentState.phase !== 'idle') return;
-      title.textContent = `Atualizado para ${currentVersion} ✓`;
-      subtitle.textContent = 'Banana Cord atualizado com sucesso.';
-      progressWrap.classList.add('hidden');
-      actions.classList.add('hidden');
-      retryWrap.classList.add('hidden');
-      closeBtn.classList.remove('hidden');
-      showCard();
-      setTimeout(() => {
-        if (currentState.phase === 'idle') hideCard();
-      }, 6500);
+      title.textContent = `Atualizado para Mingrx ${currentVersion} ✓`;
+      subtitle.textContent = 'Atualização concluída com sucesso.';
+      progressWrap.classList.add('hidden'); actions.classList.add('hidden'); retryWrap.classList.add('hidden');
+      closeBtn.classList.remove('hidden'); showCard();
+      setTimeout(() => { if (currentState.phase === 'idle') hideCard(); }, 6500);
     }, 1100);
   }).catch(() => {});
 })();
