@@ -15,6 +15,7 @@ const themeBootstrap = read('src/mingrx-theme-bootstrap.js');
 const svg = read('assets/mingrx.svg');
 const pkg = JSON.parse(read('package.json'));
 const tray = read('tray.js');
+const main = read('main-v120.js');
 
 assert(html.includes('<title>Mingrx</title>'), 'Título do renderer não está com a marca Mingrx.');
 assert(html.includes('mingrx-rebrand.css'), 'Camada visual Mingrx não foi carregada.');
@@ -34,7 +35,7 @@ assert(shell.includes('MutationObserver'), 'Shell deve proteger modais legados c
 assert(shell.includes('openCommunityModal'), 'Entrada de comunidades não foi migrada para o shell Mingrx.');
 assert(shell.includes('#addServerBtn,#v207StartServer'), 'Shell Mingrx não intercepta todos os gatilhos legados de comunidade.');
 assert(shell.includes('replaceLegacyMarks'), 'Shell Mingrx não remove marcas visuais antigas do onboarding.');
-assert(shell.includes('.banana-updater-logo img'), 'Updater ainda pode exibir o ícone antigo.');
+assert(shell.includes('.banana-updater-logo img'), 'Updater ainda pode expor uma marca visual antiga.');
 
 assert(themeBootstrap.includes("'system'"), 'Tema Sistema não é inicializado antes do primeiro paint.');
 assert(themeBootstrap.includes('prefers-color-scheme: light'), 'Tema Sistema não acompanha o esquema do Windows.');
@@ -78,13 +79,12 @@ for (const theme of ['midnight','pearl','crimson','ocean','forest','mono']) {
   const muted = hexVar(block, 'mx-muted');
   const accent = hexVar(block, 'mx-accent');
   const onAccent = hexVar(a11y, 'mx-on-accent');
-  const checks = [
+  for (const [label, foreground, background] of [
     ['texto principal', text, bg],
     ['texto secundário', text2, panel],
     ['texto discreto', muted, bg],
     ['texto de ação', onAccent, accent]
-  ];
-  for (const [label, foreground, background] of checks) {
+  ]) {
     const ratio = contrast(foreground, background);
     assert(ratio >= 4.5, `${theme}: ${label} ficou com contraste ${ratio.toFixed(2)}:1 (< 4.5:1).`);
   }
@@ -93,11 +93,20 @@ for (const theme of ['midnight','pearl','crimson','ocean','forest','mono']) {
 assert(svg.includes('viewBox="0 0 1024 1024"'), 'SVG oficial Mingrx precisa ser 1024x1024.');
 assert(svg.includes('#7c5cff'), 'Cor principal Mingrx ausente do SVG.');
 
-assert(pkg.build.productName === 'Mingrx Preview', 'Preview deve instalar separado como Mingrx Preview.');
-assert(pkg.build.appId === 'com.mingrx.preview', 'Preview precisa de appId isolado.');
+assert(pkg.version === '3.0.0', `Release pública precisa ser Mingrx 3.0.0, recebeu ${pkg.version}.`);
+assert(pkg.name === 'mingrx', 'Nome do pacote público deve ser mingrx.');
+assert(pkg.build.productName === 'Mingrx', 'Produto público deve instalar como Mingrx.');
+assert(pkg.build.appId === 'com.bananacord.app', 'App ID estável precisa ser preservado para atualizar instalações antigas no lugar.');
+assert(pkg.build.artifactName.startsWith('Mingrx-Setup-'), 'Artefato oficial não está nomeado Mingrx.');
+assert(pkg.build.protocols?.[0]?.schemes?.includes('mingrx'), 'Protocolo mingrx:// não está registrado.');
+assert(pkg.build.protocols?.[0]?.schemes?.includes('bananacord'), 'Compatibilidade temporária bananacord:// foi removida cedo demais.');
 assert(pkg.build.win.icon === 'assets/mingrx.ico', 'Build ainda não aponta para o ícone Mingrx.');
 assert(pkg.scripts['smoke:mingrx'], 'Script smoke:mingrx não foi registrado.');
 assert(tray.includes('Abrir Mingrx'), 'Tray ainda não foi rebatizado para Mingrx.');
 assert(tray.includes("assets', 'mingrx-tray.png"), 'Tray não usa o ícone Mingrx.');
+assert(tray.includes("app.setAppUserModelId('com.bananacord.app')"), 'Tray perdeu a identidade de atualização in-place.');
+assert(main.includes("path.join(app.getPath('appData'), 'Banana Cord')"), 'Migração do userData legado não está protegida.');
+assert(main.includes("app.setPath('userData', legacy)"), 'Dados locais antigos não são reutilizados no upgrade 3.0.');
+assert(main.includes("app.setName('Mingrx')"), 'Processo principal não assume o nome Mingrx.');
 
-console.log('Mingrx rebrand + themes smoke: OK');
+console.log('Mingrx 3.0 rebrand + migration smoke: OK');
