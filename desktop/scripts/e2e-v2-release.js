@@ -137,6 +137,18 @@ app.whenReady().then(async () => {
         document.getElementById('tabVideo')?.click(); await sleep(60);
         const scroller = document.querySelector('.settings-content');
         const range = (scroller?.scrollHeight || 0) - (scroller?.clientHeight || 0);
+        const shellEl = document.querySelector('.settings-shell');
+        const mainEl = document.querySelector('.settings-main');
+        const cardEl = document.querySelector('.settings-modal');
+        mark('scroll-diagnostics:' + JSON.stringify({
+          range,
+          content: scroller && {clientHeight:scroller.clientHeight,scrollHeight:scroller.scrollHeight,offsetHeight:scroller.offsetHeight,overflowY:getComputedStyle(scroller).overflowY,display:getComputedStyle(scroller).display,position:getComputedStyle(scroller).position},
+          main: mainEl && {clientHeight:mainEl.clientHeight,scrollHeight:mainEl.scrollHeight,overflowY:getComputedStyle(mainEl).overflowY},
+          shell: shellEl && {clientHeight:shellEl.clientHeight,scrollHeight:shellEl.scrollHeight,display:getComputedStyle(shellEl).display,gridTemplateRows:getComputedStyle(shellEl).gridTemplateRows},
+          modal: cardEl && {clientHeight:cardEl.clientHeight,scrollHeight:cardEl.scrollHeight},
+          area: document.getElementById('settingsArea') && {clientHeight:document.getElementById('settingsArea').clientHeight,scrollHeight:document.getElementById('settingsArea').scrollHeight},
+          video: document.querySelector('#settingsArea .camera-preview') && {height:document.querySelector('#settingsArea .camera-preview').getBoundingClientRect().height}
+        }));
         if (!scroller || !['auto','scroll'].includes(getComputedStyle(scroller).overflowY) || range <= 0) return { ok: false, reason: 'settings scroll regression' };
         scroller.scrollTop = range; await sleep(20);
         if (scroller.scrollTop < Math.max(1, range - 2)) return { ok: false, reason: 'settings cannot reach bottom' };
