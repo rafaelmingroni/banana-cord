@@ -106,11 +106,36 @@
 
     async start() {
       if (!this.user?.emailVerified) throw new Error('Faça login com um e-mail verificado.');
-      await this.ensurePublicProfile();
-      await this.startSession();
+
+      // Authentication is sufficient to display the app shell. Do not wait for
+      // Firestore profile writes or an RTDB session write to release the UI:
+      // these services can be delayed or blocked independently of Firebase Auth.
+      this.receive('auth:ready', {
+        user: {
+          id: this.user.uid,
+          name: this.user.displayName || this.user.email?.split('@')[0] || 'Usuário',
+          avatar: '', customStatus: '', status: 'online'
+        },
+        servers: []
+      });
+      window.BananaCloudBootStage = 'shell-ready';
+
+      const guarded = (stage, promise) => Promise.resolve(promise).catch(error => {
+        console.error('Mingrx Cloud startup ' + stage + ':', error);
+        window.BananaCloudBootIssue = {
+          stage,
+          code: String(error?.code || 'unknown'),
+          category: /permission/i.test(String(error?.code || '')) ? 'permissions' : 'connectivity-or-service'
+        };
+        this.receive('app:error', this.friendly(error));
+      });
+
+      window.BananaCloudBootStage = 'server-list-listening';
+      this.watchServerRefs();
       this.watchPresence();
       this.watchSignals();
-      this.watchServerRefs();
+      void guarded('public-profile', this.ensurePublicProfile());
+      void guarded('realtime-session', this.startSession());
       window.BananaCloudSocket = this;
     }
 
@@ -193,14 +218,7 @@
           // able to reach the shell, including a new account with zero servers.
           if (isInitial) {
             this.initialRefsReady = true;
-            this.receive('auth:ready', {
-              user: {
-                id: this.user.uid,
-                name: this.user.displayName || this.user.email?.split('@')[0] || 'Usuário',
-                avatar: '', customStatus: '', status: 'online'
-              },
-              servers: []
-            });
+            window.BananaCloudBootStage = 'server-list-loaded';
           }
 
           const servers = (await Promise.all(ids.map(serverId =>
@@ -232,6 +250,7 @@
           this.receive('app:error', this.friendly(error));
         }
       }, error => {
+        window.BananaCloudBootIssue = { stage: 'server-list', code: String(error?.code || 'unknown') };
         console.error('Mingrx Cloud server refs listener:', error);
         this.receive('app:error', this.friendly(error));
       });
