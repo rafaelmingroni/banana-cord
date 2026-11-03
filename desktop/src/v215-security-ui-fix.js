@@ -1,11 +1,11 @@
-/* Banana Cord V2.0.15 — renderer security hardening.
+/* Mingrx updater security hardening.
  * Invitations must never be allowed to replace the official update source.
  */
 (() => {
   if (window.__bananaV215SecurityUi) return;
   window.__bananaV215SecurityUi = true;
 
-  const OFFICIAL_REPO = 'https://github.com/rafaelmingroni/banana-cord';
+  const OFFICIAL_REPO = 'https://github.com/rafaelmingroni/mingrx-app';
 
   // Keep invitation payloads independent from update infrastructure.
   try {
@@ -22,7 +22,7 @@
     };
   } catch {}
 
-  // Keep renderer state pinned even if stale local preferences existed before 2.0.15.
+  // Keep renderer state pinned even if stale local preferences existed before the rebrand.
   queueMicrotask(async () => {
     try {
       const cfg = await ipcRenderer.invoke('update:get-config');
@@ -38,7 +38,7 @@
         if (/update|atualiza|repo/i.test(input.id || input.name || input.closest?.('.settings-card')?.textContent || '')) {
           input.value = OFFICIAL_REPO;
           input.readOnly = true;
-          input.title = 'Por segurança, atualizações do Banana Cord vêm somente do repositório oficial.';
+          input.title = 'Por segurança, atualizações do Mingrx vêm somente do repositório oficial.';
         }
       }
     }
