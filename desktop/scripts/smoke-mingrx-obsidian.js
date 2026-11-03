@@ -34,6 +34,10 @@ assert(socialCss.includes('.mingrx-social-status.online'), 'Central social não 
 
 assert(js.includes("document.getElementById('channels')") && js.includes("document.getElementById('emptyView')"), 'Observers Obsidian precisam ficar restritos às superfícies privadas.');
 assert(!js.includes('observer.observe(document.body'), 'Obsidian não deve observar o DOM inteiro.');
+assert(js.includes('--mx-private-sidebar:296px'), 'Obsidian deve preservar 296px em desktop amplo.');
+assert(js.includes('--mx-private-sidebar:276px') && js.includes('max-width:1100px'), 'Obsidian deve preservar a largura intermediária de 276px.');
+assert(js.includes('--mx-private-sidebar:256px') && js.includes('max-width:900px'), 'Obsidian deve preservar a largura compacta de 256px.');
+assert(js.includes('--mx-private-sidebar:238px') && js.includes('max-width:760px'), 'Obsidian deve preservar a largura mínima de 238px.');
 assert(!js.includes("socket.emit") && !socialJs.includes("socket.emit"), 'Camada visual Obsidian não deve alterar eventos de rede.');
 assert(socialJs.includes('mingrx-social-avatar-wrap'), 'Central social não injeta presença nos avatares.');
 assert(socialJs.includes("[data-mx-dm]"), 'Ação de mensagem da central social não recebeu ícone consistente.');
