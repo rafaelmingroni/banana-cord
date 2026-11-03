@@ -4,6 +4,7 @@
   window.__mingrx31UxFixesLoaded = true;
 
   let watchedCardId = '';
+  let contextServerId = '';
 
   function safeServerIcon(value) {
     const icon = String(value || '').trim();
@@ -17,44 +18,128 @@
     }
   }
 
+  /* Decorate the mature V1 server buttons instead of rebuilding them. This keeps
+   * drag/reorder, unread badges, mention badges and the right-click menu intact. */
   function renderServerButtonsWithPhotos() {
     if (!els?.serverList) return;
-    els.homeServer?.classList.toggle('active', state.viewMode === 'dm');
-    els.serverList.innerHTML = '';
-    for (const server of state.servers || []) {
-      const button = document.createElement('button');
-      button.className = 'server-icon mingrx-community-button' + (state.viewMode === 'server' && state.selectedServer?.id === server.id ? ' active' : '');
+    for (const button of els.serverList.querySelectorAll('.server-icon[data-server-id]')) {
+      const server = (state.servers || []).find(item => String(item.id) === String(button.dataset.serverId));
+      if (!server) continue;
+
+      button.classList.add('mingrx-community-button');
       button.title = server.name || 'Comunidade';
       button.setAttribute('aria-label', server.name || 'Comunidade');
-      button.dataset.serverId = String(server.id || '');
 
       const icon = safeServerIcon(server.icon);
+      const nonBadgeSpans = [...button.children].filter(child =>
+        child.tagName === 'SPAN'
+        && !child.classList.contains('v1-server-mention')
+        && !child.classList.contains('v1-server-unread')
+      );
+
       if (icon) {
-        button.classList.add('mingrx-community-button-has-photo');
+        button.classList.add('mingrx-community-button-has-photo', 'has-server-image');
         button.style.backgroundImage = `url("${icon.replace(/"/g, '%22')}")`;
         button.style.backgroundSize = 'cover';
         button.style.backgroundPosition = 'center';
         button.style.backgroundRepeat = 'no-repeat';
-        button.textContent = '';
+        for (const initials of nonBadgeSpans) initials.remove();
       } else {
+        button.classList.remove('mingrx-community-button-has-photo', 'has-server-image');
         button.style.backgroundImage = '';
-        button.textContent = String(server.name || 'M').trim().slice(0, 2).toUpperCase();
+        let initials = nonBadgeSpans[0] || null;
+        for (const extra of nonBadgeSpans.slice(1)) extra.remove();
+        if (!initials) {
+          initials = document.createElement('span');
+          initials.className = 'mingrx-community-initials';
+          button.insertBefore(initials, button.firstChild);
+        }
+        initials.textContent = String(server.name || 'M').trim().slice(0, 2).toUpperCase();
       }
-
-      button.addEventListener('click', () => selectServer(server.id));
-      els.serverList.appendChild(button);
     }
   }
 
   if (typeof renderServers === 'function' && !renderServers.__mingrx31PhotoWrapped) {
-    renderServers = function renderServersMingrx31() {
+    const baseRenderServers = renderServers;
+    renderServers = function renderServersMingrx31(...args) {
+      const result = baseRenderServers.apply(this, args);
       renderServerButtonsWithPhotos();
+      return result;
     };
     renderServers.__mingrx31PhotoWrapped = true;
     setTimeout(() => {
       try { renderServers(); } catch {}
     }, 0);
   }
+
+  function serverFromContext() {
+    return (state.servers || []).find(item => String(item.id) === String(contextServerId))
+      || state.selectedServer
+      || null;
+  }
+
+  async function chooseCommunityPhotoFromMenu(server) {
+    if (!server || !window.MingrxMedia?.updateCommunityPhoto) {
+      return toast?.('Não consegui abrir o editor de foto.', 4000);
+    }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/jpeg,image/webp';
+    input.hidden = true;
+    document.body.appendChild(input);
+    input.addEventListener('change', async () => {
+      const file = input.files?.[0];
+      input.remove();
+      if (!file) return;
+      try {
+        toast?.('Compactando e salvando a foto…', 2200);
+        await window.MingrxMedia.updateCommunityPhoto(file, server);
+        toast?.('Foto da comunidade atualizada.', 2800);
+      } catch (error) {
+        toast?.(error?.message || 'Não consegui atualizar a foto.', 5000);
+      }
+    }, { once:true });
+    input.addEventListener('cancel', () => input.remove(), { once:true });
+    input.click();
+  }
+
+  function clearCommunityPhotoFromMenu(server) {
+    if (!server || !window.MingrxMedia?.clearCommunityPhoto) {
+      return toast?.('Não consegui remover a foto.', 4000);
+    }
+    try {
+      window.MingrxMedia.clearCommunityPhoto(server);
+      toast?.('Foto da comunidade removida.', 2600);
+    } catch (error) {
+      toast?.(error?.message || 'Não consegui remover a foto.', 4500);
+    }
+  }
+
+  /* The legacy context menu used an uncompressed 550 KB-only FileReader path.
+   * Capture those actions first and route them through the Spark compressor. */
+  document.addEventListener('contextmenu', event => {
+    const icon = event.target instanceof Element ? event.target.closest('.server-icon[data-server-id]') : null;
+    if (icon?.dataset.serverId) contextServerId = icon.dataset.serverId;
+  }, true);
+
+  document.addEventListener('click', event => {
+    const target = event.target instanceof Element ? event.target : null;
+    const item = target?.closest('.v1-menu-item');
+    if (!item) return;
+    const label = String(item.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    const choosePhoto = label.includes('foto') && (label.includes('trocar') || label.includes('colocar'));
+    const removePhoto = label.includes('remover') && label.includes('foto');
+    if (!choosePhoto && !removePhoto) return;
+
+    const server = serverFromContext();
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    document.querySelector('.v1-context-menu')?.remove();
+
+    if (choosePhoto) chooseCommunityPhotoFromMenu(server);
+    else clearCommunityPhotoFromMenu(server);
+  }, true);
 
   function repairCommunitySettings() {
     const body = document.getElementById('modalBody');
@@ -277,6 +362,8 @@
     repairCommunitySettings,
     renderServerButtonsWithPhotos,
     safeServerIcon,
+    chooseCommunityPhotoFromMenu,
+    clearCommunityPhotoFromMenu,
     markWatchingCard,
     stopWatching,
     canonicalVoiceUser,
