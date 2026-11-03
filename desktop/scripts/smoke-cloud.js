@@ -21,7 +21,7 @@ function assert(ok, message) {
 for (const file of ['src/cloud-v2.js','src/cloud-v2-auth-fix.js','src/cloud-v2-socket.js','src/cloud-v2-legacy-bridge.js']) {
   execFileSync(process.execPath, ['--check', path.join(root, file)], { stdio: 'inherit' });
 }
-assert(/^2\.\d+\.\d+(?:-cloud\.\d+)?$/.test(pkg.version), 'V2 version must be a stable x.y.z or preview x.y.z-cloud.n');
+assert(/^\d+\.\d+\.\d+(?:-cloud\.\d+)?$/.test(pkg.version), 'Version must be stable semver x.y.z or legacy preview x.y.z-cloud.n');
 assert(pkg.dependencies?.firebase === '12.19.0', 'Firebase JS SDK must be pinned to 12.19.0');
 assert(pkg.devDependencies?.esbuild === '0.28.2', 'esbuild must be pinned for browser Firebase bundling');
 assert((pkg.build?.files || []).includes('cloud/**/*'), 'cloud config folder must be packaged');
@@ -49,4 +49,4 @@ assert(configSource.includes('banana-cord.firebaseapp.com') || configSource.incl
 assert(configSource.includes('https://banana-cord-default-rtdb.firebaseio.com'), 'Realtime Database URL missing from build config');
 assert(firestoreRules.includes('email_verified') && firestoreRules.includes('dmThreads') && firestoreRules.includes('relationships') && firestoreRules.includes('invites'), 'Firestore security rules incomplete');
 assert(databaseRules.includes('email_verified') && databaseRules.includes('presence') && databaseRules.includes('voiceRooms') && databaseRules.includes('signals'), 'Realtime Database rules incomplete');
-console.log(`Banana Cord ${pkg.version} single-runtime cloud smoke test: OK`);
+console.log(`Mingrx ${pkg.version} single-runtime cloud smoke test: OK`);
