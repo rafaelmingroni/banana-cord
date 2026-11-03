@@ -6,7 +6,10 @@ const sharp = require('sharp');
 
 async function main(){
   if(process.platform!=='win32'){console.log('Embedded Mingrx Windows icon verification skipped outside Windows.');return;}
-  const exePath=path.join(__dirname,'..','dist','win-unpacked','Mingrx Preview.exe');
+  const root=path.join(__dirname,'..');
+  const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
+  const productName=String(pkg.build?.productName||'Mingrx').trim();
+  const exePath=path.join(root,'dist','win-unpacked',`${productName}.exe`);
   if(!fs.existsSync(exePath))throw new Error(`Executável não encontrado: ${exePath}`);
   const pngPath=path.join(os.tmpdir(),`mingrx-embedded-icon-${process.pid}.png`);
   const escapedExe=exePath.replace(/'/g,"''"),escapedPng=pngPath.replace(/'/g,"''");
