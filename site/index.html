@@ -23,6 +23,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./editorial-v3.css" />
+  <link rel="stylesheet" href="./real-ui-v4.css" />
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Mingrx","applicationCategory":"CommunicationApplication","operatingSystem":"Windows 10, Windows 11","url":"https://mingrx.site/","downloadUrl":"https://github.com/rafaelmingroni/mingrx-app/releases/latest","offers":{"@type":"Offer","price":"0","priceCurrency":"BRL"}}</script>
 </head>
 <body>
@@ -56,58 +57,59 @@
         </aside>
 
         <div class="hero-copy">
-          <p class="kicker" id="timeLine">[ VOZ · CHAT · TELA · COMUNIDADE ]</p>
-          <h1>FICA NO<br><em>JOGO.</em><br>FICA NA <span>CALL.</span></h1>
-          <p class="hero-lede">Uma casa leve para sua galera conversar, jogar, compartilhar a tela e continuar junto — sem transformar seu PC numa central de controle.</p>
+          <p class="kicker" id="timeLine">[ VOICE · CHAT · SCREEN · COMMUNITY ]</p>
+          <h1>NO DISTRACTIONS.<br><em>JUST YOUR</em><br><span>CREW.</span></h1>
+          <p class="hero-lede">Voz, chat e compartilhamento de tela para sua galera ficar junta sem transformar o app no centro da atenção.</p>
           <div class="hero-actions">
             <a class="cta cta-primary download-link" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">BAIXAR PARA WINDOWS <span>↘</span></a>
-            <a class="cta cta-text" href="#recursos">EXPLORAR O MINGRX <span>→</span></a>
+            <a class="cta cta-text" href="#recursos">VER RECURSOS <span>→</span></a>
           </div>
           <div class="hero-meta">
             <span class="release-note">Windows 10/11 · Atualizações automáticas · Grátis</span>
-            <span class="return-copy">Feito para entrar na call e esquecer que o app está aberto.</span>
+            <span class="return-copy">Leve o bastante para ficar em segundo plano.</span>
           </div>
         </div>
 
-        <div class="product-stage" aria-label="Prévia da interface do Mingrx">
+        <div class="product-stage" aria-label="Prévia fiel da interface atual do Mingrx">
           <div class="stage-orbit orbit-a" aria-hidden="true"></div>
           <div class="stage-orbit orbit-b" aria-hidden="true"></div>
-          <div class="floating-chip chip-online"><span></span> 4 ONLINE</div>
-          <div class="floating-chip chip-share">1080P · TELA AO VIVO</div>
+          <div class="floating-chip chip-online"><span></span> WINDOWS · ONLINE</div>
+          <div class="floating-chip chip-share">PRIVATE · E2EE</div>
           <div class="app-shell">
-            <div class="app-frame">
+            <div class="app-frame real-app">
               <div class="app-titlebar">
                 <div><img src="./assets/mingrx-mark.svg" alt=""> <b>Mingrx</b></div>
                 <span>— □ ×</span>
               </div>
-              <div class="app-body">
-                <div class="servers">
-                  <span class="server active">M</span><span class="server">G</span><span class="server">R</span><span class="server add">+</span>
-                </div>
-                <div class="channels">
-                  <small>COMUNIDADE</small><h3>late night</h3>
-                  <small>TEXTO</small><p class="selected"># geral</p><p># clips</p><p># off-topic</p>
-                  <small>VOZ</small><p>◉ gameplay</p><p>◉ madrugada</p>
-                </div>
-                <div class="chat">
-                  <div class="chat-head"><b># geral</b><span>online agora</span></div>
-                  <div class="chat-stream">
-                    <div class="message"><i class="avatar avatar-a"></i><div><b>Rafael</b><p>entra na call, já começou</p></div></div>
-                    <div class="message"><i class="avatar avatar-b"></i><div><b>Giovanni</b><p>to indo 👀</p></div></div>
-                    <div class="message accent"><i class="avatar avatar-c"></i><div><b>Bianca</b><p>▣ compartilhando tela agora</p></div></div>
-                    <div class="message"><i class="avatar avatar-d"></i><div><b>Luan</b><p>isso aqui ficou liso demais</p></div></div>
+              <div class="real-serverbar">
+                <span class="real-server-home"><img src="./assets/mingrx-mark.svg" alt=""></span>
+                <span class="real-server-divider"></span>
+                <span class="real-server-icon">N</span>
+                <span class="real-server-add">+</span>
+              </div>
+              <div class="real-workspace">
+                <aside class="real-private">
+                  <div class="real-private-title">Privado</div>
+                  <div class="real-private-card"><b>Seu espaço privado</b><span>Amigos, mensagens diretas e chamadas sem depender de servidor.</span></div>
+                  <div class="real-private-actions">
+                    <span>👥 Amigos</span>
+                    <span class="active">💬 Mensagem</span>
+                    <span>＋ Adicionar amigo</span>
                   </div>
-                  <div class="composer">Mensagem para #geral <span>＋ ◉</span></div>
-                </div>
-                <div class="call">
-                  <small>EM CHAMADA · 4</small>
-                  <div class="person"><i class="avatar avatar-a"></i><span>Rafael</span><b>●</b></div>
-                  <div class="person"><i class="avatar avatar-b"></i><span>Giovanni</span><b>●</b></div>
-                  <div class="person"><i class="avatar avatar-c"></i><span>Bianca</span><b>●</b></div>
-                  <div class="person"><i class="avatar avatar-d"></i><span>Luan</span><b>●</b></div>
-                  <div class="share-card"><strong>▣</strong><span>tela compartilhada</span><small>assistindo agora</small></div>
-                  <div class="call-tools"><span>⌁</span><span>▣</span><span class="tool-active">⌘</span><span class="hang">●</span></div>
-                </div>
+                  <div class="real-section-label"><span>AMIGOS</span><span>2</span></div>
+                  <div class="real-friend"><i class="real-avatar purple">L</i><span><b>Luna</b><small>Online</small></span><em class="real-dot"></em></div>
+                  <div class="real-friend"><i class="real-avatar green">N</i><span><b>Nico</b><small>na call</small></span><em class="real-dot"></em></div>
+                  <div class="real-section-label"><span>RECENTES</span><span></span></div>
+                  <div class="real-recent"><i class="real-avatar green">N</i><span><b>Nico</b><small>🔒 Mensagem criptografada</small></span><em class="real-x">×</em></div>
+                  <div class="real-recent active"><i class="real-avatar purple">L</i><span><b>Luna</b><small>Iniciar conversa</small></span><em class="real-x">×</em></div>
+                  <div class="real-self"><i class="real-avatar self">M</i><span><b>mingrx</b><small>● Online</small></span><em class="real-gear">⚙</em></div>
+                </aside>
+                <section class="real-chat">
+                  <header class="real-chat-head"><b>@ Luna</b><button class="real-call" type="button">☎ Ligar</button><span class="real-online">conectado</span><span class="real-members">Membros</span></header>
+                  <div class="real-encryption">🔒 Mensagens protegidas <span>com criptografia ponta a ponta</span></div>
+                  <div class="real-chat-empty"><div><strong>Comece a conversa 👋</strong><span>As mensagens ficam sincronizadas no Mingrx Cloud.</span></div></div>
+                  <div class="real-composer"><span>Mensagem para Luna</span><b class="real-send">↗</b></div>
+                </section>
               </div>
             </div>
           </div>
@@ -115,49 +117,49 @@
       </div>
 
       <div class="ticker" aria-hidden="true">
-        <div>VOZ SEM CERIMÔNIA ✦ TELA SEM DISTRAÇÃO ✦ CHAT SEM BAGUNÇA ✦ SUA GALERA NO MESMO LUGAR ✦ VOZ SEM CERIMÔNIA ✦ TELA SEM DISTRAÇÃO ✦ CHAT SEM BAGUNÇA ✦ SUA GALERA NO MESMO LUGAR ✦</div>
+        <div>VOICE WITHOUT THE CLUTTER ✦ SHARE THE SCREEN, NOT THE SPOTLIGHT ✦ YOUR CREW, ONE PLACE ✦ VOICE WITHOUT THE CLUTTER ✦ SHARE THE SCREEN, NOT THE SPOTLIGHT ✦ YOUR CREW, ONE PLACE ✦</div>
       </div>
     </section>
 
     <section class="manifesto shell reveal" id="recursos">
-      <div class="section-code">[ 02 / O QUE IMPORTA ]</div>
+      <div class="section-code">[ 02 / CORE ]</div>
       <div class="manifesto-copy">
-        <p class="overline">MENOS RUÍDO. MAIS PRESENÇA.</p>
-        <h2>O Mingrx não quer ser o centro da sua noite.<br><span>Quer deixar sua galera ser.</span></h2>
-        <p>Sem dashboard lotado, sem camada desnecessária, sem fazer você pensar no app enquanto deveria estar jogando, conversando ou vendo a tela de alguém.</p>
+        <p class="overline">BUILT TO STAY OUT OF THE WAY.</p>
+        <h2>THE APP SHOULD DISAPPEAR.<br><span>THE MOMENT SHOULDN'T.</span></h2>
+        <p>Sem dashboard lotado, sem camada desnecessária e sem fazer você pensar no app enquanto deveria estar jogando, conversando ou assistindo à tela de alguém.</p>
       </div>
     </section>
 
     <section class="mosaic shell">
       <article class="tile tile-share reveal">
-        <div class="tile-label">01 / TELA</div>
+        <div class="tile-label">01 / SCREEN</div>
         <div class="screen-visual">
-          <div class="screen-top">AO VIVO <span>●</span></div>
-          <div class="screen-center"><strong>▣</strong><b>COMPARTILHANDO</b><small>entre na call · assista junto · saia quando quiser</small></div>
+          <div class="screen-top">LIVE <span>●</span></div>
+          <div class="screen-center"><strong>▣</strong><b>SCREEN SHARING</b><small>entre na call · assista junto · saia quando quiser</small></div>
           <div class="screen-wave"></div>
         </div>
-        <div class="tile-copy"><h3>Compartilhe sem roubar a cena.</h3><p>Gameplay, estudo, vídeo ou qualquer janela. Quem assiste continua na call e o fluxo não vira uma bagunça.</p></div>
+        <div class="tile-copy"><h3>Share without stealing the spotlight.</h3><p>Gameplay, estudo, vídeo ou qualquer janela. Quem assiste continua na call e o fluxo não vira uma bagunça.</p></div>
       </article>
 
       <article class="tile tile-voice reveal">
-        <div class="tile-label">02 / VOZ</div>
+        <div class="tile-label">02 / VOICE</div>
         <div class="voice-rings" aria-hidden="true"><i></i><i></i><i></i><span>4</span></div>
-        <h3>A call começa antes da partida.</h3>
+        <h3>Stay in the call.</h3>
         <p>Entre, veja quem está conectado e continue falando sem trocar de contexto.</p>
       </article>
 
       <article class="tile tile-private reveal">
-        <div class="tile-label">03 / PRIVADO</div>
+        <div class="tile-label">03 / PRIVATE</div>
         <div class="dm-stack">
-          <div><i class="avatar avatar-b"></i><span><b>Gustavo</b><small>mensagem protegida</small></span><em>●</em></div>
-          <div><i class="avatar avatar-a"></i><span><b>Ari</b><small>aqui é palmeiras</small></span><em>●</em></div>
+          <div><i class="avatar avatar-b"></i><span><b>Nico</b><small>mensagem protegida</small></span><em>●</em></div>
+          <div><i class="avatar avatar-a"></i><span><b>Luna</b><small>online agora</small></span><em>●</em></div>
         </div>
-        <h3>Privado de verdade.</h3>
+        <h3>Private means private.</h3>
         <p>Mensagens diretas organizadas e criptografia ponta a ponta nas conversas compatíveis.</p>
       </article>
 
       <article class="tile tile-light reveal">
-        <div class="tile-label">04 / LEVE</div>
+        <div class="tile-label">04 / LIGHT</div>
         <div class="light-word">LOW<br>NOISE</div>
         <p>Interface responsiva e foco em baixo overhead para ficar ao lado do jogo, não na frente dele.</p>
       </article>
@@ -167,7 +169,7 @@
       <div class="shell performance-grid">
         <div class="performance-title reveal">
           <div class="section-code">[ 03 / PERFORMANCE ]</div>
-          <h2>SEU PC É<br>PARA O <span>JOGO.</span></h2>
+          <h2>KEEP THE GAME<br><span>FIRST.</span></h2>
           <p>O Mingrx foi pensado para permanecer discreto enquanto você faz o que realmente importa.</p>
         </div>
         <div class="system-panel reveal" aria-label="Indicadores de experiência do Mingrx">
@@ -184,8 +186,8 @@
       <div class="shell community-grid">
         <div class="community-mark" aria-hidden="true">M</div>
         <div class="community-copy reveal">
-          <div class="section-code dark">[ 04 / SUA GALERA ]</div>
-          <h2>UM LUGAR COM<br>A CARA DO SEU GRUPO.</h2>
+          <div class="section-code dark">[ 04 / COMMUNITY ]</div>
+          <h2>YOUR PLACE.<br>YOUR CREW.</h2>
           <p>Servidores, canais e chamadas para time, guilda, amigos ou aquela call que nunca acaba.</p>
           <a class="ink-link download-link" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">CRIAR MEU ESPAÇO <span>↘</span></a>
         </div>
@@ -199,11 +201,11 @@
     </section>
 
     <section class="security shell" id="seguranca">
-      <div class="section-code">[ 05 / PRIVACIDADE ]</div>
+      <div class="section-code">[ 05 / PRIVACY ]</div>
       <div class="security-grid">
         <div class="security-copy reveal">
-          <p class="overline">CONVERSA PRIVADA É PRIVADA.</p>
-          <h2>Sem espetáculo.<br>Sem discurso vazio.</h2>
+          <p class="overline">NO THEATER. NO EMPTY PROMISES.</p>
+          <h2>PRIVATE MEANS<br>PRIVATE.</h2>
           <p>O Mingrx usa criptografia ponta a ponta nas mensagens privadas compatíveis e mantém o produto simples o suficiente para você entender o que está acontecendo.</p>
         </div>
         <div class="security-seal reveal" aria-label="Mensagens protegidas e sincronização entre sessões">
@@ -215,7 +217,7 @@
 
     <section class="faq shell" id="faq">
       <div class="faq-intro reveal">
-        <div class="section-code">[ 06 / SEM ENROLAÇÃO ]</div>
+        <div class="section-code">[ 06 / FAQ ]</div>
         <h2>PERGUNTAS<br>RÁPIDAS.</h2>
       </div>
       <div class="faq-list reveal">
@@ -227,8 +229,8 @@
     </section>
 
     <section class="last-call shell reveal">
-      <div class="last-kicker">[ SUA PRÓXIMA CALL COMEÇA AQUI ]</div>
-      <h2>ENTRA.<br><span>CHAMA A GALERA.</span><br>FICA.</h2>
+      <div class="last-kicker">[ READY WHEN YOU ARE ]</div>
+      <h2>YOUR CREW.<br><span>ONE CLICK AWAY.</span></h2>
       <a class="cta cta-primary cta-large download-link" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">BAIXAR MINGRX <span>↘</span></a>
     </section>
   </main>
