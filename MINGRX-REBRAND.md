@@ -37,7 +37,7 @@ O instalador público da V3 usa:
 Mingrx-Setup-3.0.0-x64.exe
 ```
 
-O updater passa a publicar e consultar o repositório `rafaelmingroni/mingrx`.
+O updater passa a publicar e consultar o repositório `rafaelmingroni/mingrx-app`.
 
 ## Compatibilidade de convites
 
@@ -69,7 +69,7 @@ Uploads de imagem usam a mesma instância Firebase autenticada pelo aplicativo, 
 
 O lançamento da V3 inclui a migração do próprio repositório:
 
-- nome público do repositório: `mingrx`;
+- nome público do repositório: `mingrx-app`;
 - README totalmente refeito;
 - banner e identidade visual próprios;
 - landing pública de convites rebatizada;
