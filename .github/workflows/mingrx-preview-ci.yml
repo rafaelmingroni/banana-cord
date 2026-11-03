@@ -1,11 +1,14 @@
-name: Mingrx Preview Validation
+name: Mingrx Pre-release Validation
 
 on:
   push:
-    branches: [v3.0.0-mingrx-rebrand, v3.0.0-mingrx-ui-polish]
+    branches: [v3.0.0-mingrx-rebrand, v3.0.0-mingrx-ui-polish, release/mingrx-3.0.0]
     paths:
       - "desktop/**"
       - "firebase/**"
+      - "README.md"
+      - "RELEASE_NOTES-*.md"
+      - "docs/**"
       - ".github/workflows/mingrx-preview-ci.yml"
   workflow_dispatch:
 
@@ -13,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: mingrx-preview-${{ github.ref }}
+  group: mingrx-validation-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -43,7 +46,7 @@ jobs:
         working-directory: desktop
         run: npm run prepare:source
 
-      - name: Validate Mingrx brand and polish layers
+      - name: Validate Mingrx launch layers
         working-directory: desktop
         run: npm run smoke:mingrx
 
@@ -52,6 +55,8 @@ jobs:
         run: |
           node --check desktop/main-v120.js
           node --check desktop/v21-main.js
+          node --check desktop/src/cloud-v2-brand.js
+          node --check desktop/src/cloud-v2-storage.js
           node --check desktop/src/mingrx-shell.js
           node --check desktop/src/mingrx-themes.js
           node --check desktop/src/mingrx-polish.js
@@ -61,7 +66,9 @@ jobs:
           node --check desktop/src/mingrx-regression-guard.js
           node --check desktop/src/mingrx-media.js
           node --check desktop/src/mingrx-invite-fix.js
+          node --check desktop/src/v217-premium-updater.js
           node --check desktop/tray.js
+          node --check desktop/scripts/build-cloud-browser.js
           node --check desktop/scripts/generate-icons.js
           node --check desktop/scripts/verify-built-icon.js
           node --check desktop/scripts/smoke-mingrx-polish.js
@@ -84,7 +91,7 @@ jobs:
         working-directory: desktop
         run: npm run smoke:e2e-v2
 
-      - name: Inject production Firebase config for private preview
+      - name: Inject production Firebase config
         working-directory: desktop
         env:
           BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
@@ -100,22 +107,22 @@ jobs:
         working-directory: desktop
         run: npm run prepare:source
 
-      - name: Build private Mingrx Preview installer
+      - name: Build Mingrx validation installer
         working-directory: desktop
         run: npm run dist:win -- --publish never
 
-      - name: Verify private preview installer
+      - name: Verify Mingrx validation installer
         shell: pwsh
         run: |
-          $exe = Get-ChildItem "desktop/dist/Mingrx-Preview-Setup-*.exe" | Select-Object -First 1
-          if (-not $exe) { Write-Error "Instalador Mingrx Preview .exe não foi gerado."; exit 1 }
-          if ($exe.Length -lt 50000000) { Write-Error "Instalador Mingrx parece pequeno demais."; exit 1 }
-          Write-Host "Mingrx Preview installer: $($exe.Name) - $($exe.Length) bytes"
+          $exe = Get-ChildItem "desktop/dist/Mingrx*-Setup-*.exe" | Select-Object -First 1
+          if (-not $exe) { Write-Error "Mingrx installer .exe was not generated."; exit 1 }
+          if ($exe.Length -lt 50000000) { Write-Error "Mingrx installer is unexpectedly small."; exit 1 }
+          Write-Host "Mingrx validation installer: $($exe.Name) - $($exe.Length) bytes"
 
-      - name: Upload private preview artifact
+      - name: Upload Mingrx validation artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Mingrx-Preview-Windows-${{ github.sha }}
-          path: desktop/dist/Mingrx-Preview-Setup-*.exe
+          name: Mingrx-Windows-${{ github.sha }}
+          path: desktop/dist/Mingrx*-Setup-*.exe
           if-no-files-found: error
           retention-days: 7
