@@ -6,11 +6,15 @@ const files = Object.fromEntries(await Promise.all([
 
 const checks = [
   ['custom domain', files['CNAME'].trim() === 'mingrx.site'],
-  ['homepage title', files['index.html'].includes('Mingrx — Converse, jogue e compartilhe')],
+  ['homepage title', files['index.html'].includes('Mingrx — Entre na call. Chame a galera.')],
   ['editorial stylesheet', files['index.html'].includes('editorial-v3.css') && files['editorial-v3.css'].includes('--violet')],
   ['real ui stylesheet', files['index.html'].includes('real-ui-v4.css') && files['real-ui-v4.css'].includes('.real-workspace')],
   ['real private layout', files['index.html'].includes('class="real-private"') && files['index.html'].includes('Seu espaço privado') && files['index.html'].includes('Adicionar amigo')],
-  ['bilingual impact copy', files['index.html'].includes('NO DISTRACTIONS.') && files['index.html'].includes('JUST YOUR')],
+  ['Portuguese positioning', files['index.html'].includes('ENTRE NA') && files['index.html'].includes('CHAME A GALERA.') && files['index.html'].includes('O QUE SUA GALERA USA')],
+  ['no bilingual campaign copy', !files['index.html'].includes('NO DISTRACTIONS.') && !files['index.html'].includes('PRIVATE MEANS PRIVATE') && !files['index.html'].includes('YOUR CREW') && !files['app.js'].includes('MORNING ·')],
+  ['no fake performance claims', !files['index.html'].includes('--w:92%') && !files['index.html'].includes('BAIXO OVERHEAD') && !files['index.html'].includes('LOW NOISE') && !files['index.html'].includes('id="desempenho"')],
+  ['precise E2EE home copy', files['index.html'].includes('novas mensagens privadas são criptografadas de ponta a ponta') && files['index.html'].includes('Mensagens antigas podem ter sido criadas antes desse recurso')],
+  ['precise E2EE privacy copy', files['privacy.html'].includes('Novas mensagens privadas entre clientes compatíveis') && files['privacy.html'].includes('Mensagens antigas ou criadas por versões anteriores')],
   ['fictional public examples', !files['index.html'].includes('Gustavo') && !files['index.html'].includes('Ari')],
   ['dynamic download links', files['index.html'].includes('download-link') && files['app.js'].includes('/releases/latest')],
   ['invite compatibility', files['app.js'].includes("params.get('invite')") && files['invite.html'].includes('mingrx://join/')],
