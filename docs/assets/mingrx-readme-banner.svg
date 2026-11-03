@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 500" role="img" aria-labelledby="title desc">
+  <title id="title">Mingrx</title>
+  <desc id="desc">Mingrx — voice, chat and screen sharing built to stay light while you play.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#090a0f"/>
+      <stop offset="0.55" stop-color="#11131a"/>
+      <stop offset="1" stop-color="#171322"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#7c5cff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#7c5cff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9f8cff"/>
+      <stop offset="1" stop-color="#6e52ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="500" rx="40" fill="url(#bg)"/>
+  <circle cx="1320" cy="120" r="430" fill="url(#halo)"/>
+  <circle cx="145" cy="455" r="310" fill="url(#halo)" opacity="0.42"/>
+  <g transform="translate(120 108)">
+    <rect width="188" height="188" rx="48" fill="#0c0d11" stroke="#2a2d38" stroke-width="2"/>
+    <path d="M42 139V72c0-18 21-26 33-13l19 22 19-22c12-13 33-5 33 13v67" fill="none" stroke="url(#accent)" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g font-family="Segoe UI, Inter, Arial, sans-serif">
+    <text x="360" y="205" fill="#f5f7fb" font-size="104" font-weight="800" letter-spacing="-5">MINGRX</text>
+    <text x="365" y="270" fill="#b7bcc8" font-size="30" font-weight="500">voice · chat · screen sharing</text>
+    <text x="365" y="326" fill="#7f8795" font-size="22">Built to stay light while you play.</text>
+    <g transform="translate(365 365)" font-size="18" font-weight="650">
+      <rect x="0" y="0" width="185" height="46" rx="23" fill="#181a22" stroke="#303441"/>
+      <text x="92" y="30" fill="#d7dbea" text-anchor="middle">Electron</text>
+      <rect x="201" y="0" width="185" height="46" rx="23" fill="#181a22" stroke="#303441"/>
+      <text x="294" y="30" fill="#d7dbea" text-anchor="middle">Firebase</text>
+      <rect x="402" y="0" width="185" height="46" rx="23" fill="#181a22" stroke="#303441"/>
+      <text x="494" y="30" fill="#d7dbea" text-anchor="middle">WebRTC</text>
+      <rect x="603" y="0" width="240" height="46" rx="23" fill="#181a22" stroke="#303441"/>
+      <text x="723" y="30" fill="#d7dbea" text-anchor="middle">Windows · x64</text>
+    </g>
+  </g>
+</svg>
