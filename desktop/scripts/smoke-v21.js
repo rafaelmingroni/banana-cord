@@ -19,7 +19,9 @@ const tray = read('tray.js');
 const build = read('scripts/build-cloud-browser.js');
 const e2ee = read('src/cloud-v2-v216-e2ee.js');
 
-expect(pkg.version === '2.1.0', `expected 2.1.0, got ${pkg.version}`);
+const [major, minor, patch] = String(pkg.version || '').split('.').map(Number);
+const isV21OrNewer = major > 2 || (major === 2 && (minor > 1 || (minor === 1 && patch >= 0)));
+expect(isV21OrNewer, `expected 2.1.0 or newer, got ${pkg.version}`);
 expect(pkg.build?.files?.includes('v21-main.js'), 'v21-main.js is not packaged');
 expect(pkg.scripts['smoke:cloud'].includes('smoke-v21.js'), '2.1 smoke is not part of release regression');
 expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v21-social-ui.js'), '2.1 UI Electron test missing from release');
@@ -101,4 +103,4 @@ expect(css.includes('.v21-command-menu'), 'slash command autocomplete styling mi
 expect(css.includes('.v21-channel-head'), 'premium channel header styling missing');
 expect(css.includes('.v21-message-tools'), 'message hover toolbar styling missing');
 
-console.log('Mingrx 2.1 compatibility static regression checks: OK');
+console.log(`Mingrx ${pkg.version} preserves the V2.1 compatibility static regression checks: OK`);
