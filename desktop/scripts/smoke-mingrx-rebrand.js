@@ -16,6 +16,7 @@ const themesJs = read('src/mingrx-themes.js');
 const themeBootstrap = read('src/mingrx-theme-bootstrap.js');
 const svg = read('assets/mingrx.svg');
 const pkg = JSON.parse(read('package.json'));
+const lock = JSON.parse(read('package-lock.json'));
 const tray = read('tray.js');
 const v21Main = read('v21-main.js');
 
@@ -101,6 +102,13 @@ assert(svg.includes('viewBox="0 0 1024 1024"'), 'SVG oficial Mingrx precisa ser 
 assert(svg.includes('#7c5cff'), 'Cor principal Mingrx ausente do SVG.');
 
 assert(pkg.version === '3.0.0', 'Release Mingrx precisa estar em 3.0.0.');
+assert(lock.version === pkg.version && lock.packages?.['']?.version === pkg.version, 'package-lock precisa acompanhar a versão 3.0.0 do package.json.');
+for (const name of Object.keys(pkg.dependencies || {})) {
+  assert(name in (lock.packages?.['']?.dependencies || {}), `package-lock não contém a dependência ${name}.`);
+}
+for (const name of Object.keys(pkg.devDependencies || {})) {
+  assert(name in (lock.packages?.['']?.devDependencies || {}), `package-lock não contém a devDependency ${name}.`);
+}
 assert(pkg.build.productName === 'Mingrx', 'Produto final deve se chamar Mingrx.');
 assert(pkg.build.appId === 'com.bananacord.app', 'O appId histórico precisa ser preservado para manter o caminho de atualização.');
 assert(pkg.build.artifactName === 'Mingrx-Setup-${version}-${arch}.${ext}', 'Nome do instalador Mingrx final está incorreto.');
