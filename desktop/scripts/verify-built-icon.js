@@ -6,8 +6,8 @@ const sharp = require('sharp');
 
 async function main(){
   if(process.platform!=='win32'){console.log('Embedded Mingrx Windows icon verification skipped outside Windows.');return;}
-  const exePath=path.join(__dirname,'..','dist','win-unpacked','Mingrx Preview.exe');
-  if(!fs.existsSync(exePath))throw new Error(`Executável não encontrado: ${exePath}`);
+  const exePath=path.join(__dirname,'..','dist','win-unpacked','Mingrx.exe');
+  if(!fs.existsSync(exePath))throw new Error(`Executável Mingrx não encontrado: ${exePath}`);
   const pngPath=path.join(os.tmpdir(),`mingrx-embedded-icon-${process.pid}.png`);
   const escapedExe=exePath.replace(/'/g,"''"),escapedPng=pngPath.replace(/'/g,"''");
   const ps=`Add-Type -AssemblyName System.Drawing\n$icon=[System.Drawing.Icon]::ExtractAssociatedIcon('${escapedExe}')\nif($null -eq $icon){throw 'Não foi possível extrair o ícone.'}\n$bmp=$icon.ToBitmap()\n$bmp.Save('${escapedPng}',[System.Drawing.Imaging.ImageFormat]::Png)\n$bmp.Dispose()\n$icon.Dispose()`;
