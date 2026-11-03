@@ -6,19 +6,23 @@
   let watchedCardId = '';
 
   function repairCommunitySettings() {
-    const body = window.els?.modalBody || document.getElementById('modalBody');
+    const body = document.getElementById('modalBody');
+    const modalCard = document.querySelector('#modal > .modal-card');
     const root = body?.querySelector('.v219-role-settings');
-    if (!body || !root) return false;
+    if (!body || !root) {
+      modalCard?.classList.remove('mingrx-server-settings-modal');
+      return false;
+    }
 
-    const modalCard = root.closest('.modal-card');
     modalCard?.classList.add('mingrx-server-settings-modal');
 
     try { window.MingrxMedia?.injectCommunityPhotoCard?.(); } catch {}
 
     const card = body.querySelector('.mingrx-community-photo-card');
     const hero = root.querySelector(':scope > .v219-role-hero');
-    if (card && hero && card.parentElement !== root) hero.insertAdjacentElement('afterend', card);
-    else if (card && hero && card.previousElementSibling !== hero) hero.insertAdjacentElement('afterend', card);
+    if (card && hero && (card.parentElement !== root || card.previousElementSibling !== hero)) {
+      hero.insertAdjacentElement('afterend', card);
+    }
 
     if (card) {
       card.dataset.mingrx31Placement = 'fixed';
@@ -26,7 +30,6 @@
       if (choose) {
         choose.style.display = 'inline-flex';
         choose.style.visibility = 'visible';
-        choose.disabled = false;
       }
     }
     return !!card;
@@ -42,6 +45,7 @@
   if (modalBody) {
     new MutationObserver(() => {
       if (modalBody.querySelector('.v219-role-settings')) scheduleCommunityRepair();
+      else document.querySelector('#modal > .modal-card')?.classList.remove('mingrx-server-settings-modal');
     }).observe(modalBody, { childList:true, subtree:true });
   }
 
