@@ -6,6 +6,18 @@
   if (window.__mingrxObsidianLoaded) return;
   window.__mingrxObsidianLoaded = true;
 
+  // Preserve the responsive shell contract already covered by the Electron layout E2E.
+  // The redesign may change treatment, spacing and hierarchy, but not reduce usable chat width.
+  const responsiveStyle = document.createElement('style');
+  responsiveStyle.dataset.mingrxObsidianResponsive = 'true';
+  responsiveStyle.textContent = `
+    body.mingrx-ui .app.dm-mode{--mx-private-sidebar:296px}
+    @media(max-width:1100px){body.mingrx-ui .app.dm-mode{--mx-private-sidebar:276px}}
+    @media(max-width:900px){body.mingrx-ui .app.dm-mode{--mx-private-sidebar:256px}}
+    @media(max-width:760px){body.mingrx-ui .app.dm-mode{--mx-private-sidebar:238px}}
+  `;
+  document.head.appendChild(responsiveStyle);
+
   const ICONS = {
     users:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
     message:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>',
