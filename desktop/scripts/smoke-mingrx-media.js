@@ -21,6 +21,8 @@ assert(html.indexOf('mingrx-media.js') > html.indexOf('mingrx-regression-guard.j
 assert(html.indexOf('mingrx-invite-fix.js') > html.indexOf('mingrx-media.js'), 'Invite fix precisa ser a última camada funcional.');
 
 assert(media.includes("require('firebase/storage')"), 'Anexos não usam Firebase Storage.');
+assert(media.includes('window.BananaCloud?.auth?.app'), 'Storage não está ligado à instância Firebase já inicializada pelo Mingrx Cloud.');
+assert(media.includes('getStorage(firebaseApp)'), 'Upload pode criar uma instância Firebase Storage fora do app ativo.');
 assert(media.includes('uploadBytes') && media.includes('getDownloadURL'), 'Upload de imagem está incompleto.');
 assert(media.includes('[[MINGRX_IMAGE_V1:'), 'Marcador de imagem versionado ausente.');
 assert(media.includes("'dm:send'") && media.includes("'message:send'"), 'Imagem não atende DM e comunidade.');
