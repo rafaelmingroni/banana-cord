@@ -32,6 +32,12 @@ A tela de configurações da comunidade também foi corrigida:
 - card da foto posicionado corretamente abaixo do cabeçalho, em vez de ficar preso dentro da área de título;
 - layout responsivo para janelas menores.
 
+### Identidade correta na sala de voz
+
+A lista de participantes da call agora resolve o nome atual diretamente pelo perfil/membro da comunidade, em vez de depender apenas do nome que ficou cacheado na sessão de voz.
+
+Isso corrige casos em que participantes apareciam com rótulos incorretos, como **“Comunidade”**, no lugar do próprio nome.
+
 ### Parar de assistir a uma transmissão
 
 Ao escolher **Assistir transmissão**, a transmissão focada agora recebe um botão visível **✕ Parar de assistir**.
@@ -43,6 +49,12 @@ Ao clicar nele:
 - o usuário continua na sala de voz;
 - não é necessário sair da call para parar de assistir.
 
+### Compartilhamento encerrado não congela mais o último frame
+
+Quando o transmissor encerra a tela, o cliente remoto agora limpa explicitamente o player caso `screen` e `camera` estejam desligados.
+
+Isso evita o comportamento em que o último frame da transmissão permanecia parado, parecendo uma live travada. O card volta imediatamente para o avatar do participante.
+
 ### Firebase e CI simplificados
 
 - `firebase.json` agora declara apenas Firestore e Realtime Database;
@@ -50,7 +62,7 @@ Ao clicar nele:
 - `storage.rules` foi removido da configuração atual;
 - os testes garantem que `firebase/storage`, `getStorage`, `uploadBytes` e `getDownloadURL` não voltem ao runtime Spark;
 - a validação da configuração de produção não exige mais `storageBucket`;
-- E2E agora verifica o posicionamento/visibilidade da foto da comunidade e o fluxo **Parar de assistir**.
+- E2E verifica o posicionamento/visibilidade da foto da comunidade, nomes corretos na call, o fluxo **Parar de assistir** e a limpeza de vídeo após o fim de uma transmissão.
 
 ## Compatibilidade
 
