@@ -547,13 +547,58 @@
     }
   }
 
-  let started=false;
+  let started = false;
+  let bootInFlight = false;
+  let activeSocket = null;
+  let lastBootError = null;
+
   async function boot(event) {
-    if(started)return;const cloud=window.BananaCloud;if(!cloud?.ready||!cloud?.user)return;started=true;
-    try{
-      const socket=new BananaCloudSocket(cloud);window.BananaLegacy?.attachSocket(socket,cloud.user);await socket.start();
-    }catch(error){started=false;console.error('Banana Cloud socket boot:',error);window.BananaLegacy?.toast?.(error?.message||'Falha ao iniciar Banana Cloud.',6000);}
+    const cloud = window.BananaCloud;
+    if (!cloud?.ready || !cloud?.user || started || bootInFlight) return;
+    bootInFlight = true;
+    started = true;
+    let socket = null;
+    try {
+      socket = new BananaCloudSocket(cloud);
+      activeSocket = socket;
+      window.BananaLegacy?.attachSocket(socket, cloud.user);
+      await socket.start();
+      lastBootError = null;
+    } catch (error) {
+      started = false;
+      lastBootError = error;
+      console.error('Banana Cloud socket boot:', error);
+      try { await socket?.disconnect?.(); } catch (cleanupError) {
+        console.warn('Banana Cloud socket cleanup:', cleanupError);
+      }
+      if (activeSocket === socket) activeSocket = null;
+      if (window.BananaCloudSocket === socket) window.BananaCloudSocket = null;
+      window.BananaLegacy?.toast?.(error?.message || 'Falha ao iniciar Banana Cloud.', 6000);
+    } finally {
+      bootInFlight = false;
+    }
   }
-  window.addEventListener('banana:cloud-ready',boot);
-  if(window.BananaCloud?.ready)queueMicrotask(boot);
+
+  // The Firebase snapshot listener may never deliver the first auth:ready
+  // event. Replaying cloud-ready alone cannot recover: started remains true.
+  // Recovery explicitly tears down the incomplete socket and starts again.
+  window.BananaCloudRestartBoot = async function restartCloudBoot() {
+    const shell = document.getElementById('app');
+    if (shell && !shell.classList.contains('hidden')) return { ok: true, alreadyReady: true };
+    if (bootInFlight) return { ok: false, reason: 'boot-in-flight' };
+    const stale = activeSocket;
+    started = false;
+    activeSocket = null;
+    if (stale) {
+      try { await stale.disconnect(); } catch (error) {
+        console.warn('Banana Cloud restart cleanup:', error);
+      }
+      if (window.BananaCloudSocket === stale) window.BananaCloudSocket = null;
+    }
+    await boot();
+    return { ok: started, error: lastBootError?.message || '' };
+  };
+
+  window.addEventListener('banana:cloud-ready', boot);
+  if (window.BananaCloud?.ready) queueMicrotask(boot);
 })();
