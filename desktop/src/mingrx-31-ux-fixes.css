@@ -61,7 +61,6 @@ body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-actions{
 }
 
 body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-actions button{
-  display:inline-flex!important;
   width:auto!important;
   min-width:110px!important;
   min-height:34px!important;
@@ -70,6 +69,8 @@ body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-actions but
   visibility:visible!important;
   opacity:1!important;
 }
+body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-actions button:not(.hidden){display:inline-flex!important}
+body.mingrx-ui .mingrx-server-settings-modal .mingrx-community-photo-actions button.hidden{display:none!important}
 
 body.mingrx-ui .video-card.mingrx-watching-stream{
   outline:2px solid var(--mx-accent)!important;
