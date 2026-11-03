@@ -1,6 +1,6 @@
 # Mingrx 3.1.0
 
-Mingrx 3.1 ajusta a camada de mídia para manter o projeto compatível com o plano gratuito **Firebase Spark**, sem exigir billing para os recursos principais.
+Mingrx 3.1 ajusta a camada de mídia para manter o projeto compatível com o plano gratuito **Firebase Spark**, sem exigir billing para os recursos principais, e corrige pontos de uso encontrados logo após a estreia da V3.
 
 ## Destaques
 
@@ -20,9 +20,28 @@ O botão de anexo de imagem e o envio de screenshots pelo clipboard foram removi
 
 Mensagens de imagem eventualmente criadas pela 3.0 continuam podendo ser exibidas para preservar compatibilidade, mas a 3.1 não oferece novo upload de imagens.
 
-### Foto da comunidade continua gratuita
+### Foto da comunidade corrigida e mantida no plano gratuito
 
-A foto da comunidade continua disponível. A imagem é compactada de forma agressiva e salva como um data URL pequeno no documento já usado pela comunidade no Firestore, sem Firebase Storage.
+A foto da comunidade continua disponível sem Storage. A imagem é compactada e salva como um data URL pequeno no documento já usado pela comunidade no Firestore.
+
+A tela de configurações da comunidade também foi corrigida:
+
+- painel mais largo e confortável;
+- prévia da foto visível;
+- botão **Escolher foto / Trocar foto** visível;
+- card da foto posicionado corretamente abaixo do cabeçalho, em vez de ficar preso dentro da área de título;
+- layout responsivo para janelas menores.
+
+### Parar de assistir a uma transmissão
+
+Ao escolher **Assistir transmissão**, a transmissão focada agora recebe um botão visível **✕ Parar de assistir**.
+
+Ao clicar nele:
+
+- o foco exclusivo da transmissão é encerrado;
+- a grade normal da call volta a aparecer;
+- o usuário continua na sala de voz;
+- não é necessário sair da call para parar de assistir.
 
 ### Firebase e CI simplificados
 
@@ -30,7 +49,8 @@ A foto da comunidade continua disponível. A imagem é compactada de forma agres
 - testes de regras usam somente os emuladores desses dois serviços;
 - `storage.rules` foi removido da configuração atual;
 - os testes garantem que `firebase/storage`, `getStorage`, `uploadBytes` e `getDownloadURL` não voltem ao runtime Spark;
-- a validação da configuração de produção não exige mais `storageBucket`.
+- a validação da configuração de produção não exige mais `storageBucket`;
+- E2E agora verifica o posicionamento/visibilidade da foto da comunidade e o fluxo **Parar de assistir**.
 
 ## Compatibilidade
 
