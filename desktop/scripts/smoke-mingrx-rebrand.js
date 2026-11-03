@@ -9,6 +9,7 @@ const html = read('src/index.html');
 const css = read('src/mingrx-rebrand.css');
 const shell = read('src/mingrx-shell.js');
 const polish = read('src/mingrx-polish.js');
+const regressionGuard = read('src/mingrx-regression-guard.js');
 const updaterCompat = read('src/mingrx-updater-compat.js');
 const themesCss = read('src/mingrx-themes.css');
 const themeA11yCss = read('src/mingrx-theme-a11y.css');
@@ -42,6 +43,8 @@ assert(shell.includes('.banana-updater-logo img'), 'Updater ainda pode exibir o 
 assert(!shell.includes("chip.textContent = 'Preview'"), 'Shell final ainda exibe selo Preview.');
 assert(polish.includes("DISPLAY_VERSION = '3.0.0'"), 'Configurações não exibem a versão final Mingrx 3.0.0.');
 assert(!polish.includes('Preview · v2.1.0'), 'Texto legado de preview ainda existe na camada final.');
+assert(regressionGuard.includes("const VERSION = '3.0.0'"), 'Guard final ainda não fixa a identidade visual em Mingrx 3.0.0.');
+assert(!regressionGuard.includes('Preview · v2.1.0'), 'Guard final ainda pode reintroduzir o selo Preview.');
 assert(v21Main.includes("PRODUCT_NAME = 'Mingrx'"), 'Inicialização do Windows ainda não usa o nome final Mingrx.');
 
 assert(themeBootstrap.includes("'system'"), 'Tema Sistema não é inicializado antes do primeiro paint.');
