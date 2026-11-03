@@ -2,18 +2,22 @@
 
 Arquitetura planejada: domínio na Hostinger + hospedagem GitHub Pages + releases do GitHub. **Nenhum serviço pago adicional é necessário.**
 
-> Registros do GitHub Pages conferidos na documentação oficial em 03/11/2026. Revalidar antes de qualquer mudança futura de DNS.
+> Registros e fluxo conferidos na documentação oficial do GitHub Pages em 03/11/2026. Revalidar antes de qualquer mudança futura de DNS.
 
 ## Ordem segura de publicação
 
 1. Manter a PR do site em draft enquanto o domínio ainda aponta para a página estacionada da Hostinger.
-2. Em `Settings > Pages` do repositório `rafaelmingroni/mingrx-app`, definir o domínio personalizado como `mingrx.site`.
-3. No editor de DNS da Hostinger, remover registros de estacionamento conflitantes para `@`/`www` e criar os registros abaixo.
-4. Aguardar o GitHub reconhecer a configuração DNS.
-5. Tornar a PR do site pronta e fazer o merge em `main`.
-6. Confirmar o workflow `Deploy Mingrx site` concluído com sucesso.
-7. Validar `https://mingrx.site`, `https://www.mingrx.site`, download da versão mais recente e links `?invite=`.
-8. Ativar `Enforce HTTPS` no GitHub Pages quando a opção estiver disponível.
+2. **Verificar o domínio na conta pessoal do GitHub**: `Profile Settings > Pages > Add a domain`, informar `mingrx.site` e copiar o registro TXT de verificação que o GitHub gerar.
+3. Adicionar esse TXT no editor DNS da Hostinger e concluir `Verify` no GitHub. Manter o TXT permanentemente.
+4. Em `Settings > Pages` do repositório `rafaelmingroni/mingrx-app`, definir o domínio personalizado como `mingrx.site`.
+5. No editor de DNS da Hostinger, remover registros de estacionamento conflitantes para `@`/`www` e criar os registros abaixo.
+6. Aguardar o GitHub reconhecer a configuração DNS.
+7. Tornar a PR do site pronta e fazer o merge em `main`.
+8. Confirmar o workflow `Deploy Mingrx site` concluído com sucesso.
+9. Validar `https://mingrx.site`, `https://www.mingrx.site`, download da versão mais recente e links `?invite=`.
+10. Ativar `Enforce HTTPS` no GitHub Pages quando a opção estiver disponível.
+
+A verificação no nível da conta é recomendada pelo GitHub para impedir que outra conta tente usar seu domínio em outro site GitHub Pages.
 
 ## DNS do domínio raiz
 
@@ -43,5 +47,6 @@ Com `mingrx.site` configurado como domínio personalizado, o GitHub Pages pode r
 - Não usar registro curinga `*` para o domínio.
 - Não contratar hospedagem da Hostinger para este site.
 - O arquivo `site/CNAME` é mantido como documentação do domínio, mas o deploy usa GitHub Actions; portanto o domínio personalizado também precisa ser configurado em `Settings > Pages`.
-- Alterações de DNS podem levar tempo para propagar; não remover a página atual nem alterar o fluxo de convites antes de verificar o domínio.
+- Alterações de DNS podem levar até 24 horas para propagação, embora muitas ocorram antes.
+- Não remover a página atual nem alterar o fluxo de convites antes de verificar o domínio.
 - Os links de download da home consultam a release mais recente do GitHub e caem para `/releases/latest` se a API não responder.
