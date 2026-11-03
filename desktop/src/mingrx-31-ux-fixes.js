@@ -1,9 +1,60 @@
-/* Mingrx 3.1 — community settings, voice identity and stream watching UX. */
+/* Mingrx 3.1 — community settings, server photos, voice identity and stream watching UX. */
 (() => {
   if (window.__mingrx31UxFixesLoaded) return;
   window.__mingrx31UxFixesLoaded = true;
 
   let watchedCardId = '';
+
+  function safeServerIcon(value) {
+    const icon = String(value || '').trim();
+    if (!icon) return '';
+    if (/^data:image\/(?:png|jpeg|webp);base64,/i.test(icon)) return icon;
+    try {
+      const url = new URL(icon);
+      return url.protocol === 'https:' ? url.toString() : '';
+    } catch {
+      return '';
+    }
+  }
+
+  function renderServerButtonsWithPhotos() {
+    if (!els?.serverList) return;
+    els.homeServer?.classList.toggle('active', state.viewMode === 'dm');
+    els.serverList.innerHTML = '';
+    for (const server of state.servers || []) {
+      const button = document.createElement('button');
+      button.className = 'server-icon mingrx-community-button' + (state.viewMode === 'server' && state.selectedServer?.id === server.id ? ' active' : '');
+      button.title = server.name || 'Comunidade';
+      button.setAttribute('aria-label', server.name || 'Comunidade');
+      button.dataset.serverId = String(server.id || '');
+
+      const icon = safeServerIcon(server.icon);
+      if (icon) {
+        button.classList.add('mingrx-community-button-has-photo');
+        button.style.backgroundImage = `url("${icon.replace(/"/g, '%22')}")`;
+        button.style.backgroundSize = 'cover';
+        button.style.backgroundPosition = 'center';
+        button.style.backgroundRepeat = 'no-repeat';
+        button.textContent = '';
+      } else {
+        button.style.backgroundImage = '';
+        button.textContent = String(server.name || 'M').trim().slice(0, 2).toUpperCase();
+      }
+
+      button.addEventListener('click', () => selectServer(server.id));
+      els.serverList.appendChild(button);
+    }
+  }
+
+  if (typeof renderServers === 'function' && !renderServers.__mingrx31PhotoWrapped) {
+    renderServers = function renderServersMingrx31() {
+      renderServerButtonsWithPhotos();
+    };
+    renderServers.__mingrx31PhotoWrapped = true;
+    setTimeout(() => {
+      try { renderServers(); } catch {}
+    }, 0);
+  }
 
   function repairCommunitySettings() {
     const body = document.getElementById('modalBody');
@@ -224,6 +275,8 @@
 
   window.Mingrx31UX = Object.freeze({
     repairCommunitySettings,
+    renderServerButtonsWithPhotos,
+    safeServerIcon,
     markWatchingCard,
     stopWatching,
     canonicalVoiceUser,
