@@ -1,15 +1,16 @@
 # Mingrx Cloud
 
-A camada Cloud do Mingrx existe para que comunidades, contas e mensagens continuem disponíveis sem depender de um usuário específico hospedar a sessão.
+A camada Cloud do Mingrx existe para que contas, comunidades e mensagens continuem disponíveis sem depender de um usuário específico hospedar a sessão.
 
-## Arquitetura
+## Arquitetura Spark-first
 
-O sistema é dividido em quatro blocos principais:
+A Mingrx 3.1 usa três serviços Firebase na produção:
 
 - **Firebase Authentication** — conta, login, verificação de e-mail e recuperação de senha;
-- **Cloud Firestore** — comunidades, membros, canais, mensagens, DMs e dados persistentes;
-- **Realtime Database** — presença e sinalização em tempo real;
-- **Firebase Storage** — fotos de comunidades e anexos de imagem.
+- **Cloud Firestore** — comunidades, membros, canais, mensagens, DMs, perfis e fotos compactadas de comunidade;
+- **Realtime Database** — presença e sinalização em tempo real.
+
+O projeto permanece no plano **Firebase Spark**. A Mingrx 3.1 não inicializa nem depende de Firebase Storage.
 
 Áudio, webcam e compartilhamento de tela continuam em **WebRTC**. O Firebase não é usado como transporte de mídia pesada das calls.
 
@@ -39,44 +40,41 @@ dmThreads/{uidA_uidB}/messages/{messageId}
 
 Realtime Database:
 presence/{uid}
-signaling/{roomId}
-
-Firebase Storage:
-mingrx/community-icons/{uid}/...
-mingrx/chat-media/{uid}/...
+sessionOwners/{sessionId}
+voiceRooms/{roomId}/{channelId}/{sessionId}
+signals/{targetSession}/{signalId}
 ```
 
-## Firebase Storage
+## Fotos de comunidade
 
-A V3 usa Storage para dois tipos de mídia:
+A foto da comunidade continua disponível na 3.1 sem Firebase Storage.
 
-- fotos de comunidade;
-- imagens enviadas em canais ou DMs.
+O cliente:
 
-Antes do upload, o cliente compacta a imagem. As regras de Storage exigem:
+1. valida PNG, JPG ou WebP;
+2. reduz a dimensão da imagem;
+3. compacta para WebP/JPEG;
+4. converte o resultado em um data URL pequeno;
+5. salva esse valor no documento já usado pela comunidade no Firestore.
 
-- usuário autenticado;
-- e-mail verificado;
-- UID do usuário compatível com o caminho do objeto;
-- MIME permitido (`png`, `jpeg` ou `webp`);
-- tamanho dentro do limite configurado.
+O limite é propositalmente conservador para não aproximar o documento do limite máximo do Firestore.
 
-As regras ficam em:
+## Imagens em chat e DM
 
-```text
-firebase/storage.rules
-```
+Novos uploads de imagem em canais e mensagens privadas foram removidos na 3.1 porque exigiriam uma camada de armazenamento de objetos. Como o projeto adota Spark, esse recurso não faz parte da arquitetura atual.
+
+A camada de compatibilidade ainda sabe renderizar marcadores de imagem da 3.0 caso algum exista, mas a 3.1 não cria novos uploads.
 
 ## Firestore e Realtime Database
 
-As regras estão em:
+As regras oficiais estão em:
 
 ```text
 firebase/firestore.rules
 firebase/database.rules.json
 ```
 
-O arquivo principal do Firebase referencia todos os conjuntos de regras:
+O arquivo principal referencia apenas esses dois serviços:
 
 ```text
 firebase/firebase.json
@@ -90,7 +88,7 @@ O build injeta a configuração pública do projeto Firebase em:
 desktop/cloud/firebase-config.js
 ```
 
-Campos esperados:
+Campos usados pelos serviços atuais incluem:
 
 ```js
 module.exports = {
@@ -98,13 +96,12 @@ module.exports = {
   authDomain: '',
   projectId: '',
   databaseURL: '',
-  storageBucket: '',
   messagingSenderId: '',
   appId: ''
 };
 ```
 
-A configuração identifica o projeto, mas **não substitui regras de segurança**. Proteção real depende de Authentication + Rules.
+A configuração identifica o projeto, mas **não substitui regras de segurança**. A proteção real depende de Authentication + Rules.
 
 ## CI e validação
 
@@ -113,13 +110,12 @@ Antes de uma release oficial, a pipeline valida:
 - sintaxe e build do cliente;
 - regras do Firestore;
 - regras do Realtime Database;
-- regras do Storage;
+- ausência de dependência de Firebase Storage no runtime Spark;
 - fluxos Cloud principais;
-- mídia e convites;
+- convites e social;
 - regressões de UI;
-- interação real via Electron.
-
-Quando a credencial de deploy estiver configurada, o workflow oficial também publica as regras validadas no projeto Firebase de produção.
+- interação real via Electron;
+- geração do instalador.
 
 ## WebRTC
 
@@ -133,4 +129,4 @@ O Realtime Database participa da sinalização, mas não carrega o fluxo bruto d
 
 ## Compatibilidade histórica
 
-O Mingrx nasceu da evolução do Banana Cord V2 Cloud. Alguns identificadores internos podem continuar usando nomes antigos quando isso reduz risco de migração. Novas interfaces, documentação e recursos públicos devem usar a marca Mingrx.
+O Mingrx nasceu da evolução do Banana Cord V2 Cloud. Alguns identificadores internos continuam usando nomes antigos para preservar atualização, dados e compatibilidade. Novas interfaces, documentação e recursos públicos usam a marca Mingrx.
