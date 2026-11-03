@@ -1,4 +1,4 @@
-name: Mingrx Preview Validation
+name: Mingrx V3 Validation
 
 on:
   push:
@@ -14,27 +14,32 @@ permissions:
   contents: read
 
 concurrency:
-  group: mingrx-preview-${{ github.ref }}
+  group: mingrx-v3-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   validate:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: desktop/package-lock.json
-      - uses: actions/setup-java@v4
+
+      - name: Setup Java for Firebase emulators
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
 
-      - name: Install dependencies
+      - name: Install exact dependencies
         working-directory: desktop
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Critical production dependency audit
         working-directory: desktop
@@ -44,7 +49,7 @@ jobs:
         working-directory: desktop
         run: npm run prepare:source
 
-      - name: Validate Mingrx brand and polish layers
+      - name: Validate Mingrx brand and release identity
         working-directory: desktop
         run: npm run smoke:mingrx
 
@@ -62,9 +67,11 @@ jobs:
           node --check desktop/src/mingrx-regression-guard.js
           node --check desktop/src/mingrx-media.js
           node --check desktop/src/mingrx-invite-fix.js
+          node --check desktop/src/mingrx-updater-compat.js
           node --check desktop/tray.js
           node --check desktop/scripts/generate-icons.js
           node --check desktop/scripts/verify-built-icon.js
+          node --check desktop/scripts/smoke-mingrx-rebrand.js
           node --check desktop/scripts/smoke-mingrx-polish.js
           node --check desktop/scripts/smoke-mingrx-media.js
           node --check desktop/scripts/e2e-mingrx-layout.js
@@ -73,7 +80,7 @@ jobs:
           node --check desktop/scripts/e2e-mingrx-media-invite.js
           node --check desktop/scripts/e2e-v2-release.js
 
-      - name: Existing cloud/UI regression suite
+      - name: Cloud and UI regression suite
         working-directory: desktop
         run: npm run smoke:cloud
 
@@ -81,11 +88,11 @@ jobs:
         working-directory: desktop
         run: npm run smoke:rules
 
-      - name: Existing Electron interaction suite
+      - name: Electron interaction suite
         working-directory: desktop
         run: npm run smoke:e2e-v2
 
-      - name: Inject production Firebase config for private preview
+      - name: Inject production Firebase config for release-candidate build
         working-directory: desktop
         env:
           BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
@@ -101,11 +108,11 @@ jobs:
         working-directory: desktop
         run: npm run prepare:source
 
-      - name: Build private Mingrx 3.0 installer
+      - name: Build Mingrx 3.0 release-candidate installer
         working-directory: desktop
         run: npm run dist:win -- --publish never
 
-      - name: Verify private Mingrx 3.0 installer
+      - name: Verify Mingrx 3.0 release-candidate installer
         shell: pwsh
         run: |
           $exe = Get-ChildItem "desktop/dist/Mingrx-Setup-3.0.0-*.exe" | Select-Object -First 1
@@ -113,7 +120,7 @@ jobs:
           if ($exe.Length -lt 50000000) { Write-Error "Instalador Mingrx parece pequeno demais."; exit 1 }
           Write-Host "Mingrx 3.0 installer: $($exe.Name) - $($exe.Length) bytes"
 
-      - name: Upload private Mingrx 3.0 artifact
+      - name: Upload Mingrx 3.0 release-candidate artifact
         uses: actions/upload-artifact@v4
         with:
           name: Mingrx-3.0-Windows-${{ github.sha }}
