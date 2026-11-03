@@ -34,6 +34,20 @@
   bindStateSound(document.getElementById('deafenBtn'), 'deafened', 'soundDeafen', 'deafen', 'undeafen');
 
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+  function withAuthDeadline(promise, stage, timeoutMs = 12000) {
+    let timer;
+    return Promise.race([
+      Promise.resolve(promise),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          const error = new Error('O Firebase não respondeu durante ' + stage + '. Verifique a conexão e copie o diagnóstico.');
+          error.code = 'auth/timeout';
+          window.BananaCloudBootIssue = { stage, code: error.code };
+          reject(error);
+        }, timeoutMs);
+      })
+    ]).finally(() => clearTimeout(timer));
+  }
   const gate = () => document.getElementById('cloudGate');
   const authPanel = () => document.getElementById('cloudAuth');
   const verifyPanel = () => document.getElementById('cloudVerify');
@@ -57,12 +71,31 @@
       actions = document.createElement('div');
       actions.id = 'cloudBootActions';
       actions.className = 'cloud-actions hidden';
-      actions.innerHTML = '<button id="cloudBootRetry" class="primary" type="button">Tentar novamente</button><button id="cloudBootLogout" type="button">Usar outra conta</button>';
+      actions.innerHTML = '<button id="cloudBootRetry" class="primary" type="button">Tentar novamente</button><button id="cloudBootCopy" type="button">Copiar diagnóstico</button><button id="cloudBootLogout" type="button">Usar outra conta</button>';
       loading.appendChild(actions);
 
       document.getElementById('cloudBootRetry')?.addEventListener('click', () => {
         const user = window.BananaCloud?.auth?.currentUser;
         if (user) recoverVerifiedBoot(user, { source: 'retry' });
+      });
+      document.getElementById('cloudBootCopy')?.addEventListener('click', () => {
+        const issue = window.BananaCloudBootIssue || {};
+        const safe = [
+          'Mingrx Cloud startup diagnostic',
+          'Etapa: ' + String(issue.stage || window.BananaCloudBootStage || 'unknown'),
+          'Codigo: ' + String(issue.code || 'unknown'),
+          'E-mail verificado: ' + String(!!window.BananaCloud?.auth?.currentUser?.emailVerified),
+          'Interface visivel: ' + String(appShell()?.classList.contains('hidden') === false),
+          'Data UTC: ' + new Date().toISOString()
+        ].join('\\n');
+        try {
+          require('electron').clipboard.writeText(safe);
+          document.getElementById('cloudBootCopy').textContent = 'Diagnóstico copiado';
+        } catch (error) {
+          console.warn('Mingrx diagnostic copy failed:', error);
+          const node = document.getElementById('cloudBootError');
+          if (node) node.textContent += '\\n' + safe;
+        }
       });
       document.getElementById('cloudBootLogout')?.addEventListener('click', () => window.BananaCloud?.signOut?.());
     }
@@ -152,7 +185,7 @@
     window.BananaCloudBootStage = 'auth-reload';
 
     try {
-      await user.reload();
+      await withAuthDeadline(user.reload(), 'auth-reload');
       if (!user.emailVerified) {
         showVerificationState(user);
         return;
@@ -161,7 +194,7 @@
       // Critical: refresh the ID token so Firestore/RTDB rules see
       // request.auth.token.email_verified === true immediately.
       window.BananaCloudBootStage = 'token-refresh';
-      const token = await user.getIdTokenResult(true);
+      const token = await withAuthDeadline(user.getIdTokenResult(true), 'token-refresh');
       if (token?.claims?.email_verified !== true) {
         const stale = new Error('A sessão autenticada ainda não recebeu a confirmação do e-mail.');
         stale.code = 'auth/email-verification-token-stale';
