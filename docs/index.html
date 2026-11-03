@@ -29,7 +29,7 @@
       <p id="status" class="status">Preparando seu convite…</p>
       <div class="actions">
         <a id="openApp" class="btn primary" href="#">Abrir Mingrx</a>
-        <a id="download" class="btn" href="https://github.com/rafaelmingroni/mingrx/releases/latest">Baixar Mingrx</a>
+        <a id="download" class="btn" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">Baixar Mingrx</a>
       </div>
       <small class="hint">Se o Mingrx já estiver instalado, o convite abre diretamente no aplicativo. Caso contrário, você pode baixar a versão mais recente para Windows.</small>
     </section>
@@ -53,9 +53,9 @@
   open.href=deep;
   status.textContent='Tentando abrir o Mingrx…';
   let leftPage=false;
-  let downloadUrl='https://github.com/rafaelmingroni/mingrx/releases/latest';
+  let downloadUrl='https://github.com/rafaelmingroni/mingrx-app/releases/latest';
   document.addEventListener('visibilitychange',()=>{if(document.hidden)leftPage=true});
-  fetch('https://api.github.com/repos/rafaelmingroni/mingrx/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
+  fetch('https://api.github.com/repos/rafaelmingroni/mingrx-app/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
     .then(r=>r.ok?r.json():Promise.reject())
     .then(release=>{
       const asset=(release.assets||[]).find(a=>/^Mingrx-Setup-.*-x64\.exe$/i.test(a.name));
