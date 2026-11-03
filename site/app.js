@@ -4,4 +4,9 @@ const menuButton=document.querySelector('.mobile-menu');const nav=document.query
 
 const year=document.getElementById('year');if(year)year.textContent=new Date().getFullYear();
 
-fetch('https://api.github.com/repos/rafaelmingroni/mingrx-app/releases/latest',{headers:{Accept:'application/vnd.github+json'}}).then(r=>r.ok?r.json():Promise.reject()).then(release=>{const asset=(release.assets||[]).find(a=>/^Mingrx-Setup-.*-x64\.exe$/i.test(a.name));if(!asset?.browser_download_url)return;document.querySelectorAll('a[href*="/releases/latest/download/"]').forEach(link=>{link.href=asset.browser_download_url});document.querySelectorAll('.release-note').forEach(note=>{const version=String(release.tag_name||'').replace(/^v/i,'');if(version)note.textContent=`Mingrx ${version} · Windows 10/11 · Atualizações automáticas · Grátis`})}).catch(()=>{});
+const downloadLinks=[...document.querySelectorAll('.download-link')];downloadLinks.forEach(link=>link.dataset.loading='true');
+fetch('https://api.github.com/repos/rafaelmingroni/mingrx-app/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
+  .then(r=>r.ok?r.json():Promise.reject(new Error('release unavailable')))
+  .then(release=>{const asset=(release.assets||[]).find(a=>/^Mingrx-Setup-.*-x64\.exe$/i.test(a.name));if(asset?.browser_download_url){downloadLinks.forEach(link=>{link.href=asset.browser_download_url;link.removeAttribute('target')})}const version=String(release.tag_name||'').replace(/^v/i,'');if(version){document.querySelectorAll('.release-note').forEach(note=>{note.textContent=`Mingrx ${version} · Windows 10/11 · Atualizações automáticas · Grátis`})}})
+  .catch(()=>{})
+  .finally(()=>downloadLinks.forEach(link=>delete link.dataset.loading));
