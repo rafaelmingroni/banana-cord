@@ -1,13 +1,17 @@
 import { readFile } from 'node:fs/promises';
 
 const files = Object.fromEntries(await Promise.all([
-  'index.html','app.js','editorial-v3.css','invite.html','privacy.html','terms.html','support.html','CNAME','robots.txt','sitemap.xml'
+  'index.html','app.js','editorial-v3.css','real-ui-v4.css','invite.html','privacy.html','terms.html','support.html','CNAME','robots.txt','sitemap.xml'
 ].map(async name => [name, await readFile(new URL(`./${name}`, import.meta.url), 'utf8')])));
 
 const checks = [
   ['custom domain', files['CNAME'].trim() === 'mingrx.site'],
   ['homepage title', files['index.html'].includes('Mingrx — Converse, jogue e compartilhe')],
   ['editorial stylesheet', files['index.html'].includes('editorial-v3.css') && files['editorial-v3.css'].includes('--violet')],
+  ['real ui stylesheet', files['index.html'].includes('real-ui-v4.css') && files['real-ui-v4.css'].includes('.real-workspace')],
+  ['real private layout', files['index.html'].includes('class="real-private"') && files['index.html'].includes('Seu espaço privado') && files['index.html'].includes('Adicionar amigo')],
+  ['bilingual impact copy', files['index.html'].includes('NO DISTRACTIONS.') && files['index.html'].includes('JUST YOUR')],
+  ['fictional public examples', !files['index.html'].includes('Gustavo') && !files['index.html'].includes('Ari')],
   ['dynamic download links', files['index.html'].includes('download-link') && files['app.js'].includes('/releases/latest')],
   ['invite compatibility', files['app.js'].includes("params.get('invite')") && files['invite.html'].includes('mingrx://join/')],
   ['mobile viewport', files['index.html'].includes('width=device-width,initial-scale=1')],
