@@ -3,7 +3,7 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
-const expect = (ok, message) => { if (!ok) throw new Error(`Mingrx 2.1 compatibility smoke failed: ${message}`); };
+const expect = (ok, message) => { if (!ok) throw new Error(`Mingrx legacy 2.1 compatibility smoke failed: ${message}`); };
 
 const pkg = JSON.parse(read('package.json'));
 const index = read('src/index.html');
@@ -19,9 +19,9 @@ const tray = read('tray.js');
 const build = read('scripts/build-cloud-browser.js');
 const e2ee = read('src/cloud-v2-v216-e2ee.js');
 
-expect(pkg.version === '2.1.0', `expected 2.1.0, got ${pkg.version}`);
+expect(pkg.version === '3.0.0', `expected Mingrx 3.0.0 release, got ${pkg.version}`);
 expect(pkg.build?.files?.includes('v21-main.js'), 'v21-main.js is not packaged');
-expect(pkg.scripts['smoke:cloud'].includes('smoke-v21.js'), '2.1 smoke is not part of release regression');
+expect(pkg.scripts['smoke:cloud'].includes('smoke-v21.js'), '2.1 compatibility smoke is not part of release regression');
 expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v21-social-ui.js'), '2.1 UI Electron test missing from release');
 expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v21-main.js'), '2.1 main-process Electron test missing from release');
 expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v21-language.js'), '2.1 live language Electron test missing from release');
@@ -45,12 +45,12 @@ expect(main.includes('powerMonitor.getSystemIdleState('), 'system idle-state det
 expect(main.includes('app.setLoginItemSettings'), 'Windows startup registration missing');
 expect(main.includes('app.getLoginItemSettings'), 'Windows startup status check missing');
 expect(main.includes('startupInitialized'), 'startup default-on must be one-time, not forcibly re-enabled');
-expect(main.includes("STARTUP_ARG = '--banana-startup'"), 'startup launch argument missing');
+expect(main.includes("STARTUP_ARG = '--banana-startup'"), 'legacy startup launch argument missing');
 expect(main.includes("execFileAsync('tasklist.exe'"), 'recognized game activity scanner missing');
 expect(main.includes("'rocketleague.exe': ['rocket-league', 'Rocket League']"), 'Rocket League activity mapping missing');
 expect(!main.includes("'javaw.exe'"), 'generic Java process must not be misreported as Minecraft');
 expect(main.includes('win.hide()') && main.includes("process.argv.includes(STARTUP_ARG)"), 'startup launch must stay hidden in tray');
-expect(tray.includes('Number(String(app.getVersion()') && tray.includes('>= 2'), 'tray must recognize cloud runtime across all 2.x+ releases');
+expect(tray.includes('Number(String(app.getVersion()') && tray.includes('>= 2'), 'tray must recognize cloud runtime across 2.x/3.x releases');
 expect(tray.includes('Modo: Mingrx Cloud'), 'tray must use Mingrx Cloud product identity');
 
 expect(cloud.includes("event === 'presence:set'"), 'automatic/manual presence event missing');
@@ -90,7 +90,7 @@ expect(ui.includes('startupEnabled'), 'startup preference missing');
 expect(i18n.includes("'pt-BR'"), 'Portuguese locale missing');
 expect(i18n.includes("'en-US'"), 'English locale missing');
 expect(i18n.includes("'es-ES'"), 'Spanish locale missing');
-expect(i18n.includes("localStorage.setItem('banana.language'"), 'language preference persistence missing');
+expect(i18n.includes("localStorage.setItem('banana.language'"), 'legacy language preference persistence missing');
 expect(i18n.includes('MutationObserver'), 'live localization of legacy UI missing');
 expect(i18n.includes('.channel,.v21-category-name'), 'user channel/category names are not protected from literal translation');
 expect(!i18n.match(/const PROTECTED[^;]*\boption\b/), 'select options must not be globally protected from localization');
@@ -101,4 +101,4 @@ expect(css.includes('.v21-command-menu'), 'slash command autocomplete styling mi
 expect(css.includes('.v21-channel-head'), 'premium channel header styling missing');
 expect(css.includes('.v21-message-tools'), 'message hover toolbar styling missing');
 
-console.log('Mingrx 2.1 compatibility static regression checks: OK');
+console.log('Mingrx 3.0 legacy 2.1 compatibility static regression checks: OK');
