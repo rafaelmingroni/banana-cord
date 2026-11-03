@@ -188,6 +188,7 @@
   $('cloudVerifyLogout')?.addEventListener('click', () => signOut(auth));
 
   let presenceCleanup = null;
+  let syncedUid = '';
   function attachPresence(user) {
     presenceCleanup?.();
     if (!realtime || !user) return;
@@ -213,6 +214,9 @@
     // Always keep one visible auth state until the verified app shell is ready.
     gate.classList.remove('hidden');
     if (!user) {
+      syncedUid = '';
+      presenceCleanup?.();
+      presenceCleanup = null;
       hide('cloudVerify'); hide('cloudLoading'); show('cloudAuth');
       window.BananaCloud.ready = false;
       return;
@@ -326,7 +330,6 @@
   // Once the release guard confirms email_verified in the refreshed ID token,
   // synchronize the profile and presence independently from opening the UI.
   // Firestore permissions or connectivity must not strand a verified account.
-  let syncedUid = '';
   window.addEventListener('banana:cloud-ready', event => {
     if (!event.detail?.__tokenRefreshed) return;
     const user = auth.currentUser;
