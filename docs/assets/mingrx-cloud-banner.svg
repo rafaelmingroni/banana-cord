@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 360" role="img" aria-labelledby="title desc">
+  <title id="title">Mingrx architecture</title>
+  <desc id="desc">Mingrx architecture connecting Electron, Firebase and WebRTC.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b0c11"/><stop offset="1" stop-color="#141721"/></linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6e52ff"/><stop offset="1" stop-color="#a798ff"/></linearGradient>
+  </defs>
+  <rect width="1600" height="360" rx="36" fill="url(#bg)"/>
+  <g font-family="Segoe UI, Inter, Arial, sans-serif">
+    <text x="100" y="92" fill="#f5f7fb" font-size="42" font-weight="800">How Mingrx works</text>
+    <text x="100" y="130" fill="#8d95a5" font-size="21">Persistent identity and communities in the cloud. Real-time media stays peer-to-peer whenever possible.</text>
+    <g transform="translate(100 188)">
+      <rect x="0" y="0" width="300" height="104" rx="24" fill="#171923" stroke="#343847"/>
+      <text x="150" y="44" fill="#f1f3f8" font-size="26" font-weight="750" text-anchor="middle">Electron Desktop</text>
+      <text x="150" y="74" fill="#8d95a5" font-size="17" text-anchor="middle">UI · audio · updater · capture</text>
+      <path d="M300 52H510" stroke="url(#line)" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="405" cy="52" r="7" fill="#8f79ff"/>
+      <rect x="510" y="0" width="390" height="104" rx="24" fill="#171923" stroke="#343847"/>
+      <text x="705" y="44" fill="#f1f3f8" font-size="26" font-weight="750" text-anchor="middle">Firebase Cloud</text>
+      <text x="705" y="74" fill="#8d95a5" font-size="17" text-anchor="middle">Auth · communities · chat · presence</text>
+      <path d="M900 52H1110" stroke="url(#line)" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="1005" cy="52" r="7" fill="#8f79ff"/>
+      <rect x="1110" y="0" width="300" height="104" rx="24" fill="#171923" stroke="#343847"/>
+      <text x="1260" y="44" fill="#f1f3f8" font-size="26" font-weight="750" text-anchor="middle">WebRTC</text>
+      <text x="1260" y="74" fill="#8d95a5" font-size="17" text-anchor="middle">voice · video · screen media</text>
+    </g>
+  </g>
+</svg>
