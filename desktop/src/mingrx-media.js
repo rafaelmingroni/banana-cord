@@ -75,7 +75,9 @@
     const uid=String(cloudUser?.uid||state?.user?.id||'');
     if(!uid||!window.BananaCloudMode)throw new Error('Envio de imagens exige uma conta Mingrx Cloud conectada.');
     const {getStorage,ref:storageRef,uploadBytes,getDownloadURL}=require('firebase/storage');
-    const storage=getStorage(), objectRef=storageRef(storage,path);
+    const firebaseApp=window.BananaCloud?.auth?.app;
+    if(!firebaseApp)throw new Error('Mingrx Cloud ainda não terminou de inicializar.');
+    const storage=getStorage(firebaseApp), objectRef=storageRef(storage,path);
     const snap=await uploadBytes(objectRef,blob,{contentType:blob.type||'image/webp',cacheControl:'public,max-age=31536000,immutable'});
     return getDownloadURL(snap.ref);
   }
