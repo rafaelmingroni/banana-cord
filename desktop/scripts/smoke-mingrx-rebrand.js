@@ -93,8 +93,12 @@ for (const theme of ['midnight','pearl','crimson','ocean','forest','mono']) {
 assert(svg.includes('viewBox="0 0 1024 1024"'), 'SVG oficial Mingrx precisa ser 1024x1024.');
 assert(svg.includes('#7c5cff'), 'Cor principal Mingrx ausente do SVG.');
 
-assert(pkg.build.productName === 'Mingrx Preview', 'Preview deve instalar separado como Mingrx Preview.');
-assert(pkg.build.appId === 'com.mingrx.preview', 'Preview precisa de appId isolado.');
+assert(pkg.version === '3.0.0', 'Release Mingrx precisa estar em 3.0.0.');
+assert(pkg.build.productName === 'Mingrx', 'Produto final deve se chamar Mingrx.');
+assert(pkg.build.appId === 'com.bananacord.app', 'O appId histórico precisa ser preservado para manter o caminho de atualização.');
+assert(pkg.build.artifactName === 'Mingrx-Setup-${version}-${arch}.${ext}', 'Nome do instalador Mingrx final está incorreto.');
+assert(pkg.build.protocols?.[0]?.schemes?.includes('bananacord'), 'Compatibilidade com links bananacord:// foi removida.');
+assert(pkg.build.protocols?.[0]?.schemes?.includes('mingrx'), 'Novo protocolo mingrx:// não foi registrado.');
 assert(pkg.build.win.icon === 'assets/mingrx.ico', 'Build ainda não aponta para o ícone Mingrx.');
 assert(pkg.scripts['smoke:mingrx'], 'Script smoke:mingrx não foi registrado.');
 assert(tray.includes('Abrir Mingrx'), 'Tray ainda não foi rebatizado para Mingrx.');
