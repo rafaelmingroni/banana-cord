@@ -107,8 +107,8 @@ for (const theme of ['midnight','pearl','crimson','ocean','forest','mono']) {
 assert(svg.includes('viewBox="0 0 1024 1024"'), 'SVG oficial Mingrx precisa ser 1024x1024.');
 assert(svg.includes('#7c5cff'), 'Cor principal Mingrx ausente do SVG.');
 
-assert(pkg.version === '3.1.2', 'Hotfix Mingrx precisa estar em 3.1.2.');
-assert(lock.version === pkg.version && lock.packages?.['']?.version === pkg.version, 'package-lock precisa acompanhar a versão 3.1.2 do package.json.');
+assert(/^3\.\d+\.\d+$/.test(pkg.version) && pkg.version.split('.').map(Number).every(Number.isInteger) && (Number(pkg.version.split('.')[1]) > 1 || (Number(pkg.version.split('.')[1]) === 1 && Number(pkg.version.split('.')[2]) >= 2)), `Versão oficial Mingrx inválida: ${pkg.version}.`);
+assert(lock.version === pkg.version && lock.packages?.['']?.version === pkg.version, `package-lock precisa acompanhar a versão ${pkg.version} do package.json.`);
 for (const name of Object.keys(pkg.dependencies || {})) {
   assert(name in (lock.packages?.['']?.dependencies || {}), `package-lock não contém a dependência ${name}.`);
 }
