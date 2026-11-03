@@ -1,12 +1,19 @@
-name: Banana Cord 2.1 Social Update Validation
+name: Banana Cord V2 Validation
 
 on:
   push:
-    branches: [v2.1.0-social-update]
+    branches: [main, v2.1.0-social-update]
     paths:
       - "desktop/**"
       - "firebase/**"
-      - "RELEASE_NOTES-2.1.0.md"
+      - "RELEASE_NOTES-*.md"
+      - ".github/workflows/v21-social-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "desktop/**"
+      - "firebase/**"
+      - "RELEASE_NOTES-*.md"
       - ".github/workflows/v21-social-ci.yml"
   workflow_dispatch:
 
@@ -74,20 +81,24 @@ jobs:
         run: npm run smoke:e2e-v2
 
       - name: Inject production Firebase config for test installer
+        if: github.event_name == 'push' && github.ref == 'refs/heads/v2.1.0-social-update'
         working-directory: desktop
         env:
           BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
         run: node scripts/inject-firebase-config.js
 
       - name: Rebuild prepared source with production config
+        if: github.event_name == 'push' && github.ref == 'refs/heads/v2.1.0-social-update'
         working-directory: desktop
         run: npm run prepare:source
 
       - name: Build Windows test installer
+        if: github.event_name == 'push' && github.ref == 'refs/heads/v2.1.0-social-update'
         working-directory: desktop
         run: npm run dist:win -- --publish never
 
       - name: Verify Windows test installer
+        if: github.event_name == 'push' && github.ref == 'refs/heads/v2.1.0-social-update'
         shell: pwsh
         run: |
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
@@ -101,6 +112,7 @@ jobs:
           Write-Host "Test installer: $($exe.Name) - $($exe.Length) bytes"
 
       - name: Upload Windows test installer
+        if: github.event_name == 'push' && github.ref == 'refs/heads/v2.1.0-social-update'
         uses: actions/upload-artifact@v4
         with:
           name: Banana-Cord-2.1.0-test-${{ github.sha }}
