@@ -60,6 +60,6 @@
       "uninstallerIcon": "assets/mingrx.ico",
       "installerHeaderIcon": "assets/mingrx.ico"
     },
-    "publish": [{ "provider": "github", "owner": "rafaelmingroni", "repo": "mingrx", "releaseType": "release" }]
+    "publish": [{ "provider": "github", "owner": "rafaelmingroni", "repo": "mingrx-app", "releaseType": "release" }]
   }
 }
