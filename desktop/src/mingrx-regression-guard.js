@@ -4,7 +4,7 @@
   window.__mingrxRegressionGuardLoaded = true;
 
   const BRAND = 'Mingrx';
-  const VERSION = 'Preview · v2.1.0';
+  const VERSION = '3.0.0';
   let fixing = false;
   let queued = false;
 
