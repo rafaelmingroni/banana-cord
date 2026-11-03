@@ -100,22 +100,22 @@ jobs:
         working-directory: desktop
         run: npm run prepare:source
 
-      - name: Build private Mingrx Preview installer
+      - name: Build private Mingrx 3.0 installer
         working-directory: desktop
         run: npm run dist:win -- --publish never
 
-      - name: Verify private preview installer
+      - name: Verify private Mingrx 3.0 installer
         shell: pwsh
         run: |
-          $exe = Get-ChildItem "desktop/dist/Mingrx-Preview-Setup-*.exe" | Select-Object -First 1
-          if (-not $exe) { Write-Error "Instalador Mingrx Preview .exe não foi gerado."; exit 1 }
+          $exe = Get-ChildItem "desktop/dist/Mingrx-Setup-3.0.0-*.exe" | Select-Object -First 1
+          if (-not $exe) { Write-Error "Instalador Mingrx 3.0 .exe não foi gerado."; exit 1 }
           if ($exe.Length -lt 50000000) { Write-Error "Instalador Mingrx parece pequeno demais."; exit 1 }
-          Write-Host "Mingrx Preview installer: $($exe.Name) - $($exe.Length) bytes"
+          Write-Host "Mingrx 3.0 installer: $($exe.Name) - $($exe.Length) bytes"
 
-      - name: Upload private preview artifact
+      - name: Upload private Mingrx 3.0 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Mingrx-Preview-Windows-${{ github.sha }}
-          path: desktop/dist/Mingrx-Preview-Setup-*.exe
+          name: Mingrx-3.0-Windows-${{ github.sha }}
+          path: desktop/dist/Mingrx-Setup-3.0.0-*.exe
           if-no-files-found: error
           retention-days: 7
