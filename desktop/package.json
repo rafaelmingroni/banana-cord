@@ -1,7 +1,7 @@
 {
-  "name": "banana-cord",
-  "version": "2.1.0",
-  "description": "Mingrx Preview - comunicação leve por voz, chat e compartilhamento de tela",
+  "name": "mingrx",
+  "version": "3.0.0",
+  "description": "Mingrx - comunicação leve para voz, chat, comunidades e compartilhamento de tela",
   "private": true,
   "main": "main-v120.js",
   "author": "Rafael Mingroni",
@@ -42,9 +42,9 @@
     "sharp": "0.35.5"
   },
   "build": {
-    "appId": "com.mingrx.preview",
-    "productName": "Mingrx Preview",
-    "artifactName": "Mingrx-Preview-Setup-${version}-${arch}.${ext}",
+    "appId": "com.bananacord.app",
+    "productName": "Mingrx",
+    "artifactName": "Mingrx-Setup-${version}-${arch}.${ext}",
     "protocols": [{ "name": "Mingrx Invite", "schemes": ["mingrx", "bananacord"] }],
     "directories": { "output": "dist" },
     "files": ["main-v120.js","main-v110.js","v21-main.js","rendezvous.js","tray.js","updater-prompt.js","graceful-shutdown.js","e2ee-main.js","main.js","screen-share-main-fix.js","src/**/*","server/**/*","cloud/**/*","assets/**/*","package.json","node_modules/**/*"],
@@ -55,7 +55,7 @@
       "perMachine": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Mingrx Preview",
+      "shortcutName": "Mingrx",
       "installerIcon": "assets/mingrx.ico",
       "uninstallerIcon": "assets/mingrx.ico",
       "installerHeaderIcon": "assets/mingrx.ico"
