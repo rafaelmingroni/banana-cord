@@ -7,7 +7,7 @@ const { promisify } = require('util');
 const execFileAsync = promisify(execFile);
 const STARTUP_ARG = '--banana-startup'; // kept for compatibility with existing startup behavior
 const SETTINGS_VERSION = 1;
-const PRODUCT_NAME = 'Mingrx Preview';
+const PRODUCT_NAME = 'Mingrx';
 const DEFAULTS = {
   version: SETTINGS_VERSION,
   startupInitialized: false,
