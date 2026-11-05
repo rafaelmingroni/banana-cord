@@ -30,7 +30,8 @@ function finish(code, message) {
 const fail = message => finish(1, `Mingrx layout E2E failed: ${message}`);
 
 app.whenReady().then(async () => {
-  const win = new BrowserWindow({ show:false, width:1280, height:720, webPreferences:{ nodeIntegration:true, contextIsolation:false, sandbox:false } });
+  const win = new BrowserWindow({ show:false, width:1280, height:720, webPreferences:{preload:path.join(__dirname,'..','preload.js'), nodeIntegration:false, contextIsolation:true, sandbox:true } });
+  win.webContents.on('console-message', (...args) => { const d=args[1]; const message=typeof d==='object'?d.message:args[2]; if((typeof d==='object' && d.level==='error')||d===3) console.error('renderer error:',message); });
   await win.loadFile(path.join(__dirname, '..', 'src', 'index.html'));
   await sleep(220);
 

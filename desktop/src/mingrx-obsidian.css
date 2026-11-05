@@ -447,3 +447,7 @@ body.mingrx-ui .mx-social-status.busy{background:#f0525d}
   body.mingrx-ui .mx-social-modal *,
   body.mingrx-ui .mx-friend-search-modal *{transition:none!important;animation:none!important;transform:none!important}
 }
+
+/* Keep private navigation usable with classic system scrollbars as well. */
+body.mingrx-ui .app.dm-mode .channels{padding-inline:10px!important}
+body.mingrx-ui .app.dm-mode .channels::-webkit-scrollbar{width:4px}

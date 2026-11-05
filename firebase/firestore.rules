@@ -12,6 +12,8 @@ service cloud.firestore {
       return verified() && code is string
         && exists(/databases/$(database)/documents/invites/$(code))
         && get(/databases/$(database)/documents/invites/$(code)).data.serverId == serverId
+        && exists(/databases/$(database)/documents/servers/$(serverId))
+        && get(/databases/$(database)/documents/servers/$(serverId)).data.get('deleting', false) == false
         && (!('expiresAt' in get(/databases/$(database)/documents/invites/$(code)).data)
             || get(/databases/$(database)/documents/invites/$(code)).data.expiresAt > request.time);
     }
@@ -65,9 +67,105 @@ service cloud.firestore {
       return verified() && request.auth.uid in getAfter(/databases/$(database)/documents/dmThreads/$(threadId)).data.participants;
     }
 
+    function pair(a, b) { return a < b ? a + '_' + b : b + '_' + a; }
+    function friendOf(uid) { return request.auth.uid == uid || friendThread(pair(request.auth.uid, uid)); }
+    function sendPermit(key) {
+      let permit = getAfter(/databases/$(database)/documents/users/$(request.auth.uid)/limits/chat).data;
+      return permit.lastSentAt == request.time && permit.messageKey == key;
+    }
+    function validReactionList(before, after) {
+      return before is list && after is list && after.size() <= 500
+        && after.toSet().size() == after.size()
+        && before.removeAll([request.auth.uid]) == after.removeAll([request.auth.uid])
+        && after.size() <= before.size() + 1;
+    }
+    function validReactions(before, after) {
+      return after is map && after.keys().hasOnly(['👍', '❤️', '😂', '👎'])
+        && validReactionList(before.get('👍', []), after.get('👍', []))
+        && validReactionList(before.get('❤️', []), after.get('❤️', []))
+        && validReactionList(before.get('😂', []), after.get('😂', []))
+        && validReactionList(before.get('👎', []), after.get('👎', []));
+    }
+    function validMetadata(data) {
+      return data.createdAt == request.time
+        && (!('editedAt' in data) || data.editedAt == null)
+        && (!('replyToId' in data) || data.replyToId == null || (data.replyToId is string && data.replyToId.size() <= 256))
+        && (!('mentionIds' in data) || (data.mentionIds is list && data.mentionIds.size() <= 50))
+        && (!('reactions' in data) || (data.reactions is map && data.reactions.size() == 0));
+    }
+    function validDmPreview(data) {
+      return !('lastMessage' in data) || data.lastMessage == null
+        || (data.lastMessage is map && data.lastMessage.keys().hasOnly(['fromId','toId','at','e2ee'])
+          && data.lastMessage.e2ee == true && data.lastMessage.fromId in data.participants
+          && data.lastMessage.toId in data.participants && data.lastMessage.at is number);
+    }
+    function validActiveCall(data) {
+      return !('activeCall' in data) || data.activeCall == null
+        || (data.activeCall is map && data.activeCall.keys().hasOnly(['id','startedBy','startedAt'])
+          && data.activeCall.id is string && data.activeCall.id.size() <= 600
+          && data.activeCall.startedBy == request.auth.uid && data.activeCall.startedAt is number
+          && data.activeCall.startedAt > 0 && data.activeCall.startedAt <= request.time.toMillis() + 10000);
+    }
+    function validPresence(data) {
+      return data.keys().hasOnly(['state', 'activity', 'updatedAt', 'expiresAt'])
+        && data.state in ['online', 'busy', 'away'] && data.updatedAt == request.time
+        && data.expiresAt is timestamp && data.expiresAt > request.time
+        && data.expiresAt <= request.time + duration.value(150, 's')
+        && (data.activity == null || (data.activity is map
+          && data.activity.keys().hasOnly(['id','name','startedAt'])
+          && data.activity.id is string && data.activity.id.size() <= 64
+          && data.activity.name is string && data.activity.name.size() <= 80
+          && data.activity.startedAt is number));
+    }
+    function validSession(data) {
+      return data.keys().hasOnly(['userId','sessionId','user','mediaState','speaking','updatedAt','expiresAt','joinedAt'])
+        && data.userId == request.auth.uid && data.sessionId is string && data.sessionId.size() <= 100
+        && data.user is map && data.user.keys().hasOnly(['id','name','avatar','status'])
+        && data.user.id == request.auth.uid && data.user.name is string && data.user.name.size() <= 32
+        && data.user.avatar is string && data.user.avatar.size() <= 800000
+        && data.user.status in ['online','offline','away','busy']
+        && data.mediaState is map && data.mediaState.keys().hasOnly(['muted','camera','screen'])
+        && data.mediaState.muted is bool && data.mediaState.camera is bool && data.mediaState.screen is bool
+        && data.speaking is bool && data.updatedAt is timestamp && data.updatedAt <= request.time
+        && data.expiresAt is timestamp && data.expiresAt > request.time
+        && data.expiresAt <= request.time + duration.value(120, 's') && data.joinedAt is number;
+    }
+    function validSignal(data) {
+      return data.keys().hasOnly(['fromUserId','fromSocketId','fromSlot','fromUser','targetSessionId','targetUserId','data','createdAt'])
+        && data.createdAt == request.time && data.fromUserId == request.auth.uid
+        && data.fromSocketId is string && data.fromSocketId.size() <= 100
+        && data.targetUserId is string && data.targetUserId.size() <= 128
+        && data.targetSessionId is string && data.targetSessionId.size() <= 100
+        && data.data is map && data.data.size() == 1
+        && ((data.data.keys().hasOnly(['description']) && data.data.description is map
+            && data.data.description.keys().hasOnly(['type','sdp'])
+            && data.data.description.type in ['offer','answer','pranswer','rollback']
+            && data.data.description.sdp is string && data.data.description.sdp.size() <= 65536)
+          || (data.data.keys().hasOnly(['candidate']) && data.data.candidate is map
+            && data.data.candidate.keys().hasOnly(['candidate','sdpMid','sdpMLineIndex','usernameFragment'])
+            && data.data.candidate.candidate is string && data.data.candidate.candidate.candidate.size() <= 4096
+            && (!('sdpMid' in data.data.candidate) || data.data.candidate.sdpMid == null || (data.data.candidate.sdpMid is string && data.data.candidate.sdpMid.size() <= 256))
+            && (!('usernameFragment' in data.data.candidate) || data.data.candidate.usernameFragment == null || (data.data.candidate.usernameFragment is string && data.data.candidate.usernameFragment.size() <= 256))
+            && (!('sdpMLineIndex' in data.data.candidate) || data.data.candidate.sdpMLineIndex == null || data.data.candidate.sdpMLineIndex is int)));
+    }
+    match /presence/{uid}/connections/{sessionId} {
+      allow read: if verified() && friendOf(uid);
+      allow create, update: if verified() && request.auth.uid == uid && validPresence(request.resource.data);
+      allow delete: if verified() && request.auth.uid == uid;
+    }
     match /users/{uid} {
       allow read, create, update: if verified() && request.auth.uid == uid;
       allow delete: if false;
+      match /limits/{limitId} {
+        allow get: if verified() && request.auth.uid == uid;
+        allow create, update: if verified() && request.auth.uid == uid && limitId == 'chat'
+          && request.resource.data.keys().hasOnly(['lastSentAt','messageKey'])
+          && request.resource.data.lastSentAt == request.time
+          && request.resource.data.messageKey is string && request.resource.data.messageKey.size() <= 600
+          && (!exists(/databases/$(database)/documents/users/$(uid)/limits/chat)
+            || request.time >= resource.data.lastSentAt + duration.value(800, 'ms'));
+        allow delete: if false;
+      }
       match /serverRefs/{serverId} {
         allow read, create, update, delete: if verified() && request.auth.uid == uid;
         allow delete: if owner(serverId);
@@ -89,7 +187,8 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['currentKeyId', 'algorithm', 'updatedAt'])
         && request.resource.data.currentKeyId is string
         && request.resource.data.currentKeyId.size() == 32
-        && request.resource.data.algorithm == 'X25519';
+        && request.resource.data.algorithm == 'X25519'
+        && (!exists(/databases/$(database)/documents/e2eeKeys/$(uid)) || request.resource.data.currentKeyId == resource.data.currentKeyId);
       allow delete: if false;
 
       match /keys/{keyId} {
@@ -117,12 +216,18 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 40;
       allow update: if admin(serverId)
-        && request.resource.data.ownerId == resource.data.ownerId;
+        && request.resource.data.ownerId == resource.data.ownerId
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleting']) || owner(serverId));
       allow update: if moderator(serverId)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['categories', 'updatedAt'])
         && request.resource.data.ownerId == resource.data.ownerId;
       allow delete: if owner(serverId);
 
+      match /presence/{uid}/connections/{sessionId} {
+        allow read: if member(serverId);
+        allow create, update: if member(serverId) && request.auth.uid == uid && validPresence(request.resource.data);
+        allow delete: if verified() && (request.auth.uid == uid || owner(serverId));
+      }
       match /members/{uid} {
         allow read: if member(serverId) || (verified() && uid == request.auth.uid);
         allow create: if ownerAfter(serverId)
@@ -132,7 +237,9 @@ service cloud.firestore {
         allow update: if owner(serverId);
         allow update: if verified() && uid == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'avatar', 'customStatus']);
-        allow delete: if owner(serverId) || (verified() && uid == request.auth.uid);
+        allow delete: if (owner(serverId) || (verified() && uid == request.auth.uid))
+          && (get(/databases/$(database)/documents/servers/$(serverId)).data.ownerId != uid
+            || get(/databases/$(database)/documents/servers/$(serverId)).data.get('deleting', false) == true);
       }
 
       match /channels/{channelId} {
@@ -144,18 +251,44 @@ service cloud.firestore {
           && request.resource.data.type in ['text', 'voice'];
         allow update, delete: if moderator(serverId);
 
+        match /voiceSessions/{slotId} {
+          allow read: if channelAccess(serverId, channelId) && get(/databases/$(database)/documents/servers/$(serverId)/channels/$(channelId)).data.type == 'voice';
+          allow create: if channelAccess(serverId, channelId) && get(/databases/$(database)/documents/servers/$(serverId)/channels/$(channelId)).data.type == 'voice' && slotId in ['0','1','2','3','4'] && validSession(request.resource.data);
+          allow update: if channelAccess(serverId, channelId) && get(/databases/$(database)/documents/servers/$(serverId)/channels/$(channelId)).data.type == 'voice' && slotId in ['0','1','2','3','4'] && validSession(request.resource.data)
+            && (resource.data.userId == request.auth.uid || resource.data.expiresAt <= request.time);
+          allow delete: if verified() && resource.data.userId == request.auth.uid;
+          match /signals/{signalId} {
+            function target() { return get(/databases/$(database)/documents/servers/$(serverId)/channels/$(channelId)/voiceSessions/$(slotId)).data; }
+            function source() { return get(/databases/$(database)/documents/servers/$(serverId)/channels/$(channelId)/voiceSessions/$(request.resource.data.fromSlot)).data; }
+            allow read, delete: if channelAccess(serverId, channelId) && get(/databases/$(database)/documents/servers/$(serverId)/channels/$(channelId)).data.type == 'voice' && target().userId == request.auth.uid
+              && resource.data.targetSessionId == target().sessionId && resource.data.targetUserId == request.auth.uid;
+            allow create: if channelAccess(serverId, channelId) && get(/databases/$(database)/documents/servers/$(serverId)/channels/$(channelId)).data.type == 'voice' && validSignal(request.resource.data)
+              && request.resource.data.fromSlot in ['0','1','2','3','4']
+              && source().userId == request.auth.uid
+              && source().sessionId == request.resource.data.fromSocketId
+              && source().expiresAt > request.time && target().expiresAt > request.time
+              && request.resource.data.targetSessionId == target().sessionId
+              && request.resource.data.targetUserId == target().userId
+              && request.resource.data.fromUser == source().user;
+            allow update: if false;
+          }
+        }
         match /messages/{messageId} {
           allow read: if channelAccess(serverId, channelId);
           allow create: if channelAccess(serverId, channelId)
             && request.resource.data.authorId == request.auth.uid
             && validText(request.resource.data.text)
+            && validMetadata(request.resource.data)
+            && sendPermit(serverId + '/' + channelId + '/' + messageId)
             && request.resource.data.keys().hasOnly(['authorId', 'text', 'createdAt', 'editedAt', 'replyToId', 'reactions', 'mentionIds']);
           allow update: if channelAccess(serverId, channelId)
-            && (resource.data.authorId == request.auth.uid || moderator(serverId))
+            && resource.data.authorId == request.auth.uid
+            && request.resource.data.editedAt == request.time
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'editedAt', 'mentionIds'])
             && validText(request.resource.data.text);
           allow update: if channelAccess(serverId, channelId)
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']);
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+            && validReactions(resource.data.get('reactions', {}), request.resource.data.reactions);
           allow delete: if channelAccess(serverId, channelId)
             && (resource.data.authorId == request.auth.uid || moderator(serverId));
         }
@@ -164,7 +297,7 @@ service cloud.firestore {
 
     match /invites/{code} {
       allow get: if verified();
-      allow list: if false;
+      allow list: if verified() && request.query.limit <= 100 && admin(resource.data.serverId);
       allow create: if verified()
         && (ownerAfter(request.resource.data.serverId) || admin(request.resource.data.serverId))
         && request.resource.data.code == code
@@ -179,7 +312,10 @@ service cloud.firestore {
     match /relationships/{relationshipId} {
       allow read: if verified() && request.auth.uid in resource.data.participants;
       allow create: if verified()
+        && request.resource.data.participants is list
         && request.resource.data.participants.size() == 2
+        && request.resource.data.participants[0] != request.resource.data.participants[1]
+        && relationshipId == request.resource.data.participants[0] + '_' + request.resource.data.participants[1]
         && request.auth.uid in request.resource.data.participants
         && (
           (request.resource.data.status == 'pending' && request.resource.data.requestedBy == request.auth.uid)
@@ -195,10 +331,12 @@ service cloud.firestore {
       allow update: if verified()
         && request.auth.uid in resource.data.participants
         && request.resource.data.participants == resource.data.participants
+        && (resource.data.status != 'blocked' || resource.data.blockedBy == request.auth.uid)
         && request.resource.data.status == 'blocked'
         && request.resource.data.blockedBy == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'blockedBy', 'updatedAt']);
-      allow delete: if verified() && request.auth.uid in resource.data.participants;
+      allow delete: if verified() && request.auth.uid in resource.data.participants
+        && (resource.data.status != 'blocked' || resource.data.blockedBy == request.auth.uid);
     }
 
     match /dmThreads/{threadId} {
@@ -206,13 +344,38 @@ service cloud.firestore {
       allow create: if friendThread(threadId)
         && request.resource.data.participants == relationForThread(threadId).data.participants
         && request.resource.data.participants.size() == 2
-        && request.resource.data.keys().hasOnly(['participants', 'updatedAt', 'lastMessage', 'activeCall']);
+        && request.resource.data.keys().hasOnly(['participants', 'updatedAt', 'lastMessage', 'activeCall'])
+        && validDmPreview(request.resource.data) && validActiveCall(request.resource.data);
       allow update: if dmMember(threadId)
         && friendThread(threadId)
         && request.resource.data.participants == resource.data.participants
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt', 'lastMessage', 'activeCall']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt', 'lastMessage', 'activeCall'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastMessage']) || validDmPreview(request.resource.data))
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['activeCall']) || validActiveCall(request.resource.data));
       allow delete: if false;
 
+        match /voiceSessions/{slotId} {
+          allow read: if friendThread(threadId) && dmMember(threadId);
+          allow create: if friendThread(threadId) && dmMember(threadId) && slotId in ['0','1'] && validSession(request.resource.data);
+          allow update: if friendThread(threadId) && dmMember(threadId) && slotId in ['0','1'] && validSession(request.resource.data)
+            && (resource.data.userId == request.auth.uid || resource.data.expiresAt <= request.time);
+          allow delete: if verified() && resource.data.userId == request.auth.uid;
+          match /signals/{signalId} {
+            function target() { return get(/databases/$(database)/documents/dmThreads/$(threadId)/voiceSessions/$(slotId)).data; }
+            function source() { return get(/databases/$(database)/documents/dmThreads/$(threadId)/voiceSessions/$(request.resource.data.fromSlot)).data; }
+            allow read, delete: if friendThread(threadId) && dmMember(threadId) && target().userId == request.auth.uid
+              && resource.data.targetSessionId == target().sessionId && resource.data.targetUserId == request.auth.uid;
+            allow create: if friendThread(threadId) && dmMember(threadId) && validSignal(request.resource.data)
+              && request.resource.data.fromSlot in ['0','1']
+              && source().userId == request.auth.uid
+              && source().sessionId == request.resource.data.fromSocketId
+              && source().expiresAt > request.time && target().expiresAt > request.time
+              && request.resource.data.targetSessionId == target().sessionId
+              && request.resource.data.targetUserId == target().userId
+              && request.resource.data.fromUser == source().user;
+            allow update: if false;
+          }
+        }
       match /messages/{messageId} {
         allow read: if dmMember(threadId);
         allow create: if friendThread(threadId)
@@ -220,7 +383,10 @@ service cloud.firestore {
           && request.resource.data.fromId == request.auth.uid
           && request.resource.data.toId in getAfter(/databases/$(database)/documents/dmThreads/$(threadId)).data.participants
           && request.resource.data.toId != request.auth.uid
-          && validDmPayload(request.resource.data);
+          && validDmPayload(request.resource.data)
+          && ('e2ee' in request.resource.data)
+          && validMetadata(request.resource.data)
+          && sendPermit(threadId + '/' + messageId);
 
         // Legacy plaintext DMs remain editable so old history is not broken.
         allow update: if friendThread(threadId)
@@ -242,7 +408,8 @@ service cloud.firestore {
 
         allow update: if friendThread(threadId)
           && dmMember(threadId)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']);
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+            && validReactions(resource.data.get('reactions', {}), request.resource.data.reactions);
         allow delete: if dmMember(threadId) && resource.data.fromId == request.auth.uid;
       }
     }

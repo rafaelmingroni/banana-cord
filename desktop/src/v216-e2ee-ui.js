@@ -48,6 +48,7 @@
       banner.classList.add('wait');
       banner.innerHTML = '<span>⚠ Proteção ainda não disponível</span><small>Seu contato precisa abrir uma versão atual do Banana Cord para ativar a proteção.</small>';
     }
+    if(status?.keyId) banner.title = 'Código da chave do contato: ' + status.keyId.match(/.{1,4}/g).join(' ') + '. Confira por outro canal com seu contato.';
     els.messages.prepend(banner);
 
     const messages = state.dmMessages.get(state.activeDmUserId) || [];

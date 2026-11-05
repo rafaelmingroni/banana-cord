@@ -84,6 +84,7 @@ async function main() {
     await assertFails(getDocs(collection(malloryDb, 'dmThreads', 'alice_bob', 'messages')));
 
     const makeThread = writeBatch(aliceDb);
+    makeThread.set(doc(aliceDb,'users','alice','limits','chat'),{lastSentAt:serverTimestamp(),messageKey:'alice_bob/encrypted-1'});
     makeThread.set(doc(aliceDb, 'dmThreads', 'alice_bob'), {
       participants: ['alice', 'bob'], updatedAt: serverTimestamp(), lastMessage: { fromId: 'alice', toId: 'bob', at: Date.now(), e2ee: true }
     });
@@ -92,9 +93,12 @@ async function main() {
     });
     await assertSucceeds(makeThread.commit());
 
-    await assertSucceeds(setDoc(doc(bobDb, 'dmThreads', 'alice_bob', 'messages', 'encrypted-2'), {
+    const bobBatch=writeBatch(bobDb);
+    bobBatch.set(doc(bobDb,'users','bob','limits','chat'),{lastSentAt:serverTimestamp(),messageKey:'alice_bob/encrypted-2'});
+    bobBatch.set(doc(bobDb, 'dmThreads', 'alice_bob', 'messages', 'encrypted-2'), {
       fromId: 'bob', toId: 'alice', e2ee: envelope(bobKey, aliceKey), createdAt: serverTimestamp(), editedAt: null, replyToId: null, reactions: {}
-    }));
+    });
+    await assertSucceeds(bobBatch.commit());
 
     await assertFails(setDoc(doc(aliceDb, 'dmThreads', 'alice_bob', 'messages', 'mixed'), {
       fromId: 'alice', toId: 'bob', text: 'não deve coexistir', e2ee: envelope(aliceKey, bobKey), createdAt: serverTimestamp(), editedAt: null, replyToId: null, reactions: {}

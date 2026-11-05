@@ -15,7 +15,8 @@ const hardTimeout = setTimeout(() => { console.error('V2.0.19 details E2E failed
 const finish = (code, msg) => { clearTimeout(hardTimeout); if (msg) (code ? console.error : console.log)(msg); setTimeout(() => app.exit(code), 50); };
 
 app.whenReady().then(async () => {
-  const win = new BrowserWindow({ show:false, width:1200, height:760, webPreferences:{ nodeIntegration:true, contextIsolation:false, sandbox:false } });
+  const win = new BrowserWindow({ show:false, width:1200, height:760, webPreferences:{preload:path.join(__dirname,'..','preload.js'), nodeIntegration:false, contextIsolation:true, sandbox:true } });
+  win.webContents.on('console-message', (...args) => { const d=args[1]; const message=typeof d==='object'?d.message:args[2]; if((typeof d==='object' && d.level==='error')||d===3) console.error('renderer error:',message); });
   await win.loadFile(path.join(__dirname, '..', 'src', 'index.html'));
   await new Promise(r => setTimeout(r, 180));
 

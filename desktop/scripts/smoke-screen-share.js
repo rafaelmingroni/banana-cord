@@ -15,15 +15,15 @@ const pkg = JSON.parse(read('package.json'));
 new Function(renderer);
 new Function(mainFix);
 
-assert(renderer.includes('audio: true'), 'screen share should first request system audio');
+assert(renderer.includes('audio: choice.audio') && renderer.includes('chooseCaptureSource'), 'screen share must explicitly select source and audio');
 assert(renderer.includes('audio: false'), 'screen share should retry video-only');
 assert(renderer.includes("removeAllListeners('shortcut:screen')"), 'screen shortcut should use compatibility handler');
 assert(renderer.includes('Não consegui compartilhar a tela (${code})'), 'screen failures should expose an error code');
 
-assert(mainFix.includes("startsWith('screen:')"), 'main handler should prioritize real screen sources');
-assert(mainFix.includes('request?.audioRequested'), 'loopback audio should only be granted when requested');
-assert(mainFix.includes("streams.audio = 'loopback'"), 'Windows loopback audio should remain available');
-assert(mainFix.includes('useSystemPicker: false'), 'Windows capture should not depend on the experimental picker');
+assert(mainFix.includes('state.available.get(state.selected)'), 'main handler must use the explicitly selected source');
+assert(mainFix.includes('request.audioRequested'), 'loopback audio should only be granted when requested');
+assert(mainFix.includes("streams.audio='loopback'"), 'Windows loopback audio should remain available');
+assert(mainFix.includes('useSystemPicker:false'), 'Windows capture should not depend on the experimental picker');
 
 assert(index.includes('<script src="screen-share-fix.js"></script>'), 'renderer screen-share fix must be loaded');
 assert(updater.includes("require('./screen-share-main-fix.js')"), 'main screen-share fix must be loaded');

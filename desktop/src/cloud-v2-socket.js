@@ -85,6 +85,7 @@
     }
     off(event, handler) { this.handlers.get(event)?.delete(handler); return this; }
     receive(event, payload) {
+      if (!this.connected) return;
       for (const handler of [...(this.handlers.get(event) || [])]) {
         try { handler(payload); } catch (error) { console.error(`Banana Cloud handler ${event}:`, error); }
       }
@@ -249,6 +250,7 @@
           const server = await this.loadServer(serverId).catch(() => null);
           if (!server) return;
           this.serverCache.set(serverId, server);
+          this.syncVoiceWatchers?.(serverId, server.channels);
           this.receive('server:updated', server);
           await this.emitMembers(serverId).catch(() => {});
         });
@@ -256,10 +258,7 @@
       offs.push(onSnapshot(doc(this.db, 'servers', serverId), refresh, () => {}));
       offs.push(onSnapshot(collection(this.db, 'servers', serverId, 'channels'), refresh, () => {}));
       offs.push(onSnapshot(collection(this.db, 'servers', serverId, 'members'), refresh, () => {}));
-      if (this.rtdb) {
-        const voiceOff = onValue(ref(this.rtdb, `voiceRooms/${serverId}`), snap => this.processVoiceServer(serverId, snap.val() || {}));
-        offs.push(voiceOff);
-      }
+      if (this.watchVoiceServer) offs.push(this.watchVoiceServer(serverId));
       this.serverCleanup.set(serverId, offs);
     }
     unwatchServer(serverId) {
@@ -532,7 +531,7 @@
         for(const change of snap.docChanges()) { const m=mapMessage(change.doc,serverId,channelId); if(change.type==='added')this.receive('message:new',m);else if(change.type==='modified')this.receive('message:updated',m);else if(change.type==='removed')this.receive('message:deleted',{channelId,messageId:change.doc.id}); }
       },e=>this.receive('app:error',this.friendly(e))); this.messageCleanup.set(channelId,off);
     }
-    async mentionIds(serverId,text){const members=await getDocs(collection(this.db,'servers',serverId,'members'));const lower=String(text||'').toLocaleLowerCase('pt-BR'),ids=[];for(const m of members.docs){const u=await this.publicUser(m.id);if(u?.name&&lower.includes(`@${u.name.toLocaleLowerCase('pt-BR')}`))ids.push(m.id);}return ids;}
+    async mentionIds(serverId,text){if(!String(text||'').includes('@'))return [];const members=await getDocs(collection(this.db,'servers',serverId,'members'));const lower=String(text||'').toLocaleLowerCase('pt-BR'),ids=[];for(const m of members.docs){const u=await this.publicUser(m.id);if(u?.name&&lower.includes(`@${u.name.toLocaleLowerCase('pt-BR')}`))ids.push(m.id);}return ids;}
     async sendMessage(p){const text=String(p.text||'').trim().slice(0,2000);if(!text)return;await setDoc(doc(collection(this.db,'servers',p.serverId,'channels',p.channelId,'messages')),{authorId:this.user.uid,text,createdAt:serverTimestamp(),editedAt:null,replyToId:p.replyToId||null,reactions:{},mentionIds:await this.mentionIds(p.serverId,text)});}
     async editMessage(p){const mref=doc(this.db,'servers',p.serverId,'channels',p.channelId,'messages',p.messageId);const s=await getDoc(mref);if(!s.exists())return;const role=await this.role(p.serverId);if(s.data().authorId!==this.user.uid&&ROLE_RANK[role]<ROLE_RANK.moderator)throw new Error('Você não pode editar essa mensagem.');const text=String(p.text||'').trim().slice(0,2000);if(text)await updateDoc(mref,{text,editedAt:serverTimestamp(),mentionIds:await this.mentionIds(p.serverId,text)});}
     async deleteMessage(p){const mref=doc(this.db,'servers',p.serverId,'channels',p.channelId,'messages',p.messageId);const s=await getDoc(mref);if(!s.exists())return;const role=await this.role(p.serverId);if(s.data().authorId!==this.user.uid&&ROLE_RANK[role]<ROLE_RANK.moderator)throw new Error('Você não pode apagar essa mensagem.');await deleteDoc(mref);}
@@ -611,6 +610,7 @@
   // The Firebase snapshot listener may never deliver the first auth:ready
   // event. Replaying cloud-ready alone cannot recover: started remains true.
   // Recovery explicitly tears down the incomplete socket and starts again.
+  window.BananaCloudResetBoot = function resetCloudBoot() { started = false; activeSocket = null; lastBootError = null; };
   window.BananaCloudRestartBoot = async function restartCloudBoot() {
     const shell = document.getElementById('app');
     if (shell && !shell.classList.contains('hidden')) return { ok: true, alreadyReady: true };

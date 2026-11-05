@@ -1,6 +1,6 @@
 /* Banana Cord v1.2.1/V2 compatibility layer — public links, deep links and stability. */
 (() => {
-  const { ipcRenderer } = require('electron');
+  const { ipcRenderer } = window.MingrxDesktop;
   const VERSION = window.BananaCloudMode ? '2 Cloud Preview' : '1.2.1';
   const PUBLIC_INVITE_BASE = 'https://rafaelmingroni.github.io/mingrx-app/?invite=';
   const INVITE_LEAD = window.BananaCloudMode

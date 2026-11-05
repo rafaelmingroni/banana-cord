@@ -3,7 +3,7 @@
  */
 (() => {
   if (window.BananaE2EE) return;
-  const { ipcRenderer } = require('electron');
+  const { ipcRenderer } = window.MingrxDesktop;
   window.BananaE2EE = Object.freeze({
     status: () => ipcRenderer.invoke('e2ee:status'),
     ensureKeypair: uid => ipcRenderer.invoke('e2ee:ensure-keypair', uid),

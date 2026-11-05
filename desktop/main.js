@@ -10,126 +10,9 @@ let mainWindow;
 let localServerHandle = null;
 let tunnelProc = null;
 let tunnelUrl = '';
-const DEFAULT_UPDATE_REPO = 'https://github.com/rafaelmingroni/banana-cord';
-const OFFICIAL_UPDATE_OWNER = 'rafaelmingroni';
-const OFFICIAL_UPDATE_NAME = 'banana-cord';
-let updateConfig = { repoUrl: DEFAULT_UPDATE_REPO, autoCheck: true, autoDownload: true };
-let updateState = { status: 'idle', currentVersion: '', latestVersion: '', progress: 0, message: '' };
-let updaterEventsBound = false;
-let updateCheckTimer = null;
+const {loadUpdateConfig,configureUpdater,scheduleAutomaticUpdateCheck,emitUpdateState}=require('./update-service');
 
-function sendHostStatus(status, extra = {}) {
-  const payload = { status, ...extra };
-  app.emit('banana:host-status', payload);
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('host:status', payload);
-}
-
-function updateConfigFile() {
-  return path.join(app.getPath('userData'), 'update-config.json');
-}
-
-function normalizeGithubRepoUrl(value) {
-  const raw = String(value || '').trim().replace(/\/+$/, '');
-  if (!raw) return '';
-  try {
-    const u = new URL(raw);
-    if (!['github.com', 'www.github.com'].includes(u.hostname.toLowerCase())) return '';
-    const parts = u.pathname.split('/').filter(Boolean);
-    if (parts.length < 2) return '';
-    return `https://github.com/${parts[0]}/${parts[1].replace(/\.git$/i, '')}`;
-  } catch {
-    return '';
-  }
-}
-
-function isOfficialUpdateRepo(value) {
-  return normalizeGithubRepoUrl(value).toLowerCase() === DEFAULT_UPDATE_REPO.toLowerCase();
-}
-
-function loadUpdateConfig() {
-  try {
-    const parsed = JSON.parse(fs.readFileSync(updateConfigFile(), 'utf8'));
-    updateConfig = {
-      repoUrl: DEFAULT_UPDATE_REPO,
-      autoCheck: parsed.autoCheck !== false,
-      autoDownload: parsed.autoDownload !== false
-    };
-  } catch {
-    updateConfig = { repoUrl: DEFAULT_UPDATE_REPO, autoCheck: true, autoDownload: true };
-  }
-  return updateConfig;
-}
-
-function persistUpdateConfig(next = {}) {
-  updateConfig = {
-    repoUrl: DEFAULT_UPDATE_REPO,
-    autoCheck: next.autoCheck ?? updateConfig.autoCheck,
-    autoDownload: next.autoDownload ?? updateConfig.autoDownload
-  };
-  updateConfig.autoCheck = !!updateConfig.autoCheck;
-  updateConfig.autoDownload = !!updateConfig.autoDownload;
-  fs.mkdirSync(path.dirname(updateConfigFile()), { recursive: true });
-  fs.writeFileSync(updateConfigFile(), JSON.stringify(updateConfig, null, 2));
-  configureUpdater();
-  return updateConfig;
-}
-
-function emitUpdateState(patch = {}) {
-  updateState = {
-    ...updateState,
-    currentVersion: app.getVersion(),
-    configured: true,
-    repoUrl: DEFAULT_UPDATE_REPO,
-    autoCheck: updateConfig.autoCheck,
-    autoDownload: updateConfig.autoDownload,
-    ...patch
-  };
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('update:state', updateState);
-  return updateState;
-}
-
-function bindUpdaterEvents() {
-  if (updaterEventsBound) return;
-  updaterEventsBound = true;
-  autoUpdater.logger = console;
-  autoUpdater.autoInstallOnAppQuit = true;
-  autoUpdater.allowPrerelease = false;
-  autoUpdater.on('checking-for-update', () => emitUpdateState({ status: 'checking', progress: 0, message: 'Verificando atualizações…' }));
-  autoUpdater.on('update-available', info => emitUpdateState({ status: updateConfig.autoDownload ? 'downloading' : 'available', latestVersion: info?.version || '', progress: 0, message: `Banana Cord ${info?.version || 'novo'} disponível.` }));
-  autoUpdater.on('update-not-available', info => emitUpdateState({ status: 'up-to-date', latestVersion: info?.version || app.getVersion(), progress: 100, message: 'Banana Cord está atualizado.' }));
-  autoUpdater.on('download-progress', p => emitUpdateState({ status: 'downloading', progress: Math.max(0, Math.min(100, Number(p?.percent || 0))), message: `Baixando atualização… ${Math.round(Number(p?.percent || 0))}%` }));
-  autoUpdater.on('update-downloaded', info => emitUpdateState({ status: 'downloaded', latestVersion: info?.version || '', progress: 100, message: 'Atualização pronta. Reinicie para instalar.' }));
-  autoUpdater.on('error', err => emitUpdateState({ status: 'error', progress: 0, message: String(err?.message || err || 'Falha ao atualizar.') }));
-}
-
-function configureUpdater() {
-  bindUpdaterEvents();
-  autoUpdater.autoDownload = !!updateConfig.autoDownload;
-  try {
-    autoUpdater.setFeedURL({ provider: 'github', owner: OFFICIAL_UPDATE_OWNER, repo: OFFICIAL_UPDATE_NAME, private: false });
-    return emitUpdateState({ status: updateState.status === 'not-configured' ? 'idle' : updateState.status, message: updateState.status === 'not-configured' ? 'Atualizações oficiais configuradas.' : updateState.message });
-  } catch (err) {
-    return emitUpdateState({ status: 'error', message: `Não consegui configurar atualizações: ${err?.message || err}` });
-  }
-}
-
-async function checkForUpdates(manual = false) {
-  if (!app.isPackaged) return emitUpdateState({ status: 'dev', message: 'A verificação automática funciona no Banana Cord instalado (.exe).' });
-  try {
-    configureUpdater();
-    return await autoUpdater.checkForUpdates();
-  } catch (err) {
-    emitUpdateState({ status: 'error', message: String(err?.message || err || 'Falha ao verificar atualizações.') });
-    if (manual) throw err;
-    return null;
-  }
-}
-
-function scheduleAutomaticUpdateCheck() {
-  clearTimeout(updateCheckTimer);
-  if (!updateConfig.autoCheck) return;
-  updateCheckTimer = setTimeout(() => checkForUpdates(false), 6500);
-}
+function sendHostStatus(status,extra={}) { app.emit('banana:host-status',{status,...extra}); }
 
 function safeExternalUrl(value) {
   try {
@@ -175,18 +58,19 @@ function createWindow() {
     autoHideMenuBar: true,
     icon: path.join(__dirname, 'assets', 'banana-cord.png'),
     webPreferences: {
-      // Legacy renderer still needs Node in 2.0.x. The dangerous expansion paths
-      // (workers, subframes, webviews, navigation and popup windows) are disabled.
-      nodeIntegration: true,
+      // The renderer only receives explicitly allowed operations from preload.
+      nodeIntegration: false,
       nodeIntegrationInWorker: false,
       nodeIntegrationInSubFrames: false,
-      contextIsolation: false,
+      contextIsolation: true,
+      sandbox: true,
+      preload: path.join(__dirname, 'preload.js'),
       webviewTag: false,
       webSecurity: true,
       allowRunningInsecureContent: false,
       devTools: !app.isPackaged,
       autoplayPolicy: 'no-user-gesture-required',
-      backgroundThrottling: false
+      backgroundThrottling: true
     }
   });
   hardenWindow(mainWindow);
@@ -331,49 +215,8 @@ app.whenReady().then(() => {
     callback(allowedPermissions.has(permission) && isTrustedRenderer(webContents));
   });
 
-  if (session.defaultSession.setDisplayMediaRequestHandler) {
-    session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
-      try {
-        const sources = await desktopCapturer.getSources({ types: ['screen', 'window'], thumbnailSize: { width: 320, height: 180 }, fetchWindowIcons: true });
-        if (!sources.length) return callback({});
-        callback({ video: sources[0], audio: process.platform === 'win32' ? 'loopback' : undefined });
-      } catch {
-        callback({});
-      }
-    }, { useSystemPicker: true });
-  }
-
-  ipcMain.handle('host:start', startHosting);
-  ipcMain.handle('host:stop', stopHosting);
-  ipcMain.handle('host:status', () => ({ running: !!localServerHandle, url: tunnelUrl, localUrl: localServerHandle ? 'http://127.0.0.1:3210' : '' }));
-  ipcMain.handle('clipboard:write', (_e, text) => { clipboard.writeText(String(text || '').slice(0, 20000)); return true; });
-  ipcMain.handle('external:open', async (_e, raw) => {
-    const url = safeExternalUrl(raw);
-    if (!url) throw new Error('Link externo bloqueado por segurança.');
-    await shell.openExternal(url);
-    return true;
-  });
-  ipcMain.handle('update:get-state', () => emitUpdateState());
-  ipcMain.handle('update:get-config', () => ({ ...updateConfig, repoUrl: DEFAULT_UPDATE_REPO, currentVersion: app.getVersion() }));
-  ipcMain.handle('update:save-config', (_e, cfg) => {
-    const requested = String(cfg?.repoUrl || '').trim();
-    if (requested && !isOfficialUpdateRepo(requested)) throw new Error('Por segurança, o Banana Cord só aceita atualizações do repositório oficial.');
-    const saved = persistUpdateConfig({ autoCheck: cfg?.autoCheck, autoDownload: cfg?.autoDownload });
-    scheduleAutomaticUpdateCheck();
-    return { ...saved, repoUrl: DEFAULT_UPDATE_REPO, currentVersion: app.getVersion() };
-  });
-  ipcMain.handle('update:check', async () => { await checkForUpdates(true); return emitUpdateState(); });
-  ipcMain.handle('update:download', async () => {
-    if (!app.isPackaged) return emitUpdateState({ status: 'dev', message: 'Downloads de atualização só funcionam no app instalado.' });
-    await autoUpdater.downloadUpdate();
-    return emitUpdateState();
-  });
-  ipcMain.handle('update:install', () => {
-    if (updateState.status !== 'downloaded') return false;
-    setImmediate(() => autoUpdater.quitAndInstall(false, true));
-    return true;
-  });
-
+  ipcMain.handle('clipboard:write', (_event,text)=>{if(typeof text!=='string'||text.length>20000)throw new Error('Texto inválido.');clipboard.writeText(text);return true;});
+  ipcMain.handle('external:open',async (_event,raw)=>{const url=safeExternalUrl(raw);if(!url)throw new Error('Link bloqueado.');await shell.openExternal(url);return true;});
   const registerShortcut = (accelerator, eventName) => {
     try { globalShortcut.register(accelerator, () => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(eventName); }); } catch {}
   };
@@ -387,7 +230,7 @@ app.whenReady().then(() => {
 });
 
 app.on('before-quit', () => {
-  clearTimeout(updateCheckTimer);
+
   try { globalShortcut.unregisterAll(); } catch {}
   if (tunnelProc) { try { tunnelProc.kill(); } catch {} }
   if (localServerHandle) { try { localServerHandle.server.close(); } catch {} }

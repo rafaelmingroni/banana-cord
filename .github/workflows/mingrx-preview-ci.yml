@@ -2,7 +2,7 @@ name: Mingrx V3 Validation
 
 on:
   push:
-    branches: [v3.0.0-mingrx-rebrand, v3.0.0-mingrx-ui-polish, v3.1.0-spark-media-removal, hotfix/3.1.1-server-photo-voice-ui, hotfix/3.1.2-dm-permission-private-ui, 'hotfix/3.1.4-*']
+    branches: [v3.0.0-mingrx-rebrand, v3.0.0-mingrx-ui-polish, v3.1.0-spark-media-removal, hotfix/3.1.1-server-photo-voice-ui, hotfix/3.1.2-dm-permission-private-ui, 'hotfix/3.1.4-*', 'hotfix/3.1.5-*']
     paths:
       - "desktop/**"
       - "firebase/**"
@@ -89,7 +89,7 @@ jobs:
 
       - name: Cloud and UI regression suite
         working-directory: desktop
-        run: npm run smoke:cloud
+        run: npm run smoke:cloud && npm run smoke:hotfix315
 
       - name: Firebase security rules regression
         working-directory: desktop

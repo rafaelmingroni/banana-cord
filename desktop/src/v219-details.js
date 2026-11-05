@@ -13,7 +13,7 @@
   let stopRoleColorWatch = null;
 
   const firestore = (() => {
-    try { return require('firebase/firestore'); } catch { return null; }
+    try { return window.MingrxFirebase?.firestore; } catch { return null; }
   })();
 
   function cleanHex(value, fallback) {

@@ -1,0 +1,13 @@
+const fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=require('assert/strict');
+const pkg=require('../package.json');
+assert(/^3\.1\.\d+$/.test(pkg.version));
+assert.equal(pkg.build.appId,'com.bananacord.app');assert.equal(pkg.build.productName,'Mingrx');
+assert.equal(pkg.build.publish[0].repo,'mingrx-app');
+const name=`Mingrx-Setup-${pkg.version}-x64.exe`,dir=path.resolve(__dirname,'../dist');
+const binary=fs.readFileSync(path.join(dir,name));assert(binary.length>50000000,'Installer is unexpectedly small');
+assert(fs.statSync(path.join(dir,name+'.blockmap')).size>0);
+const metadata=require('js-yaml').load(fs.readFileSync(path.join(dir,'latest.yml'),'utf8'));
+assert.equal(metadata.version,pkg.version);assert.equal(metadata.path,name);
+assert.equal(metadata.sha512,crypto.createHash('sha512').update(binary).digest('base64'));
+assert.equal(metadata.files[0].url,name);assert.equal(metadata.files[0].size,binary.length);
+console.log(`Mingrx ${pkg.version} installer and SHA-512 metadata: OK`);

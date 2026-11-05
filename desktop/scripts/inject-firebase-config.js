@@ -3,8 +3,8 @@ const path = require('path');
 
 const raw = String(process.env.BANANA_FIREBASE_CONFIG_JSON || '').trim();
 if (!raw) {
-  console.log('BANANA_FIREBASE_CONFIG_JSON not set; keeping V2 preview unconfigured.');
-  process.exit(0);
+  console.error('BANANA_FIREBASE_CONFIG_JSON is required for a configured release build.');
+  process.exit(1);
 }
 
 let parsed;
@@ -29,3 +29,8 @@ const output = `// Generated at build time. Do not edit manually.\nmodule.export
 const target = path.resolve(__dirname, '..', 'cloud', 'firebase-config.js');
 fs.writeFileSync(target, output, 'utf8');
 console.log('Firebase web config injected into Banana Cord V2 build.');
+
+// Only a public HTTPS issuer URL is packaged; TURN passwords are never bundled.
+const relayUrl=String(process.env.MINGRX_TURN_CREDENTIALS_URL||'').trim();
+if(relayUrl){const url=new URL(relayUrl);if(url.protocol!=='https:'||url.username||url.password)throw new Error('TURN issuer must be HTTPS without embedded credentials.');}
+require('fs').writeFileSync(require('path').join(__dirname,'../cloud/rtc-config.json'),JSON.stringify({credentialsUrl:relayUrl},null,2)+'\n');

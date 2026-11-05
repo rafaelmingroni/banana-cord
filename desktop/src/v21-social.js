@@ -3,7 +3,7 @@
   if (window.__bananaV21SocialUi) return;
   window.__bananaV21SocialUi = true;
 
-  const { ipcRenderer } = require('electron');
+  const { ipcRenderer } = window.MingrxDesktop;
   const i18n = () => window.BananaI18n;
   const t = (key, vars) => i18n()?.t?.(key, vars) || key;
   const ROLE_RANK_V21 = { member:0, moderator:1, admin:2, owner:3 };

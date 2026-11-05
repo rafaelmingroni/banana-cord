@@ -69,6 +69,7 @@
     // This patch is deliberately applied after V2.0.16 E2EE, so the DM wrapper
     // rate-limits the encrypted send path instead of replacing encryption.
     const sendDmBase = typeof socket.sendDm === 'function' ? socket.sendDm.bind(socket) : null;
+    socket.__mingrxSendDmBase = sendDmBase;
     if (sendDmBase) {
       socket.sendDm = async function sendDmV220(payload = {}) {
         this.takeMessagePermitV220();

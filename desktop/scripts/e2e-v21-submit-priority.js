@@ -21,7 +21,8 @@ function finish(code, message) { clearTimeout(timeout); (code ? console.error : 
 function fail(message) { finish(1, `Banana Cord 2.1 submit priority E2E failed: ${message}`); }
 
 app.whenReady().then(async () => {
-  const win = new BrowserWindow({ show:false,width:900,height:650,webPreferences:{nodeIntegration:true,contextIsolation:false,sandbox:false} });
+  const win = new BrowserWindow({ show:false,width:900,height:650,webPreferences:{preload:path.join(__dirname,'..','preload.js'),nodeIntegration:false,contextIsolation:true,sandbox:true} });
+  win.webContents.on('console-message', (...args) => { const d=args[1]; const message=typeof d==='object'?d.message:args[2]; if((typeof d==='object' && d.level==='error')||d===3) console.error('renderer error:',message); });
   await win.loadFile(path.join(__dirname,'..','src','index.html'));
   await new Promise(r => setTimeout(r,180));
   const result = await win.webContents.executeJavaScript(`

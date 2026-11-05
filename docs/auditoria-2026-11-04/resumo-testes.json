@@ -1,0 +1,49 @@
+{
+  "prepare": [
+    "Mingrx icon OK: 16/24/32/48/64/128/256px; 32px dark=80% purple=18%; 256px dark=81% purple=18%"
+  ],
+  "brand": [
+    "Mingrx rebrand + themes smoke: OK",
+    "Mingrx UI polish smoke: OK",
+    "Mingrx Spark media + server photo + invite static regression smoke: OK",
+    "Mingrx Obsidian social smoke: OK",
+    "Mingrx Obsidian settings smoke: OK"
+  ],
+  "cloud": [
+    "Mingrx 3.1.4 single-runtime cloud smoke test: OK",
+    "Banana Cord V2 auth tab click regression test: OK",
+    "Banana Cord V2 native Cloud + full v1.2.1 protocol parity smoke test: OK",
+    "Screen-share compatibility smoke test OK.",
+    "Banana Cord V2.0.9 native server deletion regression checks: OK",
+    "Banana Cord 3.1.4 preserves the V2.0.6 call/update restart regressions: OK",
+    "Banana Cord V2.0.8+ restored voice transport regression checks: OK",
+    "Banana Cord 3.1.4 preserves the V2.0.10 server delete UI regression: OK",
+    "Mingrx 3.1.4 social/DM single-runtime regression checks: OK",
+    "Mingrx 3.1.4 preserves the V2.0.12 links/private navigation/voice hierarchy/private-call regressions: OK",
+    "Banana Cord V2.0.14 private navigation/sidebar regression checks: OK",
+    "Mingrx updater/security hardening regression checks: OK",
+    "Banana Cord V2.0.16 E2EE regression checks: OK",
+    "Banana Cord V2.0.18+ polish/updater regression checks: OK",
+    "Banana Cord V2.0.19+ detail polish regression checks: OK",
+    "Banana Cord V2.0.20+ chat stability checks: OK",
+    "Mingrx 3.1.4 preserves the V2.1 compatibility static regression checks: OK"
+  ],
+  "ui": [
+    "Mingrx v3.1.4 UI smoke test: OK"
+  ],
+  "invites": [
+    "Banana Cord v1.1.1 encrypted rendezvous smoke test: OK"
+  ],
+  "legacy": [
+    "Banana Cord v1 smoke test: OK"
+  ],
+  "rules": [
+    "[2026-11-04T13:55:00.501Z]  @firebase/database: FIREBASE WARNING: set at /presence/member failed: permission_denied ",
+    "[2026-11-04T13:55:00.640Z]  @firebase/database: FIREBASE WARNING: set at /sessionOwners/session-fake failed: permission_denied ",
+    "[2026-11-04T13:55:00.695Z]  @firebase/database: FIREBASE WARNING: set at /voiceRooms/srv-test/voice-general/session-owner failed: permission_denied ",
+    "[2026-11-04T13:55:00.790Z]  @firebase/database: FIREBASE WARNING: set at /signals/does-not-exist/sig2 failed: permission_denied ",
+    "[2026-11-04T13:55:00.794Z]  @firebase/database: FIREBASE WARNING: set at /signaling/legacy-room/offer failed: permission_denied ",
+    "Mingrx 3.1 Firebase Security Rules emulator test: OK",
+    "Banana Cord V2.0.16 / Mingrx 3.1.2 E2EE Firestore Rules test: OK"
+  ]
+}

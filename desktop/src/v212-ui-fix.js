@@ -6,7 +6,7 @@
   if (window.__bananaV212UiFix) return;
   window.__bananaV212UiFix = true;
 
-  const { shell } = require('electron');
+  const { shell } = window.MingrxDesktop;
   const ROLE_RANK_V212 = { member: 0, moderator: 1, admin: 2, owner: 3 };
   const directCalls = new Map();
   const notifiedCalls = new Set();

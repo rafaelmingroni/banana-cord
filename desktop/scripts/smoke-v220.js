@@ -19,7 +19,7 @@ const index = read('src/index.html');
 const css = read('src/v220-chat-stability.css');
 const ui = read('src/v220-chat-stability.js');
 const cloud = read('src/cloud-v2-v220-chat-stability.js');
-const updater = read('updater-prompt.js');
+const updater = read('update-service.js');
 const build = read('scripts/build-cloud-browser.js');
 
 expect(versionAtLeast(pkg.version, '2.0.20'), `expected 2.0.20 or newer, got ${pkg.version}`);
@@ -37,8 +37,8 @@ expect(cloud.includes('sendMessageV220') && cloud.includes('sendDmV220'), 'anti-
 expect(cloud.includes('const result = previousAttach(socket, user);') && cloud.indexOf('const result = previousAttach(socket, user);') < cloud.lastIndexOf('patchSocket(socket);'), 'V2.0.20 must layer after E2EE attach');
 expect(ui.includes("els.messages?.addEventListener('scroll'"), 'scroll-triggered history loading missing');
 expect(ui.includes('oldHeight') && ui.includes('scrollHeight - anchor.oldHeight'), 'scroll anchor preservation missing');
-expect(updater.includes('autoUpdater.quitAndInstall(true, true)'), 'silent updater must install and force relaunch');
-expect(updater.includes('autoUpdater.autoRunAppAfterInstall = true'), 'updater relaunch preference missing');
+expect(updater.includes('autoUpdater.quitAndInstall(true,true)'), 'silent updater must install and force relaunch');
+expect(updater.includes('autoUpdater.autoRunAppAfterInstall=true'), 'updater relaunch preference missing');
 expect(pkg.scripts['smoke:cloud'].includes('smoke-v220.js'), 'V2.0.20 smoke not included in release regression');
 expect(pkg.scripts['smoke:e2e-v2'].includes('e2e-v220-chat-ui.js'), 'V2.0.20 Electron stress test not included');
 

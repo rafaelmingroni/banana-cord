@@ -13,7 +13,7 @@
   const COMMUNITY_MAX_OUTPUT = 260 * 1024;
 
   function b64urlDecode(value) {
-    return Buffer.from(String(value), 'base64url').toString('utf8');
+    return new TextDecoder().decode(Uint8Array.from(atob(String(value).replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)));
   }
 
   function safeHttps(value) {

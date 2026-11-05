@@ -4,7 +4,7 @@ const assert = require('assert');
 
 const root = path.resolve(__dirname, '..');
 const graceful = fs.readFileSync(path.join(root, 'graceful-shutdown.js'), 'utf8');
-const updater = fs.readFileSync(path.join(root, 'updater-prompt.js'), 'utf8');
+const updater = fs.readFileSync(path.join(root, 'update-service.js'), 'utf8');
 const tray = fs.readFileSync(path.join(root, 'tray.js'), 'utf8');
 const callFix = fs.readFileSync(path.join(root, 'src', 'v206-call-update-fix.js'), 'utf8');
 const index = fs.readFileSync(path.join(root, 'src', 'index.html'), 'utf8');
@@ -66,6 +66,7 @@ assert(index.includes('v206-call-update-fix.js'), 'Renderer must load the V2.0.6
     };
   };
 
+  fakeWindow.MingrxFirebase={database:mockRequire('firebase/database')};
   new Function('window', 'require', callFix)(fakeWindow, mockRequire);
 
   fakeSocket.processVoiceServer('server', tree);

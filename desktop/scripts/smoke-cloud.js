@@ -41,14 +41,15 @@ assert(cloud.includes('cloudVerifyError') && authFix.includes('cloudVerifyError'
 assert(cloud.includes("gate.classList.remove('hidden')"), 'auth gate must remain visible until verified shell is ready');
 assert(!cloud.includes("await setDoc(doc(db, 'users', credential.user.uid)"), 'registration must not write Firestore profile before e-mail verification');
 assert(cloud.includes('browserLocalPersistence'), 'persistent auth session missing');
-assert(cloud.includes('persistentLocalCache'), 'Firestore offline cache missing');
+assert(cloud.includes('memoryLocalCache'), 'Decrypted account state must not persist in a shared cache');
 assert(cloud.includes('onDisconnect'), 'presence disconnect handling missing');
 assert(socket.includes('BananaCloudSocket') && socket.includes("case 'server:create'") && socket.includes("case 'voice:join'"), 'full cloud protocol transport missing');
 assert(!configSource.includes('private_key') && !configSource.includes('serviceAccount'), 'Firebase admin credentials must never be packaged');
 assert(configSource.includes('banana-cord.firebaseapp.com') || configSource.includes("authDomain: ''"), 'Firebase authDomain must be injected or remain a clean template');
 assert(configSource.includes('https://banana-cord-default-rtdb.firebaseio.com'), 'Realtime Database URL missing from build config');
 assert(firestoreRules.includes('email_verified') && firestoreRules.includes('dmThreads') && firestoreRules.includes('relationships') && firestoreRules.includes('invites'), 'Firestore security rules incomplete');
-assert(databaseRules.includes('email_verified') && databaseRules.includes('presence') && databaseRules.includes('voiceRooms') && databaseRules.includes('signals'), 'Realtime Database rules incomplete');
+assert(JSON.parse(databaseRules).rules['.read']===false && JSON.parse(databaseRules).rules['.write']===false, 'Legacy RTDB must be closed');
+assert(firestoreRules.includes('voiceSessions') && firestoreRules.includes('validSignal'), 'Firestore voice authorization missing');
 const recovery = fs.readFileSync(path.join(root, 'src', 'cloud-v2-release-fixes.js'), 'utf8');
 assert(socket.indexOf("this.receive('auth:ready'") < socket.indexOf('const servers = (await Promise.all(ids.map('), 'First authenticated app shell must not wait for server-detail reads');
 assert(socket.includes("this.loadServer(serverId).catch(error =>"), 'Per-server startup failures must not crash entire cloud session');

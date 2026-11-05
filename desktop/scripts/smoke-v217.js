@@ -16,18 +16,18 @@ const versionAtLeast = (actual, minimum) => {
   return true;
 };
 
-const updater = read('updater-prompt.js');
+const updater = read('update-service.js');
 const ui = read('src/v217-premium-updater.js');
 const css = read('src/v217-premium-updater.css');
 const html = read('src/index.html');
 const pkg = JSON.parse(read('package.json'));
 
 assert(versionAtLeast(pkg.version, '2.0.17'), 'package version must be 2.0.17 or newer');
-assert(updater.includes('autoUpdater.autoDownload = true'), 'automatic background download must remain enabled');
-assert(updater.includes('autoUpdater.autoInstallOnAppQuit = false'), 'visible/implicit install-on-quit path must stay disabled');
-assert(updater.includes('autoUpdater.autoRunAppAfterInstall = true'), 'updater should prefer reopening after install');
+assert(updater.includes('autoUpdater.autoDownload=config.autoDownload'), 'automatic background download must remain enabled');
+assert(updater.includes('autoUpdater.autoInstallOnAppQuit=false'), 'visible/implicit install-on-quit path must stay disabled');
+assert(updater.includes('autoUpdater.autoRunAppAfterInstall=true'), 'updater should prefer reopening after install');
 assert(
-  updater.includes('autoUpdater.quitAndInstall(true, true)'),
+  updater.includes('autoUpdater.quitAndInstall(true,true)'),
   'electron-updater 6 install must be silent and force the app to reopen'
 );
 assert(!updater.includes('dialog.showMessageBox'), 'native Windows update dialogs must not return');

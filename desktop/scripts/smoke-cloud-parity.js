@@ -73,6 +73,7 @@ assert(v110.includes('BananaCloudMode') && v110.includes('invite:create-temporar
 assert(v120.includes('BananaPendingInvite') && v120.includes("server:join"), 'deep links must route into Banana Cloud');
 
 for (const required of ['publicProfiles', 'relationships', 'invites', 'dmThreads', 'email_verified']) assert(firestoreRules.includes(required), `Firestore rules missing ${required}`);
-for (const required of ['presence', 'sessionOwners', 'voiceRooms', 'signals', 'email_verified']) assert(databaseRules.includes(required), `Realtime Database rules missing ${required}`);
+assert(JSON.parse(databaseRules).rules['.write']===false, 'Legacy RTDB bypass must be closed');
+assert(firestoreRules.includes('voiceSessions') && firestoreRules.includes('validPresence'), 'Authorized voice/presence paths missing');
 
 console.log('Banana Cord V2 native Cloud + full v1.2.1 protocol parity smoke test: OK');

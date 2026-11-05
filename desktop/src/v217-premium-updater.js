@@ -1,6 +1,6 @@
 /* Banana Cord V2.0.17 — premium in-app updater */
 (() => {
-  const { ipcRenderer } = require('electron');
+  const { ipcRenderer } = window.MingrxDesktop;
   const badge = document.getElementById('updateBadge');
   if (!badge) return;
 
