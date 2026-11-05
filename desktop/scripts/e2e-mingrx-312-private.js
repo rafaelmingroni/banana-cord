@@ -20,7 +20,8 @@ function finish(code, message) { clearTimeout(hardTimeout); if (message) (code ?
 const fail = message => finish(1, `Mingrx 3.1.2 private E2E failed: ${message}`);
 
 app.whenReady().then(async () => {
-  const win = new BrowserWindow({ show:false,width:1366,height:768,webPreferences:{nodeIntegration:true,contextIsolation:false,sandbox:false} });
+  const win = new BrowserWindow({ show:false,width:1366,height:768,webPreferences:{preload:path.join(__dirname,'..','preload.js'),nodeIntegration:false,contextIsolation:true,sandbox:true} });
+  win.webContents.on('console-message', (...args) => { const d=args[1]; const message=typeof d==='object'?d.message:args[2]; if((typeof d==='object' && d.level==='error')||d===3) console.error('renderer error:',message); });
   await win.loadFile(path.join(__dirname,'..','src','index.html'));
   await sleep(400);
 
@@ -77,8 +78,8 @@ app.whenReady().then(async () => {
       if(!document.querySelector('.mingrx312-recent-item[data-user-id="ari"]')) failures.push('new message did not restore hidden recent conversation');
 
       const ensureSource=String(window.Mingrx312?.ensureFriendThread || '');
-      if(!/getDoc\\(threadRef\\)/.test(ensureSource) || !/setDoc\\(threadRef/.test(ensureSource)) failures.push('fresh-DM parent-thread repair is missing');
-      if(!/status !== 'friends'/.test(ensureSource)) failures.push('DM repair does not enforce friendship before creating a thread');
+      if(!/socket.ensureFriendThread/.test(ensureSource)) failures.push('fresh-DM repair must delegate to bundled transport');
+      if(/require\\('firebase/.test(ensureSource)) failures.push('DM repair must not load a second Firebase runtime');
 
       return {ok:failures.length===0,failures,nav,recentCount:document.querySelectorAll('.mingrx312-recent-item').length,historyCount:(state.dmMessages.get('ari')||[]).length};
     })();

@@ -33,9 +33,8 @@
   function roleCanAccessChannel(role, channel) {
     const roles = Array.isArray(channel?.allowedRoles) ? channel.allowedRoles : [];
     if (!roles.length) return true;
-    if (role === 'owner') return true;
-    const min = minimumRoleForChannel(channel);
-    return (ROLE_RANK[role] ?? -1) >= (ROLE_RANK[min] ?? 99);
+    if (role === 'owner' || role === 'admin') return true;
+    return roles.includes(role);
   }
 
   function patchSocket(socket) {

@@ -20,7 +20,8 @@ function finish(code, message) { clearTimeout(hardTimeout); if (message) (code ?
 const fail = message => finish(1, `Mingrx Spark media/invite E2E failed: ${message}`);
 
 app.whenReady().then(async () => {
-  const win = new BrowserWindow({ show:false,width:1366,height:768,webPreferences:{nodeIntegration:true,contextIsolation:false,sandbox:false} });
+  const win = new BrowserWindow({ show:false,width:1366,height:768,webPreferences:{preload:path.join(__dirname,'..','preload.js'),nodeIntegration:false,contextIsolation:true,sandbox:true} });
+  win.webContents.on('console-message', (...args) => { const d=args[1]; const message=typeof d==='object'?d.message:args[2]; if((typeof d==='object' && d.level==='error')||d===3) console.error('renderer error:',message); });
   await win.loadFile(path.join(__dirname,'..','src','index.html'));
   await sleep(300);
 
@@ -161,7 +162,7 @@ app.whenReady().then(async () => {
 
       // Old 3.0 image markers still render for backwards compatibility, but no new upload UI exists.
       const legacyMeta={u:'https://example.com/screenshot.webp',n:'print.webp',c:'Imagem antiga'};
-      const marker='[[MINGRX_IMAGE_V1:'+Buffer.from(JSON.stringify(legacyMeta),'utf8').toString('base64url')+']]';
+      const marker='[[MINGRX_IMAGE_V1:'+btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(legacyMeta)))).split('+').join('-').split('/').join('_').replace(/=+$/,'')+']]';
       state.viewMode='server'; state.selectedServer=server; state.selectedChannel=server.channels[0];
       state.messagesByChannel.set('general',[{id:'img1',serverId:'srv',channelId:'general',authorId:'me',text:marker,at:Date.now(),reactions:{}}]);
       renderMessages(true); await sleep(30);

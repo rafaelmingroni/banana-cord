@@ -2,7 +2,7 @@
 (() => {
   if (window.__mingrxInviteFixLoaded) return;
   window.__mingrxInviteFixLoaded = true;
-  const { ipcRenderer } = require('electron');
+  const { ipcRenderer } = window.MingrxDesktop;
 
   const cleanCode = value => String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   const formatCode = value => {

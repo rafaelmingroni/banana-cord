@@ -49,19 +49,20 @@ app.whenReady().then(async () => {
     show:false,
     width:1000,
     height:700,
-    webPreferences:{ nodeIntegration:true, contextIsolation:false, sandbox:false }
+    webPreferences:{preload:path.join(__dirname,'..','preload.js'), nodeIntegration:false, contextIsolation:true, sandbox:true }
   });
+  win.webContents.on('console-message', (...args) => { const d=args[1]; const message=typeof d==='object'?d.message:args[2]; if((typeof d==='object' && d.level==='error')||d===3) console.error('renderer error:',message); });
   await win.loadFile(path.join(__dirname, '..', 'src', 'index.html'));
   await sleep(250);
 
   const result = await win.webContents.executeJavaScript(`
     (async () => {
-      const first = await require('electron').ipcRenderer.invoke('banana-v21:get-settings');
-      const second = await require('electron').ipcRenderer.invoke('banana-v21:set-settings', {
+      const first = await window.MingrxDesktop.ipcRenderer.invoke('banana-v21:get-settings');
+      const second = await window.MingrxDesktop.ipcRenderer.invoke('banana-v21:set-settings', {
         shareActivity:false,
         autoAwayMinutes:10
       });
-      const languages = await require('electron').ipcRenderer.invoke('banana-v21:get-system-languages');
+      const languages = await window.MingrxDesktop.ipcRenderer.invoke('banana-v21:get-system-languages');
       return { first, second, languages };
     })();
   `, true);

@@ -37,7 +37,7 @@
     if (!socket || socket.__bananaV206CallUpdatePatched) return false;
     socket.__bananaV206CallUpdatePatched = true;
 
-    const { ref, get, remove } = require('firebase/database');
+    const { ref, get, remove } = window.MingrxFirebase?.database;
 
     if (typeof socket.processVoiceServer === 'function') {
       const originalProcessVoiceServer = socket.processVoiceServer.bind(socket);

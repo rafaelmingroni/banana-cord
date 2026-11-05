@@ -19,7 +19,7 @@ const index = read('src/index.html');
 const css = read('src/v218-polish.css');
 const ui = read('src/v218-polish.js');
 const e2eeUi = read('src/v216-e2ee-ui.js');
-const updater = read('updater-prompt.js');
+const updater = read('update-service.js');
 const shutdown = read('graceful-shutdown.js');
 
 expect(versionAtLeast(pkg.version, '2.0.18'), `expected package version 2.0.18 or newer, got ${pkg.version}`);
@@ -37,9 +37,9 @@ expect(ui.includes('está falando') && ui.includes('Você está falando'), 'spea
 expect(ui.includes("ipcRenderer.send('banana-call:attention', true)"), 'Windows attention request missing');
 expect(!e2eeUi.includes('O Firebase recebe somente conteúdo cifrado'), 'technical Firebase wording leaked into user-facing E2EE banner');
 expect(e2eeUi.includes('Só você e seu contato conseguem ler'), 'plain-language E2EE explanation missing');
-expect(updater.includes('autoUpdater.autoInstallOnAppQuit = false'), 'automatic install on quit must stay disabled');
-expect(updater.includes('autoUpdater.autoRunAppAfterInstall = true'), 'updater must prefer reopening after install');
-expect(updater.includes('autoUpdater.quitAndInstall(true, true)'), 'electron-updater 6 silent install + forced relaunch missing');
+expect(updater.includes('autoUpdater.autoInstallOnAppQuit=false'), 'automatic install on quit must stay disabled');
+expect(updater.includes('autoUpdater.autoRunAppAfterInstall=true'), 'updater must prefer reopening after install');
+expect(updater.includes('autoUpdater.quitAndInstall(true,true)'), 'electron-updater 6 silent install + forced relaunch missing');
 expect(shutdown.includes('originalQuitAndInstall(options, legacyIsForceRunAfter)'), 'graceful updater wrapper must preserve positional relaunch arguments');
 expect(!updater.includes('showMessageBox'), 'native installer/update prompts must not return');
 

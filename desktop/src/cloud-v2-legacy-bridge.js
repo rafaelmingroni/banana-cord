@@ -83,8 +83,10 @@
   }
 
   async function cloudLogout() {
-    try { await window.BananaCloudSocket?.disconnect?.(); } catch (error) { console.warn('Banana Cloud disconnect:', error); }
-    try { await window.BananaCloud?.signOut?.(); } catch (error) { console.error('Banana Cloud logout:', error); return toast('Não consegui sair da conta.', 4200); }
+    if (typeof cleanupVoice === 'function') cleanupVoice();
+    window.BananaCloudResetBoot?.();
+    try { await Promise.race([window.BananaCloudSocket?.disconnect?.(), new Promise(resolve=>setTimeout(resolve,1800))]); } catch (error) { console.warn('Banana Cloud disconnect:', error); }
+    try { await (window.BananaCloud?.signOutAuth || window.BananaCloud?.signOut)?.(); } catch (error) { console.error('Banana Cloud logout:', error); return toast('Não consegui sair da conta.', 4200); }
     window.BananaCloudSocket = null;
     state.socket = null;
     state.readyOnce = false;
@@ -95,6 +97,16 @@
     state.members = new Map();
     state.messagesByChannel = new Map();
     state.voicePresence = new Map();
+    state.dmMessages = new Map();
+    state.dmConversations = [];
+    state.dmUnread = new Set();
+    state.activeDmUserId = null;
+    if (state.v1) { state.v1.social = {friends:[],incoming:[],outgoing:[],blocked:[]}; state.v1.pinnedDms = new Set(); state.v1.reply=null; state.v1.editing=null; state.v1.menu?.remove(); state.v1.menu=null; state.v1.unreadChannels?.clear(); state.v1.mentionCounts?.clear(); }
+    if(state.e2ee){state.e2ee.byUser.clear();state.e2ee.localAvailable=null;}
+    if(els.messages)els.messages.textContent='';
+    if(els.messageInput)els.messageInput.value='';
+    if(els.channels)els.channels.textContent='';
+    if(els.memberList)els.memberList.textContent='';
     setConnection(false);
     els.app?.classList.add('hidden');
     els.setup?.classList.add('hidden');

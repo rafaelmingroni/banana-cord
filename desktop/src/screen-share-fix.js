@@ -8,7 +8,7 @@
   if (window.__bananaScreenShareFix) return;
   window.__bananaScreenShareFix = true;
 
-  const { ipcRenderer: screenIpc } = require('electron');
+  const { ipcRenderer: screenIpc } = window.MingrxDesktop;
   const screenBtn = document.getElementById('screenBtn');
 
   const isCancel = error => ['AbortError'].includes(String(error?.name || ''));
@@ -22,11 +22,37 @@
     };
   }
 
+  async function chooseCaptureSource() {
+    const sources = await screenIpc.invoke('capture:sources');
+    if (!sources.length) throw new Error('Nenhuma tela ou janela disponível.');
+    return new Promise(resolve => {
+      openModal('<h2>Compartilhar tela ou janela</h2><p>Escolha o que será transmitido. Confira a miniatura antes de iniciar.</p><div id="captureChoices" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px"></div><label><input id="captureSystemAudio" type="checkbox"> Incluir áudio do sistema</label><button id="captureCancel" class="secondary">Cancelar</button>');
+      const modal=document.getElementById('modal');
+      const finish=value=>{observer.disconnect();closeModal();resolve(value);};
+      const observer=new MutationObserver(()=>{if(modal.classList.contains('hidden')){observer.disconnect();screenIpc.invoke('capture:cancel').catch(()=>{});resolve(null);}});
+      observer.observe(modal,{attributes:true,attributeFilter:['class']});
+      for(const source of sources){
+        const button=document.createElement('button');button.type='button';
+        const image=document.createElement('img');image.src=source.thumbnail;image.alt='';image.style.width='100%';
+        const name=document.createElement('span');name.textContent=source.name;
+        button.append(image,name);
+        button.onclick=async()=>{
+          try{await screenIpc.invoke('capture:select',source.id);finish({audio:document.getElementById('captureSystemAudio').checked});}
+          catch(error){toast(error.message);finish(null);}
+        };
+        document.getElementById('captureChoices').appendChild(button);
+      }
+      document.getElementById('captureCancel').onclick=()=>{screenIpc.invoke('capture:cancel').catch(()=>{});finish(null);};
+    });
+  }
+
   async function requestDisplayStream() {
+    const choice = await chooseCaptureSource();
+    if (!choice) throw Object.assign(new Error('Captura cancelada.'), {name:'AbortError'});
     const video = screenVideoConstraints();
     try {
       // Keep system audio when the machine supports Windows loopback capture.
-      return await navigator.mediaDevices.getDisplayMedia({ video, audio: true });
+      return await navigator.mediaDevices.getDisplayMedia({ video, audio: choice.audio });
     } catch (firstError) {
       if (isCancel(firstError)) throw firstError;
       console.warn('Banana Cord display capture with audio failed; retrying video only:', firstError);
@@ -52,6 +78,7 @@
       videoTrack.onended = stopScreen;
       await setOutgoingVideo(videoTrack);
       await syncSystemAudio();
+      screenIpc.invoke('capture:cancel').catch(()=>{});
       updateLocalVideo();
       emitMediaState();
 

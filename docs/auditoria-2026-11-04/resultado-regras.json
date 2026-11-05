@@ -1,0 +1,80 @@
+{
+  "project": "demo-banana-cord",
+  "results": [
+    {
+      "id": "A01",
+      "description": "getDoc de DM inexistente é negado até para amigos (caminho usado pelo reparo 3.1.2)",
+      "reproduced": true
+    },
+    {
+      "id": "A02",
+      "description": "criar diretamente o pai da DM funciona para os mesmos amigos",
+      "reproduced": true
+    },
+    {
+      "id": "A03",
+      "description": "terceiro verificado pode tomar sessionOwners de outra conta",
+      "reproduced": true
+    },
+    {
+      "id": "A04",
+      "description": "depois da tomada, terceiro lê a caixa de sinalização da vítima",
+      "reproduced": true
+    },
+    {
+      "id": "A05",
+      "description": "terceiro sem associação entra em sala RTDB de uma comunidade",
+      "reproduced": true
+    },
+    {
+      "id": "A06",
+      "description": "qualquer verificado lê participantes de uma sala conhecida",
+      "reproduced": true
+    },
+    {
+      "id": "A07",
+      "description": "registro de voz de outro usuário pode ser sobrescrito",
+      "reproduced": true
+    },
+    {
+      "id": "A08",
+      "description": "sinal com fromSocketId de terceiro é aceito sem prova de sessão ou sala",
+      "reproduced": true
+    },
+    {
+      "id": "A09",
+      "description": "membro pode atribuir reações a outras contas e usar emoji arbitrário",
+      "reproduced": true
+    },
+    {
+      "id": "A10",
+      "description": "moderador altera texto do autor apesar da restrição da interface",
+      "reproduced": true
+    },
+    {
+      "id": "A11",
+      "description": "mensagem aceita createdAt arbitrário no futuro",
+      "reproduced": true
+    },
+    {
+      "id": "A12",
+      "description": "usuário bloqueado apaga o bloqueio aplicado pelo outro",
+      "reproduced": true
+    },
+    {
+      "id": "A13",
+      "description": "usuário bloqueado recria pedido após apagar bloqueio",
+      "reproduced": true
+    },
+    {
+      "id": "A14",
+      "description": "dono pode remover a própria associação por acesso direto",
+      "reproduced": true
+    },
+    {
+      "id": "A15",
+      "description": "após perder associação, dono fica sem permissão para remover canais",
+      "reproduced": true
+    }
+  ]
+}

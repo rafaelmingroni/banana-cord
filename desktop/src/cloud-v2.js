@@ -72,14 +72,14 @@
   let db;
   try {
     db = initializeFirestore(firebaseApp, {
-      localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() })
+      localCache: require('firebase/firestore').memoryLocalCache()
     });
   } catch (e) {
     console.warn('Banana Cloud: cache persistente indisponível, usando cache normal.', e?.message || e);
     const { getFirestore } = require('firebase/firestore');
     db = getFirestore(firebaseApp);
   }
-  const realtime = config.databaseURL ? getDatabase(firebaseApp) : null;
+  const realtime = null; // 3.1.5: control and presence use authorized Firestore paths.
 
   const $ = id => document.getElementById(id);
   const show = id => $(id)?.classList.remove('hidden');
@@ -206,6 +206,9 @@
     // Always keep one visible auth state until the verified app shell is ready.
     gate.classList.remove('hidden');
     if (!user) {
+      window.MingrxStopMedia?.();
+      window.BananaCloudSocket?.disconnect?.().catch(()=>{});
+      window.BananaCloudResetBoot?.();
       hide('cloudVerify'); hide('cloudLoading'); show('cloudAuth');
       window.BananaCloud.ready = false;
       return;
@@ -217,7 +220,7 @@
       return;
     }
     hide('cloudAuth'); hide('cloudVerify'); show('cloudLoading');
-    try { await ensureProfile(user); attachPresence(user); }
+    try { await ensureProfile(user); }
     catch (err) { console.error('Banana Cloud profile:', err); }
     hide('cloudLoading'); gate.classList.add('hidden');
     window.BananaCloud.ready = true;
@@ -305,7 +308,8 @@
   window.BananaCloud = {
     configured: true, ready: false, auth, db, realtime,
     get user() { return auth.currentUser; },
-    signOut: () => signOut(auth),
+    signOutAuth: () => signOut(auth),
+    signOut: () => window.BananaLegacy?.cloudLogout ? window.BananaLegacy.cloudLogout() : signOut(auth),
     createServer, listenMyServers, listenChannelMessages, sendChannelMessage,
     sendDM, listenDM, updateMessage, deleteMessage, dmThreadId
   };

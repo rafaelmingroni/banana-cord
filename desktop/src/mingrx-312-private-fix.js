@@ -3,8 +3,8 @@
   if (window.__mingrx312PrivateFixLoaded) return;
   window.__mingrx312PrivateFixLoaded = true;
 
-  const { doc, getDoc, setDoc, serverTimestamp } = require('firebase/firestore');
-  const HIDDEN_RECENTS_KEY = 'mingrx.hiddenDmRecents.v1';
+  const HIDDEN_RECENTS_KEY = 'mingrx.hiddenDmRecents.v2';
+  const recentsKey = () => `${HIDDEN_RECENTS_KEY}:${state.user?.id || 'signed-out'}`;
 
   const style = document.createElement('style');
   style.textContent = `
@@ -39,7 +39,7 @@
 
   function readHiddenRecents() {
     try {
-      const value = JSON.parse(localStorage.getItem(HIDDEN_RECENTS_KEY) || '{}');
+      const value = JSON.parse(localStorage.getItem(recentsKey()) || '{}');
       return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
     } catch {
       return {};
@@ -47,7 +47,7 @@
   }
 
   function writeHiddenRecents(value) {
-    try { localStorage.setItem(HIDDEN_RECENTS_KEY, JSON.stringify(value || {})); } catch {}
+    try { localStorage.setItem(recentsKey(), JSON.stringify(value || {})); } catch {}
   }
 
   function lastAt(conversation) {
@@ -179,21 +179,8 @@
     const otherUid = String(peerId || '');
     if (!socket?.db || !uid || !otherUid || uid === otherUid) return;
 
-    const relation = typeof socket.relation === 'function' ? await socket.relation(otherUid) : null;
-    const relationData = relation?.exists?.() ? relation.data() : null;
-    if (!relationData || relationData.status !== 'friends' || !(relationData.participants || []).includes(uid)) {
-      throw new Error('Adicione esta pessoa como amigo antes de iniciar uma conversa privada.');
-    }
-
-    const tid = pairId(uid, otherUid);
-    const threadRef = doc(socket.db, 'dmThreads', tid);
-    const existing = await getDoc(threadRef);
-    if (!existing.exists()) {
-      await setDoc(threadRef, {
-        participants: [uid, otherUid].sort(),
-        updatedAt: serverTimestamp()
-      });
-    }
+    if (typeof socket.ensureFriendThread !== 'function') throw new Error('Atualize o Mingrx para iniciar a conversa.');
+    await socket.ensureFriendThread(otherUid);
   }
 
   function patchDmSocket(socket) {
@@ -202,9 +189,9 @@
     socket.__mingrx312DmPatched = true;
 
     const watchDmBase = socket.watchDm.bind(socket);
-    socket.watchDm = async function watchDmMingrx312(peerId) {
+    socket.watchDm = async function watchDmMingrx312(peerId, ...args) {
       await ensureFriendThread(this, peerId);
-      return watchDmBase(peerId);
+      return watchDmBase(peerId, ...args);
     };
 
     const sendDmBase = socket.sendDm.bind(socket);

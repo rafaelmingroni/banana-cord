@@ -1,218 +1,104 @@
 name: Mingrx Windows Release
-
 on:
   push:
     branches: [main]
-    paths:
-      - "desktop/**"
-      - "firebase/**"
-      - "RELEASE_NOTES-*.md"
-      - ".github/workflows/release-windows.yml"
+    paths: ['desktop/**', 'firebase/**', 'RELEASE_NOTES-*.md', '.github/workflows/release-windows.yml']
   workflow_dispatch:
-
 permissions:
   contents: write
-
+concurrency:
+  group: mingrx-windows-release
+  cancel-in-progress: false
 jobs:
   release:
     runs-on: windows-latest
+    timeout-minutes: 45
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '22'
           cache: npm
           cache-dependency-path: desktop/package-lock.json
-
-      - name: Setup Java for Firebase emulators
-        uses: actions/setup-java@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "21"
-
+          java-version: '21'
       - name: Install exact dependencies
         working-directory: desktop
         run: npm ci --no-audit --no-fund
-
-      - name: Critical production dependency audit
+      - name: Audit production dependencies
         working-directory: desktop
         run: npm run security:audit
-
-      - name: Inject production Firebase config
-        working-directory: desktop
-        env:
-          BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
-        run: node scripts/inject-firebase-config.js
-
       - name: Prepare source
         working-directory: desktop
         run: npm run prepare:source
-
-      - name: Validate JavaScript
-        shell: pwsh
-        run: |
-          node --check desktop/main-v120.js
-          node --check desktop/v21-main.js
-          node --check desktop/updater-prompt.js
-          node --check desktop/src/app.js
-          node --check desktop/src/cloud-v2-socket.js
-          node --check desktop/src/v207-voice-stream-fix.js
-          node --check desktop/src/v219-details.js
-          node --check desktop/src/mingrx-shell.js
-          node --check desktop/src/mingrx-polish.js
-          node --check desktop/src/mingrx-regression-guard.js
-          node --check desktop/src/mingrx-media.js
-          node --check desktop/src/mingrx-invite-fix.js
-          node --check desktop/src/mingrx-31-ux-fixes.js
-          node --check desktop/scripts/inject-firebase-config.js
-          node --check desktop/scripts/smoke-mingrx-rebrand.js
-          node --check desktop/scripts/smoke-mingrx-media.js
-          node --check desktop/scripts/e2e-v2-release.js
-          node --check desktop/scripts/e2e-mingrx-media-invite.js
-
-      - name: Mingrx brand and release identity tests
+      - name: Security, UI, history and Cloud regressions
         working-directory: desktop
-        run: npm run smoke:mingrx
-
-      - name: Cloud foundation and parity tests
-        working-directory: desktop
-        run: npm run smoke:cloud
-
-      - name: Firebase Spark security rules emulator tests
+        run: npm run smoke:mingrx && npm run smoke:cloud && npm run smoke:hotfix315 && npm run smoke:ui && npm run smoke:rendezvous
+      - name: Firebase authorization and encryption rules
         working-directory: desktop
         run: npm run smoke:rules
-
-      - name: Deploy Firestore and Realtime Database rules when credential is configured
-        shell: pwsh
+      - name: Real Electron interactions with production isolation
         working-directory: desktop
+        run: npm run smoke:e2e-v2
+      - name: Inject production Firebase and optional TURN endpoint
+        working-directory: desktop
+        env:
+          BANANA_FIREBASE_CONFIG_JSON: ${{ secrets.BANANA_FIREBASE_CONFIG_JSON }}
+          MINGRX_TURN_CREDENTIALS_URL: ${{ vars.MINGRX_TURN_CREDENTIALS_URL }}
+        run: node scripts/inject-firebase-config.js
+      - name: Build Windows installer and updater metadata
+        working-directory: desktop
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: npm run dist:win -- --publish never
+      - name: Verify release identity and artifact hashes
+        working-directory: desktop
+        run: node scripts/verify-release-artifacts.js
+      - name: Upload reviewable build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mingrx-Windows-${{ github.sha }}
+          path: |
+            desktop/dist/Mingrx-Setup-*.exe
+            desktop/dist/Mingrx-Setup-*.exe.blockmap
+            desktop/dist/latest.yml
+          if-no-files-found: error
+      - name: Stage complete release as draft
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
+          $tag = "v$version"
+          $notes = "RELEASE_NOTES-$version.md"
+          if (-not (Test-Path $notes)) { throw "Release notes missing: $notes" }
+          $existing = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            $release = $existing | ConvertFrom-Json
+            if (-not $release.draft) { throw "Version $version is already public. Never replace published artifacts." }
+          } else {
+            gh release create $tag --draft --target $env:GITHUB_SHA --title "Mingrx $version — Security hotfix" --notes-file $notes
+            if ($LASTEXITCODE -ne 0) { throw 'Failed to stage release' }
+          }
+          gh release upload $tag "desktop/dist/Mingrx-Setup-$version-x64.exe" "desktop/dist/Mingrx-Setup-$version-x64.exe.blockmap" desktop/dist/latest.yml --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to upload complete artifacts' }
+      - name: Deploy required backend authorization before publishing
+        working-directory: desktop
+        shell: pwsh
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
-          if (-not $env:FIREBASE_TOKEN) {
-            Write-Host "::warning::FIREBASE_TOKEN is not configured; Firestore and Realtime Database rules were validated but not deployed by this workflow."
-            exit 0
-          }
-          npx firebase-tools deploy --project banana-cord --config ../firebase/firebase.json --only firestore:rules,database --token $env:FIREBASE_TOKEN --non-interactive
-
-      - name: UI regression tests
-        working-directory: desktop
-        run: npm run smoke:ui
-
-      - name: Invite regression tests
-        working-directory: desktop
-        run: npm run smoke:rendezvous
-
-      - name: Real Electron Mingrx interaction tests
-        working-directory: desktop
-        run: npm run smoke:e2e-v2
-
-      - name: Validate official version and upgrade identity
-        shell: pwsh
-        run: |
-          $pkg = Get-Content desktop/package.json | ConvertFrom-Json
-          $version = $pkg.version
-          if ($version -notmatch '^\d+\.\d+\.\d+$') { Write-Error "Release oficial exige versão sem sufixo: $version"; exit 1 }
-          if ($version -notmatch '^3\.') { Write-Error "Este workflow publica a linha Mingrx V3: $version"; exit 1 }
-          if ($pkg.build.appId -ne 'com.bananacord.app') { Write-Error "appId histórico mudou; isso pode quebrar a atualização do Banana Cord para Mingrx."; exit 1 }
-          if ($pkg.build.productName -ne 'Mingrx') { Write-Error "productName final precisa ser Mingrx."; exit 1 }
-          if ($pkg.build.publish[0].repo -ne 'mingrx-app') { Write-Error "Repositório de atualização precisa ser mingrx-app."; exit 1 }
-          if (Test-Path firebase/storage.rules) { Write-Error "Mingrx 3.1 Spark não deve publicar Firebase Storage rules."; exit 1 }
-          Write-Host "Mingrx official version: $version - Spark architecture and upgrade identity preserved"
-
-      - name: Prepare version tag
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
-          $tag = "v$version"
-          $repo = $env:GITHUB_REPOSITORY
-          git fetch --tags --force
-
-          $releaseJson = gh api "repos/$repo/releases/tags/$tag" 2>$null
-          $releaseExists = ($LASTEXITCODE -eq 0)
-          $releaseComplete = $false
-
-          if ($releaseExists) {
-            $release = $releaseJson | ConvertFrom-Json
-            $assetNames = @($release.assets | ForEach-Object { $_.name })
-            $hasExe = ($assetNames | Where-Object { $_ -like "Mingrx-Setup-$version-*.exe" }).Count -gt 0
-            $hasBlockmap = ($assetNames | Where-Object { $_ -like "Mingrx-Setup-$version-*.exe.blockmap" }).Count -gt 0
-            $hasLatest = $assetNames -contains "latest.yml"
-            $releaseComplete = $hasExe -and $hasBlockmap -and $hasLatest
-
-            if ($releaseComplete) {
-              $tagCommit = (git rev-list -n 1 $tag).Trim()
-              if ($tagCommit -ne $env:GITHUB_SHA) {
-                Write-Error "A versão $version já foi publicada. Aumente desktop/package.json antes de publicar novas mudanças."
-                exit 1
-              }
-              Write-Host "Release $tag já está completa no commit atual."
-              exit 0
-            }
-
-            foreach ($asset in $release.assets) { gh api -X DELETE "repos/$repo/releases/assets/$($asset.id)" }
-          }
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -f $tag $env:GITHUB_SHA
-          git push origin "refs/tags/$tag" --force
-
-      - name: Build Windows installer and updater metadata
-        working-directory: desktop
-        run: npm run dist:win -- --publish never
-
-      - name: Verify installer and updater files
-        shell: pwsh
-        run: |
-          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
-          $exe = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe" | Select-Object -First 1
-          $blockmap = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe.blockmap" | Select-Object -First 1
-          $latest = Get-Item "desktop/dist/latest.yml" -ErrorAction SilentlyContinue
-          if (-not $exe) { Write-Error "Instalador Mingrx .exe não foi gerado."; exit 1 }
-          if ($exe.Length -lt 50000000) { Write-Error "Instalador Mingrx parece pequeno demais."; exit 1 }
-          if (-not $blockmap) { Write-Error "Blockmap não foi gerado."; exit 1 }
-          if (-not $latest) { Write-Error "latest.yml não foi gerado."; exit 1 }
-          Write-Host "Installer: $($exe.Name) - $($exe.Length) bytes"
-
-      - name: Prepare release notes
-        shell: pwsh
-        run: |
-          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
-          $specific = "RELEASE_NOTES-$version.md"
-          if (Test-Path $specific) {
-            $body = Get-Content $specific
-          } else {
-            Write-Error "$specific não existe"
-            exit 1
-          }
-          $body | Set-Content release-notes.md -Encoding UTF8
-
-      - name: Create or update GitHub Release
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
-          $tag = "v$version"
-          gh release view $tag *> $null
-          if ($LASTEXITCODE -eq 0) {
-            gh release edit $tag --title "Mingrx V$version" --notes-file release-notes.md --latest
-          } else {
-            gh release create $tag --title "Mingrx V$version" --target $env:GITHUB_SHA --notes-file release-notes.md --latest
-          }
-          $exe = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe" | Select-Object -First 1
-          $blockmap = Get-ChildItem "desktop/dist/Mingrx-Setup-$version-*.exe.blockmap" | Select-Object -First 1
-          $latest = Get-Item "desktop/dist/latest.yml"
-          gh release upload $tag $exe.FullName $blockmap.FullName $latest.FullName --clobber
-
-      - name: Verify published release
+          if (-not $env:FIREBASE_TOKEN) { throw 'FIREBASE_TOKEN is required: this hotfix cannot publish against old backend rules.' }
+          $project = node -e "console.log(require('./cloud/firebase-config.js').projectId)"
+          if (-not $project) { throw 'Production Firebase project is missing' }
+          npx firebase-tools deploy --project $project --config ../firebase/firebase.json --only firestore:rules,database --token $env:FIREBASE_TOKEN --non-interactive
+          if ($LASTEXITCODE -ne 0) { throw 'Backend authorization deployment failed; release remains draft.' }
+      - name: Promote verified release to latest
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -221,11 +107,8 @@ jobs:
           $tag = "v$version"
           $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" | ConvertFrom-Json
           $names = @($release.assets | ForEach-Object { $_.name })
-          $hasExe = ($names | Where-Object { $_ -like "Mingrx-Setup-$version-*.exe" }).Count -gt 0
-          $hasBlockmap = ($names | Where-Object { $_ -like "Mingrx-Setup-$version-*.exe.blockmap" }).Count -gt 0
-          $hasLatest = $names -contains "latest.yml"
-          if (-not ($hasExe -and $hasBlockmap -and $hasLatest)) {
-            Write-Error "Release incompleta: $($names -join ', ')"
-            exit 1
+          foreach ($name in @("Mingrx-Setup-$version-x64.exe", "Mingrx-Setup-$version-x64.exe.blockmap", 'latest.yml')) {
+            if ($names -notcontains $name) { throw "Missing release asset: $name" }
           }
-          Write-Host "Mingrx V$version publicado com EXE + blockmap + latest.yml."
+          gh release edit $tag --draft=false --latest
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to publish release' }

@@ -1,6 +1,6 @@
 /* Banana Cord v1.1.1/V2 — convites curtos, com suporte Banana Cloud. */
 (() => {
-  const { ipcRenderer } = require('electron');
+  const { ipcRenderer } = window.MingrxDesktop;
   const VERSION = '1.1.1';
   const CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
   const isCloud = () => !!window.BananaCloudMode && !!window.BananaCloudSocket?.connected;

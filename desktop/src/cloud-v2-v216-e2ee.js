@@ -46,6 +46,8 @@
       if (!window.BananaE2EE) throw new Error('Módulo de criptografia do Banana Cord não foi carregado.');
       const local = await window.BananaE2EE.ensureKeypair(this.user.uid);
       const parentRef = doc(this.db, 'e2eeKeys', this.user.uid);
+      const identity = await getDoc(parentRef);
+      if (identity.exists() && identity.data().currentKeyId !== local.keyId) throw new Error('Esta conta usa outra chave de mensagens. Use o dispositivo original ou restaure o cofre; a identidade não será substituída automaticamente.');
       const keyRef = doc(this.db, 'e2eeKeys', this.user.uid, 'keys', local.keyId);
       const existing = await getDoc(keyRef);
       if (!existing.exists()) {
@@ -232,6 +234,7 @@
       });
 
       const batch = writeBatch(this.db);
+      this.addSendPermit?.(batch, `${tid}/${messageRef.id}`);
       batch.set(doc(this.db, 'dmThreads', tid), {
         participants: [this.user.uid, peerId].sort(),
         updatedAt: serverTimestamp(),

@@ -1,247 +1,96 @@
-const fs = require('fs');
-const path = require('path');
-const {
-  initializeTestEnvironment,
-  assertSucceeds,
-  assertFails
-} = require('@firebase/rules-unit-testing');
-const {
-  doc, collection, getDoc, getDocs, setDoc, updateDoc, writeBatch,
-  serverTimestamp, Timestamp
-} = require('firebase/firestore');
-const {
-  ref, set, get, remove
-} = require('firebase/database');
-
-const root = path.resolve(__dirname, '..');
-const firestoreRules = fs.readFileSync(path.resolve(root, '..', 'firebase', 'firestore.rules'), 'utf8');
-const databaseRules = fs.readFileSync(path.resolve(root, '..', 'firebase', 'database.rules.json'), 'utf8');
-const projectId = 'demo-banana-cord';
-
-function emulator(name, fallbackPort) {
-  const raw = process.env[name] || `127.0.0.1:${fallbackPort}`;
-  const match = raw.match(/^(.+):(\d+)$/);
-  return { host: match?.[1] || '127.0.0.1', port: Number(match?.[2] || fallbackPort) };
+require('./test-local-emulators');
+const fs=require('fs'),path=require('path');
+const {initializeTestEnvironment,assertSucceeds,assertFails}=require('@firebase/rules-unit-testing');
+const {doc,collection,getDoc,getDocs,setDoc,updateDoc,deleteDoc,writeBatch,serverTimestamp,Timestamp}=require('firebase/firestore');
+const {ref,set,get}=require('firebase/database');
+const envelope={version:1,algorithm:'X25519-AES-256-GCM',senderKeyId:'a'.repeat(32),recipientKeyId:'b'.repeat(32),iv:'MTIzNDU2Nzg5MDEy',ciphertext:'ZW5jcnlwdGVk',tag:'MTIzNDU2Nzg5MDEyMzQ1Ng=='};
+async function main(){
+  const env=await initializeTestEnvironment({projectId:'demo-banana-cord',firestore:{rules:fs.readFileSync(path.resolve(__dirname,'../../firebase/firestore.rules'),'utf8')},database:{rules:fs.readFileSync(path.resolve(__dirname,'../../firebase/database.rules.json'),'utf8')}});
+  let checks=0;
+  const yes=async p=>{await assertSucceeds(p);checks++;}, no=async p=>{await assertFails(p);checks++;};
+  const user=id=>env.authenticatedContext(id,{email:`${id}@test.invalid`,email_verified:true});
+  const alice=user('alice'),bob=user('bob'),mod=user('mod'),outsider=user('outsider');
+  const a=alice.firestore(),b=bob.firestore(),m=mod.firestore(),o=outsider.firestore();
+  const server=(db,...p)=>doc(db,'servers','s',...p);
+  const room=(db,slot)=>server(db,'channels','voice','voiceSessions',slot);
+  const session=(uid,sid)=>({userId:uid,sessionId:sid,user:{id:uid,name:uid,avatar:'',status:'online'},mediaState:{muted:false,camera:false,screen:false},speaking:false,joinedAt:Date.now(),updatedAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+90000)});
+  try{
+    await env.clearFirestore();await env.clearDatabase();
+    await no(setDoc(doc(env.unauthenticatedContext().firestore(),'publicProfiles','n'),{displayName:'n'}));
+    const create=writeBatch(a);
+    create.set(server(a),{name:'Teste',ownerId:'alice',inviteCode:'ABCD1234',categories:[],createdAt:serverTimestamp()});
+    create.set(server(a,'members','alice'),{role:'owner',joinedAt:serverTimestamp()});
+    create.set(server(a,'channels','chat'),{name:'chat',type:'text',allowedRoles:[],createdAt:serverTimestamp()});
+    create.set(server(a,'channels','voice'),{name:'voz',type:'voice',allowedRoles:[],createdAt:serverTimestamp()});
+    create.set(doc(a,'invites','ABCD1234'),{serverId:'s',code:'ABCD1234',createdAt:serverTimestamp()});
+    await yes(create.commit());
+    await no(getDoc(server(o)));
+    await yes(setDoc(server(b,'members','bob'),{role:'member',joinedVia:'ABCD1234'}));
+    await yes(setDoc(server(a,'members','mod'),{role:'moderator'}));
+    await no(deleteDoc(server(a,'members','alice')));
+    await yes(getDoc(server(b)));
+    const send=(db,uid,id,text='oi',extra={})=>{
+      const batch=writeBatch(db);batch.set(doc(db,'users',uid,'limits','chat'),{lastSentAt:serverTimestamp(),messageKey:`s/chat/${id}`});
+      batch.set(server(db,'channels','chat','messages',id),{authorId:uid,text,createdAt:serverTimestamp(),editedAt:null,reactions:{},...extra});return batch.commit();
+    };
+    await yes(send(a,'alice','one'));
+    await no(send(a,'alice','flood'));
+    await no(setDoc(server(b,'channels','chat','messages','no-permit'),{authorId:'bob',text:'sem limite',createdAt:serverTimestamp()}));
+    await no(send(b,'bob','future','oi',{createdAt:Timestamp.fromMillis(Date.now()+600000)}));
+    await yes(send(b,'bob','two'));
+    await no(updateDoc(server(m,'channels','chat','messages','one'),{text:'falsificado',editedAt:serverTimestamp()}));
+    await yes(updateDoc(server(a,'channels','chat','messages','one'),{text:'editado',editedAt:serverTimestamp()}));
+    await yes(updateDoc(server(b,'channels','chat','messages','one'),{reactions:{'👍':['bob']}}));
+    await no(updateDoc(server(m,'channels','chat','messages','one'),{reactions:{'👍':['alice','bob']}}));
+    await no(updateDoc(server(m,'channels','chat','messages','one'),{reactions:{'👍':[]}}));
+    await no(updateDoc(server(m,'channels','chat','messages','one'),{reactions:{falso:['mod']}}));
+    await yes(updateDoc(server(b,'channels','chat','messages','one'),{reactions:{}}));
+    await yes(setDoc(doc(a,'relationships','alice_bob'),{participants:['alice','bob'],status:'pending',requestedBy:'alice'}));
+    await yes(updateDoc(doc(b,'relationships','alice_bob'),{status:'friends',blockedBy:null,updatedAt:serverTimestamp()}));
+    await no(getDoc(doc(a,'dmThreads','alice_bob')));
+    // Real fresh-DM sequence: authorized idempotent creation, without denied get.
+    await yes(setDoc(doc(a,'dmThreads','alice_bob'),{participants:['alice','bob'],updatedAt:serverTimestamp()},{merge:true}));
+    await yes(getDocs(collection(b,'dmThreads','alice_bob','messages')));
+    await no(getDocs(collection(o,'dmThreads','alice_bob','messages')));
+    const dm=writeBatch(m);dm.set(doc(m,'users','mod','limits','chat'),{lastSentAt:serverTimestamp(),messageKey:'alice_bob/spoof'});dm.set(doc(m,'dmThreads','alice_bob','messages','spoof'),{fromId:'mod',toId:'alice',e2ee:envelope,createdAt:serverTimestamp()});await no(dm.commit());
+    // Both media control and signaling enforce the room's Firestore permissions.
+    await yes(setDoc(room(a,'0'),session('alice','session-a')));
+    await yes(setDoc(room(b,'1'),session('bob','session-b')));
+    await no(setDoc(room(o,'2'),session('outsider','session-o')));
+    await no(getDocs(collection(o,'servers','s','channels','voice','voiceSessions')));
+    await no(setDoc(room(b,'0'),session('bob','takeover')));
+    await no(setDoc(room(a,'5'),session('alice','sixth-slot')));
+    const signal={fromUserId:'alice',fromSocketId:'session-a',fromSlot:'0',fromUser:session('alice','session-a').user,targetSessionId:'session-b',targetUserId:'bob',data:{description:{type:'offer',sdp:'synthetic'}},createdAt:serverTimestamp()};
+    const inbox=(db,id)=>doc(db,'servers','s','channels','voice','voiceSessions','1','signals',id);
+    await yes(setDoc(inbox(a,'offer'),signal));
+    await yes(getDoc(inbox(b,'offer')));
+    await no(getDoc(inbox(a,'offer')));
+    await no(setDoc(inbox(a,'forged'),{...signal,fromSocketId:'socket-of-somebody-else'}));
+    await no(setDoc(inbox(o,'outsider'),{...signal,fromUserId:'outsider'}));
+    await yes(deleteDoc(inbox(b,'offer')));
+    await yes(setDoc(doc(a,'dmThreads','alice_bob','voiceSessions','0'),session('alice','private-a')));
+    await no(setDoc(doc(o,'dmThreads','alice_bob','voiceSessions','1'),session('outsider','private-o')));
+    await yes(updateDoc(doc(a,'relationships','alice_bob'),{status:'blocked',blockedBy:'alice',updatedAt:serverTimestamp()}));
+    await no(deleteDoc(doc(b,'relationships','alice_bob')));
+    await no(updateDoc(doc(b,'relationships','alice_bob'),{status:'blocked',blockedBy:'bob'}));
+    await no(setDoc(doc(b,'dmThreads','alice_bob','voiceSessions','1'),session('bob','private-b')));
+    await yes(deleteDoc(doc(a,'dmThreads','alice_bob','voiceSessions','0')));
+    const presence={state:'online',activity:null,updatedAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+120000)};
+    await yes(setDoc(doc(a,'presence','alice','connections','pc'),presence));
+    await no(getDocs(collection(b,'presence','alice','connections')));
+    await yes(setDoc(server(a,'presence','alice','connections','pc'),presence));
+    await yes(getDocs(collection(b,'servers','s','presence','alice','connections')));
+    await no(getDocs(collection(o,'servers','s','presence','alice','connections')));
+    await yes(deleteDoc(server(a,'members','bob')));
+    await no(getDocs(collection(b,'servers','s','channels','voice','voiceSessions')));
+    await no(updateDoc(room(b,'1'),{speaking:true}));
+    await yes(deleteDoc(room(b,'1')));
+    // No legacy RTDB path may bypass the new authorization.
+    for(const location of ['presence/alice','sessionOwners/s','voiceRooms/s/v/s','signals/s/s']){
+      await no(set(ref(alice.database(),location),{userId:'alice'}));
+      await no(get(ref(alice.database(),location)));
+    }
+    console.log(`Mingrx 3.1.5 Firebase authorization tests: OK (${checks} checks)`);
+  }finally{await env.cleanup();}
 }
-const firestoreEmulator = emulator('FIRESTORE_EMULATOR_HOST', 8080);
-const databaseEmulator = emulator('FIREBASE_DATABASE_EMULATOR_HOST', 9000);
-
-async function main() {
-  const env = await initializeTestEnvironment({
-    projectId,
-    firestore: { ...firestoreEmulator, rules: firestoreRules },
-    database: { ...databaseEmulator, rules: databaseRules }
-  });
-
-  const verified = (uid) => env.authenticatedContext(uid, {
-    email: `${uid}@bananacord.test`,
-    email_verified: true
-  });
-  const unverified = (uid) => env.authenticatedContext(uid, {
-    email: `${uid}@bananacord.test`,
-    email_verified: false
-  });
-
-  try {
-    await env.clearFirestore();
-    await env.clearDatabase();
-
-    const owner = verified('owner');
-    const member = verified('member');
-    const outsider = verified('outsider');
-    const noVerify = unverified('not-verified');
-    const anon = env.unauthenticatedContext();
-
-    const ownerDb = owner.firestore();
-    const memberDb = member.firestore();
-    const outsiderDb = outsider.firestore();
-    const noVerifyDb = noVerify.firestore();
-    const anonDb = anon.firestore();
-
-    // E-mail verificado é obrigatório e perfil público tem schema limitado.
-    await assertFails(setDoc(doc(noVerifyDb, 'publicProfiles', 'not-verified'), { displayName: 'Nope' }));
-    await assertFails(setDoc(doc(anonDb, 'publicProfiles', 'anon'), { displayName: 'Anon' }));
-    await assertSucceeds(setDoc(doc(ownerDb, 'publicProfiles', 'owner'), { displayName: 'Owner' }));
-    await assertSucceeds(setDoc(doc(memberDb, 'publicProfiles', 'member'), { displayName: 'Member' }));
-    await assertFails(setDoc(doc(ownerDb, 'publicProfiles', 'owner'), { displayName: 'Owner', admin: true }));
-
-    // Fluxo real de criação de servidor: servidor + dono + canais + ref + convite no mesmo batch.
-    const serverId = 'srv-test';
-    const inviteCode = 'ABCD1234';
-    const create = writeBatch(ownerDb);
-    create.set(doc(ownerDb, 'servers', serverId), {
-      name: 'Banana Test', ownerId: 'owner', icon: '', inviteCode,
-      categories: [], createdAt: serverTimestamp(), updatedAt: serverTimestamp()
-    });
-    create.set(doc(ownerDb, 'servers', serverId, 'members', 'owner'), {
-      role: 'owner', joinedAt: serverTimestamp(), displayName: 'Owner'
-    });
-    create.set(doc(ownerDb, 'servers', serverId, 'channels', 'general'), {
-      name: 'geral', type: 'text', position: 0, categoryId: null, allowedRoles: [], createdAt: serverTimestamp()
-    });
-    create.set(doc(ownerDb, 'servers', serverId, 'channels', 'voice-general'), {
-      name: 'Geral', type: 'voice', position: 1, categoryId: null, allowedRoles: [], createdAt: serverTimestamp()
-    });
-    create.set(doc(ownerDb, 'users', 'owner', 'serverRefs', serverId), {
-      serverId, role: 'owner', joinedAt: serverTimestamp()
-    });
-    create.set(doc(ownerDb, 'invites', inviteCode), {
-      serverId, code: inviteCode, createdBy: 'owner', permanent: true, createdAt: serverTimestamp()
-    });
-    await assertSucceeds(create.commit());
-
-    // Spark community photo: owner/admin can persist a compact data URL in the server document.
-    // This is the production replacement for Firebase Storage in Mingrx 3.1.
-    const testIcon = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEAAQAcJaQAA3AA/v89WAAAAA==';
-    await assertSucceeds(updateDoc(doc(ownerDb, 'servers', serverId), {
-      icon: testIcon,
-      updatedAt: serverTimestamp()
-    }));
-    const iconRead = await assertSucceeds(getDoc(doc(ownerDb, 'servers', serverId)));
-    if (iconRead.data()?.icon !== testIcon) throw new Error('Community icon did not persist in Firestore.');
-
-    // O código exato do convite pode ser consultado, mas servidores/convites não podem ser enumerados.
-    await assertSucceeds(getDoc(doc(memberDb, 'invites', inviteCode)));
-    await assertFails(getDocs(collection(outsiderDb, 'invites')));
-    await assertFails(getDoc(doc(memberDb, 'servers', serverId)));
-    await assertFails(getDoc(doc(outsiderDb, 'servers', serverId)));
-    await assertFails(getDocs(collection(outsiderDb, 'servers')));
-
-    // Entrada pelo convite grava membro + referência na conta no mesmo batch.
-    const join = writeBatch(memberDb);
-    join.set(doc(memberDb, 'servers', serverId, 'members', 'member'), {
-      role: 'member', joinedAt: serverTimestamp(), joinedVia: inviteCode, displayName: 'Member'
-    });
-    join.set(doc(memberDb, 'users', 'member', 'serverRefs', serverId), {
-      serverId, role: 'member', joinedAt: serverTimestamp()
-    });
-    await assertSucceeds(join.commit());
-    await assertSucceeds(getDoc(doc(memberDb, 'servers', serverId)));
-
-    // Ordinary member cannot change the community photo.
-    await assertFails(updateDoc(doc(memberDb, 'servers', serverId), { icon: testIcon + 'x' }));
-
-    // Membro envia mensagem, mas não pode falsificar autor nem alterar identidade/metadados depois.
-    const messageRef = doc(memberDb, 'servers', serverId, 'channels', 'general', 'messages', 'm1');
-    await assertSucceeds(setDoc(messageRef, {
-      authorId: 'member', text: 'oi', createdAt: serverTimestamp(), editedAt: null,
-      replyToId: null, reactions: {}, mentionIds: []
-    }));
-    await assertFails(setDoc(doc(memberDb, 'servers', serverId, 'channels', 'general', 'messages', 'spoof'), {
-      authorId: 'owner', text: 'sou o dono', createdAt: serverTimestamp(), editedAt: null,
-      replyToId: null, reactions: {}, mentionIds: []
-    }));
-    await assertFails(updateDoc(messageRef, { authorId: 'owner' }));
-    await assertFails(updateDoc(messageRef, { createdAt: serverTimestamp() }));
-    await assertSucceeds(updateDoc(messageRef, { text: 'oi editado', editedAt: serverTimestamp(), mentionIds: [] }));
-    await assertFails(updateDoc(doc(memberDb, 'servers', serverId), { name: 'Hack' }));
-
-    // Dono promove moderador; moderador cria canal, mas não muda nome do servidor.
-    await assertSucceeds(updateDoc(doc(ownerDb, 'servers', serverId, 'members', 'member'), { role: 'moderator' }));
-    await assertSucceeds(setDoc(doc(memberDb, 'servers', serverId, 'channels', 'mods'), {
-      name: 'mods', type: 'text', position: 2, categoryId: null, allowedRoles: ['moderator'], createdAt: serverTimestamp()
-    }));
-    await assertFails(updateDoc(doc(memberDb, 'servers', serverId), { name: 'Moderador não é admin' }));
-
-    // Convite expirado não permite entrada.
-    await env.withSecurityRulesDisabled(async context => {
-      await setDoc(doc(context.firestore(), 'invites', 'EXPIRED1'), {
-        serverId, code: 'EXPIRED1', createdBy: 'owner', permanent: false,
-        expiresAt: Timestamp.fromMillis(Date.now() - 60000)
-      });
-    });
-    const expiredUser = verified('expired-user');
-    await assertFails(setDoc(doc(expiredUser.firestore(), 'servers', serverId, 'members', 'expired-user'), {
-      role: 'member', joinedAt: serverTimestamp(), joinedVia: 'EXPIRED1', displayName: 'Expired'
-    }));
-
-    // Amizade: solicitante não pode auto-aceitar; somente o destinatário pode aceitar.
-    const relationRefOwner = doc(ownerDb, 'relationships', 'member_owner');
-    await assertSucceeds(setDoc(relationRefOwner, {
-      participants: ['member', 'owner'], status: 'pending', requestedBy: 'owner', updatedAt: serverTimestamp()
-    }));
-    await assertFails(updateDoc(relationRefOwner, { status: 'friends', blockedBy: null, updatedAt: serverTimestamp() }));
-    await assertSucceeds(updateDoc(doc(memberDb, 'relationships', 'member_owner'), {
-      status: 'friends', blockedBy: null, updatedAt: serverTimestamp()
-    }));
-    await assertSucceeds(getDoc(doc(memberDb, 'relationships', 'member_owner')));
-    await assertFails(getDoc(doc(outsiderDb, 'relationships', 'member_owner')));
-
-    // DM nova exige amizade aceita. Um outsider não consegue fabricar thread com outro usuário.
-    const badThread = writeBatch(outsiderDb);
-    badThread.set(doc(outsiderDb, 'dmThreads', 'outsider_owner'), {
-      participants: ['outsider', 'owner'], updatedAt: serverTimestamp()
-    });
-    badThread.set(doc(outsiderDb, 'dmThreads', 'outsider_owner', 'messages', 'bad'), {
-      fromId: 'outsider', toId: 'owner', text: 'forçado', createdAt: serverTimestamp(), editedAt: null, replyToId: null, reactions: {}
-    });
-    await assertFails(badThread.commit());
-
-    const threadId = 'member_owner';
-    const dmBatch = writeBatch(ownerDb);
-    dmBatch.set(doc(ownerDb, 'dmThreads', threadId), {
-      participants: ['member', 'owner'], updatedAt: serverTimestamp(), lastMessage: { text: 'oi', at: Date.now() }
-    });
-    dmBatch.set(doc(ownerDb, 'dmThreads', threadId, 'messages', 'dm1'), {
-      fromId: 'owner', toId: 'member', text: 'oi', createdAt: serverTimestamp(), editedAt: null, replyToId: null, reactions: {}
-    });
-    await assertSucceeds(dmBatch.commit());
-    await assertSucceeds(getDocs(collection(memberDb, 'dmThreads', threadId, 'messages')));
-    await assertFails(updateDoc(doc(memberDb, 'dmThreads', threadId, 'messages', 'dm1'), { text: 'não pode editar mensagem alheia' }));
-    await assertSucceeds(updateDoc(doc(memberDb, 'dmThreads', threadId, 'messages', 'dm1'), { reactions: { '👍': ['member'] } }));
-    await assertFails(updateDoc(doc(ownerDb, 'dmThreads', threadId, 'messages', 'dm1'), { fromId: 'member' }));
-
-    // Realtime Database: presença própria, sessão, voz e sinalização WebRTC.
-    const ownerRt = owner.database();
-    const memberRt = member.database();
-    const outsiderRt = outsider.database();
-    const noVerifyRt = noVerify.database();
-    const anonRt = anon.database();
-
-    await assertSucceeds(set(ref(ownerRt, 'presence/owner'), { state: 'online', lastChanged: Date.now(), displayName: 'Owner' }));
-    await assertFails(set(ref(ownerRt, 'presence/member'), { state: 'online', lastChanged: Date.now() }));
-    await assertFails(get(ref(noVerifyRt, 'presence')));
-    await assertFails(get(ref(anonRt, 'presence')));
-
-    await assertSucceeds(set(ref(ownerRt, 'sessionOwners/session-owner'), 'owner'));
-    await assertSucceeds(set(ref(memberRt, 'sessionOwners/session-member'), 'member'));
-    await assertFails(set(ref(ownerRt, 'sessionOwners/session-fake'), 'member'));
-    await assertFails(get(ref(ownerRt, 'sessionOwners')));
-    await assertSucceeds(get(ref(ownerRt, 'sessionOwners/session-owner')));
-
-    await assertSucceeds(set(ref(ownerRt, `voiceRooms/${serverId}/voice-general/session-owner`), {
-      userId: 'owner', user: { id: 'owner', name: 'Owner' },
-      mediaState: { muted: false, camera: false, screen: false }, speaking: false,
-      joinedAt: Date.now()
-    }));
-    await assertFails(set(ref(memberRt, `voiceRooms/${serverId}/voice-general/session-owner`), {
-      userId: 'owner', user: { id: 'owner', name: 'Owner' },
-      mediaState: { muted: false, camera: false, screen: false }, speaking: true,
-      joinedAt: Date.now()
-    }));
-    await assertFails(get(ref(ownerRt, 'voiceRooms')));
-    await assertSucceeds(get(ref(memberRt, `voiceRooms/${serverId}`)));
-
-    await assertSucceeds(set(ref(ownerRt, 'signals/session-member/sig1'), {
-      fromSocketId: 'session-owner', fromUserId: 'owner', fromUser: { id: 'owner', name: 'Owner' },
-      data: { type: 'offer', sdp: 'fake' }, at: Date.now()
-    }));
-    await assertSucceeds(get(ref(memberRt, 'signals/session-member')));
-    await assertFails(get(ref(ownerRt, 'signals/session-member')));
-    await assertSucceeds(remove(ref(memberRt, 'signals/session-member/sig1')));
-    await assertFails(set(ref(outsiderRt, 'signals/does-not-exist/sig2'), {
-      fromSocketId: 'outsider', fromUserId: 'outsider', data: { type: 'offer' }, at: Date.now()
-    }));
-    await assertFails(set(ref(ownerRt, 'signaling/legacy-room/offer'), { sdp: 'legacy' }));
-    await assertFails(get(ref(ownerRt, 'signaling/legacy-room')));
-
-    console.log('Mingrx 3.1 Firebase Security Rules emulator test: OK');
-  } finally {
-    await env.cleanup();
-  }
-}
-
-main().catch(error => {
-  console.error('Firebase rules emulator test failed:', error);
-  process.exit(1);
-});
+main().catch(error=>{console.error(error);process.exitCode=1;});

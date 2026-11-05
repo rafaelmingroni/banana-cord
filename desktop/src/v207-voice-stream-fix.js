@@ -139,7 +139,7 @@
     socket.__bananaV207VoiceStreamPatched = true;
     socket.__bananaV207VoiceDirectoryByServer ||= new Map();
 
-    const { ref, get, remove, set, onDisconnect, serverTimestamp: rtdbTimestamp } = require('firebase/database');
+    const { ref, get, remove, set, onDisconnect, serverTimestamp: rtdbTimestamp } = window.MingrxFirebase?.database;
 
     if (typeof socket.processVoiceServer === 'function') {
       const previousProcessVoiceServer = socket.processVoiceServer.bind(socket);

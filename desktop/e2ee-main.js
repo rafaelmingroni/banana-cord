@@ -45,10 +45,11 @@ function readVault(uid) {
   const file = vaultFile(uid);
   try {
     const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
-    if (parsed?.version !== E2EE_VERSION || !parsed?.keys || typeof parsed.keys !== 'object') return emptyVault();
+    if (parsed?.version !== E2EE_VERSION || !parsed?.keys || typeof parsed.keys !== 'object') throw new Error('Formato de cofre inválido.');
     return parsed;
-  } catch {
-    return emptyVault();
+  } catch (error) {
+    if (error.code === 'ENOENT') return emptyVault();
+    throw new Error('O cofre de criptografia não pôde ser lido. Preserve o arquivo e restaure seu backup antes de continuar.');
   }
 }
 

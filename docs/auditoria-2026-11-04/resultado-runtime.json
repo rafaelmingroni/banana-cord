@@ -1,0 +1,40 @@
+[
+  {
+    "id": "R01",
+    "reproduced": true,
+    "description": "watchDm(peer, 120) solicita somente 60 após o wrapper 3.1.2",
+    "observedLimit": 60
+  },
+  {
+    "id": "R02",
+    "reproduced": true,
+    "description": "loadOlderDmV220 retorna ao limite inicial em vez de avançar",
+    "observedLimit": 60
+  },
+  {
+    "id": "R03",
+    "reproduced": true,
+    "description": "cliente permite moderador em canal restrito a member, regra Firestore usa inclusão exata",
+    "clientAllows": true,
+    "rulesAllow": false
+  },
+  {
+    "id": "R04",
+    "reproduced": true,
+    "description": "doc() do SDK Node rejeita db do SDK empacotado para browser, combinação usada em mingrx-312-private-fix.js e v219-details.js",
+    "error": "Expected first argument to doc() to be a CollectionReference, a DocumentReference or FirebaseFirestore"
+  },
+  {
+    "id": "R05",
+    "reproduced": true,
+    "description": "cloudLogout deixa DMs em memória e não encerra a mídia local; socket simulado sem efeitos de mídia, como disconnect do transporte",
+    "plaintextRemains": true,
+    "localTrackStopped": false
+  },
+  {
+    "id": "R06",
+    "reproduced": true,
+    "description": "configureUpdater do main reativa autoInstallOnAppQuit que updater-prompt havia desativado",
+    "autoInstallOnAppQuit": true
+  }
+]

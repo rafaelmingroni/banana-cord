@@ -29,9 +29,10 @@ app.whenReady().then(async () => {
     show: false,
     width: 900,
     height: 600,
-    webPreferences: { nodeIntegration: true, contextIsolation: false, sandbox: false, autoplayPolicy: 'no-user-gesture-required' }
+    webPreferences: {preload:path.join(__dirname,'..','preload.js'), nodeIntegration: false, contextIsolation: true, sandbox: true, autoplayPolicy: 'no-user-gesture-required' }
   });
 
+  win.webContents.on('console-message', (...args) => { const d=args[1]; const message=typeof d==='object'?d.message:args[2]; if((typeof d==='object' && d.level==='error')||d===3) console.error('renderer error:',message); });
   await win.loadFile(path.join(__dirname, '..', 'src', 'index.html'));
   await sleep(180);
 

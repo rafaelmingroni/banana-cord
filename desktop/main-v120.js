@@ -1,3 +1,4 @@
+require('./ipc-security').install();
 const { app, BrowserWindow } = require('electron');
 
 const PRIMARY_SCHEME = 'mingrx';

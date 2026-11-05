@@ -3,7 +3,7 @@
   if (window.__bananaV218Polish) return;
   window.__bananaV218Polish = true;
 
-  const { ipcRenderer } = require('electron');
+  const { ipcRenderer } = window.MingrxDesktop;
   const seenNotifications = new Set();
   let incomingPeerId = '';
   let incomingCallKey = '';

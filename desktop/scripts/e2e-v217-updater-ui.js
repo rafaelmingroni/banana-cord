@@ -36,9 +36,10 @@ app.whenReady().then(async () => {
     show: false,
     width: 1280,
     height: 800,
-    webPreferences: { nodeIntegration: true, contextIsolation: false, sandbox: false }
+    webPreferences: {preload:path.join(__dirname,'..','preload.js'), nodeIntegration: false, contextIsolation: true, sandbox: true }
   });
 
+  win.webContents.on('console-message', (...args) => { const d=args[1]; const message=typeof d==='object'?d.message:args[2]; if((typeof d==='object' && d.level==='error')||d===3) console.error('renderer error:',message); });
   await win.loadFile(path.join(__dirname, '..', 'src', 'index.html'));
   await new Promise(resolve => setTimeout(resolve, 180));
 

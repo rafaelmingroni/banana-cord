@@ -11,6 +11,7 @@ fs.mkdirSync(outdir, { recursive: true });
   await esbuild.build({
     stdin: {
       contents: [
+        "window.MingrxFirebase = { firestore: require('firebase/firestore'), database: require('firebase/database') };",
         "require('./cloud-v2.js');",
         "require('./cloud-v2-auth-fix.js');",
         "require('./cloud-v2-ui-fix.js');",
@@ -22,7 +23,8 @@ fs.mkdirSync(outdir, { recursive: true });
         "require('./cloud-v2-v215-security-fix.js');",
         "require('./cloud-v2-v216-e2ee.js');",
         "require('./cloud-v2-v220-chat-stability.js');",
-        "require('./cloud-v2-v21-social.js');"
+        "require('./cloud-v2-v21-social.js');",
+        "require('./cloud-v315-transport.js');"
       ].join('\n'),
       resolveDir: path.join(root, 'src'),
       sourcefile: 'cloud-v2-browser-entry.js'
