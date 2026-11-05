@@ -320,8 +320,13 @@
       await disconnect(...args);
     };
     require('./chat-history')(socket);
-    const online=()=>{if(this.voice)this.refreshVoiceLease().catch(()=>this.receive('voice:revoked'));this.publishPresence().catch(()=>{});};
-    window.addEventListener('online',online);this.cleanup.push(()=>window.removeEventListener('online',online));
+    const online=()=>{
+      if(!socket.connected || socket.auth.currentUser?.uid!==uid) return;
+      if(socket.voice) socket.refreshVoiceLease().catch(()=>socket.receive('voice:revoked'));
+      socket.publishPresence().catch(()=>{});
+    };
+    window.addEventListener('online',online);
+    socket.cleanup.push(()=>window.removeEventListener('online',online));
   }
   if(previousAttach)window.BananaLegacy.attachSocket=function(socket,user){const result=previousAttach(socket,user);patch(socket);return result;};
   if(window.BananaCloudSocket)patch(window.BananaCloudSocket);

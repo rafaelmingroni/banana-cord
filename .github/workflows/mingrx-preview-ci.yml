@@ -2,7 +2,7 @@ name: Mingrx V3 Validation
 
 on:
   push:
-    branches: [v3.0.0-mingrx-rebrand, v3.0.0-mingrx-ui-polish, v3.1.0-spark-media-removal, hotfix/3.1.1-server-photo-voice-ui, hotfix/3.1.2-dm-permission-private-ui, 'hotfix/3.1.4-*', 'hotfix/3.1.5-*']
+    branches: [v3.0.0-mingrx-rebrand, v3.0.0-mingrx-ui-polish, v3.1.0-spark-media-removal, hotfix/3.1.1-server-photo-voice-ui, hotfix/3.1.2-dm-permission-private-ui, 'hotfix/3.1.4-*', 'hotfix/3.1.5-*', 'hotfix/3.1.6-*']
     paths:
       - "desktop/**"
       - "firebase/**"
@@ -94,6 +94,9 @@ jobs:
       - name: Firebase security rules regression
         working-directory: desktop
         run: npm run smoke:rules
+      - name: Real Firebase login and persisted-session boot
+        working-directory: desktop
+        run: npm run smoke:cloud-boot
 
       - name: Electron interaction suite
         working-directory: desktop
