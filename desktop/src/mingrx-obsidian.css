@@ -449,5 +449,5 @@ body.mingrx-ui .mx-social-status.busy{background:#f0525d}
 }
 
 /* Keep private navigation usable with classic system scrollbars as well. */
-body.mingrx-ui .app.dm-mode .channels{padding-inline:10px!important}
+body.mingrx-ui .app.dm-mode .channels{padding-inline:8px!important;scrollbar-width:thin!important}
 body.mingrx-ui .app.dm-mode .channels::-webkit-scrollbar{width:4px}
