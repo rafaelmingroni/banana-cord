@@ -196,9 +196,17 @@ app.whenReady().then(async () => {
   // Check the startup presence write against the real deployed rule source.
   const presence = await win.webContents.executeJavaScript(`(async () => {
     const F=window.MingrxFirebase.firestore, socket=window.BananaCloudSocket;
-    const snap=await F.getDoc(F.doc(socket.db,'presence',socket.user.uid,'connections',socket.id));
-    const data=snap.data();
-    return {state:data.state,leaseMs:data.expiresAt.toMillis()-data.updatedAt.toMillis(),clockErrorMs:Math.abs(socket.serverNow()-window.__realDateNow())};
+    const reference=F.doc(socket.db,'presence',socket.user.uid,'connections',socket.id);
+    // The initial UI can publish its saved status just after auth:ready. Its
+    // local serverTimestamp is null until acknowledged; verify committed data.
+    for(let i=0;i<30;i++){
+      await F.waitForPendingWrites(socket.db);
+      const snap=await F.getDocFromServer(reference),data=snap.data();
+      if(!snap.metadata.hasPendingWrites&&data?.updatedAt?.toMillis)
+        return {state:data.state,leaseMs:data.expiresAt.toMillis()-data.updatedAt.toMillis(),clockErrorMs:Math.abs(socket.serverNow()-window.__realDateNow())};
+      await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    throw new Error('Startup presence did not receive a committed server timestamp');
   })()`);
   assert.equal(presence.state, 'online');
   assert(presence.leaseMs>115000&&presence.leaseMs<=125000&&presence.clockErrorMs<5000,'Presence must use server time despite a clock 117 seconds behind');
