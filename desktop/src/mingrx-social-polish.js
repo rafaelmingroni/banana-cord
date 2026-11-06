@@ -108,7 +108,7 @@
       <div class="mingrx-social-hub">
         <div class="mingrx-social-head">
           <div><h2>Amigos</h2><p>Suas pessoas, por perto.</p></div>
-          <button type="button" class="mingrx-social-add-button" data-mx-tab="add">＋ Adicionar amigo</button>
+          <button type="button" class="mingrx-social-add-button" data-mx-tab="add"><span aria-hidden="true">＋</span> <span>Adicionar amigo</span></button>
         </div>
         <div class="mingrx-social-tabs" role="tablist" aria-label="Amigos">
           ${tabButton('friends','Amigos',social.friends.length,tab === 'friends')}

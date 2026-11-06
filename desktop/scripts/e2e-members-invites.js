@@ -82,7 +82,8 @@ app.whenReady().then(async()=>{
   assert.equal(copied,'https://mingrx.site/?invite=EFGH-6789');
   console.log('Invites: permanent and temporary clipboard links verified');
   await js("window.BananaI18n.setLocale('en-US');closeModal();showDmHome()");await pause();
-  assert.equal(await js("document.querySelector('.v214-private-home h2')?.textContent"),'Private','private home must settle in the selected locale without a rewrite loop');
+  assert.equal(await js("document.querySelector('.v214-private-home h2')?.textContent"),'Your first conversation starts here.','new Private welcome must settle in the selected locale without a rewrite loop');
+  assert((await js("document.getElementById('v214HomeFriend')?.textContent")).includes('Find friends'),'welcome action must use the selected locale');
   assert(await js("!document.querySelector('.members').getClientRects().length"),'private messages must not show community members');
   await js("selectServer('member-test')");await pause();
   assert((await state()).open,'returning to a community must preserve the visible preference');
