@@ -17,6 +17,7 @@ function value(v){
   if('booleanValue'in v)return v.booleanValue;
   if('integerValue'in v)return Number(v.integerValue);
   if('doubleValue'in v)return v.doubleValue;
+  if('timestampValue'in v)return new Date(v.timestampValue);
   if('arrayValue'in v)return(v.arrayValue.values||[]).map(value);
   if('mapValue'in v)return Object.fromEntries(Object.entries(v.mapValue.fields||{}).map(([k,x])=>[k,value(x)]));
   return 'other';
@@ -44,6 +45,16 @@ async function main(){
     const own=members.find(member=>member.name.split('/').at(-1)===owner);
     const counts={};for(const member of members){const key=role(value(member.fields?.role));counts[key]=(counts[key]||0)+1;}
     console.log(JSON.stringify({community:index+1,ownerDocumentExists:!!own,ownerRole:role(value(own?.fields?.role)),parentOwnerRole:role(value(server.fields?.memberRoles)?.[owner]),memberRoles:counts,channels:channels.map(channel=>{const type=value(channel.fields?.type),allowed=value(channel.fields?.allowedRoles);return {type:['voice','text'].includes(type)?type:`other-${kind(type)}`,allowedRolesType:kind(allowed),allowedRoles:Array.isArray(allowed)?allowed.map(role):undefined};})}));
+    for(let channelIndex=0;channelIndex<channels.length;channelIndex++){
+      const channel=channels[channelIndex];if(value(channel.fields?.type)!=='voice')continue;
+      const sessions=await query(channel.name,'voiceSessions',['userId','sessionId','user','mediaState','speaking','updatedAt','expiresAt','joinedAt'],10);
+      console.log(JSON.stringify({community:index+1,channel:channelIndex+1,slots:sessions.map(s=>{
+        const data=Object.fromEntries(Object.entries(s.fields||{}).map(([k,v])=>[k,value(v)]));
+        return {slot:['0','1','2','3','4'].includes(s.name.split('/').at(-1))?'bounded':'other',expiresType:data.expiresAt instanceof Date?'timestamp':kind(data.expiresAt),expired:data.expiresAt instanceof Date?data.expiresAt.getTime()<Date.now():null,sessionIdLength:data.sessionId?.length,userKeys:Object.keys(data.user||{}).sort(),userStatus:['online','offline','away','busy'].includes(data.user?.status)?data.user.status:kind(data.user?.status),nameLength:data.user?.name?.length,avatarLength:data.user?.avatar?.length,mediaKeys:Object.keys(data.mediaState||{}).sort(),updatedType:data.updatedAt instanceof Date?'timestamp':kind(data.updatedAt),joinedType:kind(data.joinedAt)};
+      })}));
+    }
   }
+  const profiles=await query(parent,'publicProfiles',['displayName','avatar'],50);
+  console.log(JSON.stringify({profiles:profiles.map(p=>({nameType:kind(value(p.fields?.displayName)),nameLength:value(p.fields?.displayName)?.length,avatarType:kind(value(p.fields?.avatar)),avatarLength:value(p.fields?.avatar)?.length}))}));
 }
 main().catch(error=>{console.error(`Read-only voice diagnosis failed: ${error.status||error.context?.response?.status||error.message?.slice(0,150)||'unknown'}`);process.exitCode=1;});
