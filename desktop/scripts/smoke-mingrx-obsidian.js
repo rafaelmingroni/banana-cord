@@ -40,7 +40,7 @@ assert(js.includes('--mx-private-sidebar:256px') && js.includes('max-width:900px
 assert(js.includes('--mx-private-sidebar:238px') && js.includes('max-width:760px'), 'Obsidian deve preservar a largura mínima de 238px.');
 assert(js.includes('request.dataset.mxObsidianSignature !== requestSignature'), 'Pedidos privados precisam de decoração idempotente.');
 assert(js.includes('friendHeading.dataset.mxObsidianSignature !== headingSignature'), 'Cabeçalho de amigos precisa de decoração idempotente.');
-assert(js.includes("heading.textContent !== 'Privado'") && js.includes('copy.textContent !== privateCopy'), 'Home privada não deve reescrever o DOM sem mudança real.');
+assert(js.includes('heading.textContent !== privateLabel') && js.includes('copy.textContent !== privateCopy'), 'Home privada não deve reescrever o DOM sem mudança real.');
 assert(!js.includes("socket.emit") && !socialJs.includes("socket.emit"), 'Camada visual Obsidian não deve alterar eventos de rede.');
 assert(socialJs.includes('mingrx-social-avatar-wrap'), 'Central social não injeta presença nos avatares.');
 assert(socialJs.includes("[data-mx-dm]"), 'Ação de mensagem da central social não recebeu ícone consistente.');

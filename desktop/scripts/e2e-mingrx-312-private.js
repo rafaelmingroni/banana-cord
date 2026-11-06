@@ -29,6 +29,7 @@ app.whenReady().then(async () => {
   const result = await win.webContents.executeJavaScript(`
     (async()=>{
       const failures=[];
+      window.BananaI18n?.setLocale('pt-BR');
       const peer={id:'peer',name:'Gustavo Pioto',status:'offline',avatar:'',customStatus:''};
       const ari={id:'ari',name:'Ari',status:'online',avatar:'',customStatus:'aqui é palmeiras'};
       state.user={id:'me',name:'mingrx',status:'online',avatar:''};

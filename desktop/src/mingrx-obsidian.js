@@ -101,7 +101,8 @@
     if (!home) return;
     const heading = home.querySelector('h2');
     const copy = home.querySelector('p');
-    if (heading && heading.textContent !== 'Privado') heading.textContent = 'Privado';
+    const privateLabel = window.BananaI18n?.getLocale?.() === 'en-US' ? 'Private' : 'Privado';
+    if (heading && heading.textContent !== privateLabel) heading.textContent = privateLabel;
     const privateCopy = 'Encontre seus amigos, continue conversas recentes ou comece uma nova mensagem.';
     if (copy && copy.textContent !== privateCopy) copy.textContent = privateCopy;
     replaceButton(document.getElementById('v214HomeFriend'), 'userPlus', 'Adicionar amigo');
