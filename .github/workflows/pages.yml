@@ -39,7 +39,7 @@ jobs:
       - name: Check desktop and mobile in a real browser
         run: ./desktop/node_modules/.bin/electron --no-sandbox --headless --ozone-platform=headless --ozone-override-screen-size=1920,1080 site/test-browser.cjs
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
         with:
           enablement: true
       - name: Upload Mingrx site
