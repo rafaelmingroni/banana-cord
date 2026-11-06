@@ -18,6 +18,16 @@ const deadline=setTimeout(()=>finish(1,'Site browser checks timed out'),60000);
 function finish(code,message){if(finished)return;finished=true;clearTimeout(deadline);(code?console.error:console.log)(message);try{win?.destroy();server?.close();fs.rmSync(profile,{recursive:true,force:true})}catch{}app.exit(code)}
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const js=code=>win.webContents.executeJavaScript(code,true);
+async function press(keyCode,modifiers=[]){
+  win.webContents.sendInputEvent({type:'keyDown',keyCode,modifiers});
+  if(keyCode==='Enter'||keyCode==='Space')win.webContents.sendInputEvent({type:'char',keyCode:keyCode==='Enter'?'\r':' ',modifiers});
+  win.webContents.sendInputEvent({type:'keyUp',keyCode,modifiers});
+  await wait(50);
+}
+function contrast(foreground,background){
+  const luminance=color=>{const channels=color.match(/[\d.]+/g).slice(0,3).map(Number).map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*channels[0]+.7152*channels[1]+.0722*channels[2]};
+  const a=luminance(foreground),b=luminance(background);return(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+}
 const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'application/javascript; charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.ico':'image/x-icon'};
 async function capture(name){
   if(!process.env.MINGRX_SITE_PREVIEWS)return;
@@ -59,25 +69,44 @@ app.whenReady().then(async()=>{
     for(let i=0;i<100;i++){if(await js("document.querySelector('.release-note').textContent.includes('3.1.10')"))break;await wait(50);}
     const layout=await js(`(()=>({width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+1,images:[...document.images].every(img=>img.complete&&img.naturalWidth>0),heading:document.querySelector('h1').textContent,version:document.querySelector('.release-note').textContent,animations:document.getAnimations().length,radii:[...document.querySelectorAll('.button,.menu-button')].map(el=>parseFloat(getComputedStyle(el).borderTopLeftRadius)),download:document.querySelector('.download-link').href}))()`);
     assert.equal(layout.width,width);assert(!layout.overflow,`Horizontal overflow at ${width}`);assert(layout.images,`Missing image at ${width}`);assert.equal(layout.animations,0);assert(layout.radii.every(radius=>radius<=8));assert.match(layout.version,/3\.1\.10/);assert.match(layout.download,/releases\/download\/v3\.1\.10\/Mingrx-Setup-3\.1\.10-x64\.exe$/);
+    assert(await js("[...document.images].every(img=>img.hasAttribute('alt'))&&document.querySelector('.product-image img').alt.length>30"),'Image alternatives are missing');
+    if(width===1440){
+      const colors=await js("(()=>{const body=getComputedStyle(document.body),copy=getComputedStyle(document.querySelector('.hero-description')),button=getComputedStyle(document.querySelector('.hero-actions .button-primary'));return{body:body.color,bg:body.backgroundColor,muted:copy.color,button:button.color,buttonBg:button.backgroundColor}})()");
+      assert(contrast(colors.body,colors.bg)>=4.5&&contrast(colors.muted,colors.bg)>=4.5&&contrast(colors.button,colors.buttonBg)>=4.5,'Text contrast below 4.5:1');
+      win.webContents.focus();await press('Tab');
+      assert(await js("document.activeElement.classList.contains('skip-link')"),'First Tab must reach the skip link');
+      await press('Enter');assert.equal(await js('document.activeElement.id'),'conteudo');
+      await js("document.querySelector('summary').focus()");await press('Space');
+      assert(await js("document.querySelector('details').open"),'Space must open the FAQ');
+      await press('Enter');assert(!(await js("document.querySelector('details').open")),'Enter must close the FAQ');
+    }
     if(width<=850){
-      await js("document.querySelector('.menu-button').click()");
+      await js("document.querySelector('.menu-button').focus()");await press('Space');
       assert(await js("document.querySelector('.menu-button').getAttribute('aria-expanded')==='true'&&getComputedStyle(document.querySelector('.topnav')).display==='flex'"));
-      await js("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))");
+      await press('Escape');
       assert.equal(await js("document.querySelector('.menu-button').getAttribute('aria-expanded')"),'false');
-      await js("document.querySelector('.menu-button').click();document.querySelector('.topnav a').click()");
+      assert(await js("document.activeElement.classList.contains('menu-button')"),'Escape must restore menu focus');
+      await press('Space');await press('Tab');
+      assert(await js("document.activeElement.matches('.topnav a')"),'Tab must reach an open menu link');
+      await press('Enter');
       assert.equal(await js("document.querySelector('.menu-button').getAttribute('aria-expanded')"),'false');
+      assert.equal(await js('document.activeElement.id'),'recursos','In-page navigation must focus its destination');
       await js('scrollTo(0,0)');
     }
     if(width===1440)await capture('desktop.png');if(width===390)await capture('mobile.png');
     console.log(`Site ${width}px: layout, images, live version, rectangular buttons and navigation passed`);
   }
-  for(const page of ['privacy.html','terms.html','support.html','invite.html?invite=BAD','404.html']){
+  win.setContentSize(1440,1000);await win.loadURL(origin+'/');win.webContents.setZoomFactor(2);await wait(100);
+  assert(await js('document.documentElement.scrollWidth<=innerWidth+1'),'Content must reflow at 200% zoom');win.webContents.setZoomFactor(1);
+  for(const page of ['privacy.html','terms.html','support.html','cookies.html','refunds.html','accessibility.html','about.html','invite.html?invite=BAD','404.html']){
     win.setContentSize(390,844);await win.loadURL(origin+'/'+page);await wait(50);
     assert(await js('document.documentElement.scrollWidth<=innerWidth+1'),`Overflow on ${page}`);
     assert(await js("document.querySelector('h1')?.textContent.length>0"));
     const icon=await js("fetch(document.querySelector('link[rel=icon]').href).then(response=>response.ok)");assert(icon,`Favicon missing on ${page}`);
     console.log(`Site ${page}: mobile layout, heading and favicon passed`);
   }
+  assert.deepEqual(await isolated.cookies.get({url:origin}),[],'Site scripts must not create tracking cookies');
+  assert(await js('localStorage.length===0&&sessionStorage.length===0'),'Site must not retain tracking identifiers');
   assert.deepEqual(unexpectedRequests,[],'Unexpected external resource or tracking request');
   assert.deepEqual(errors,[],'Browser errors');
   finish(0,'Site browser checks: desktop/mobile, menu, assets, factual release, legal pages and no external tracking passed');

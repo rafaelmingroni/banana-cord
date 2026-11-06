@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self'; font-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d0f14">
@@ -9,11 +10,11 @@
 <title>Página não encontrada | Mingrx</title>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/assets/mingrx-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/styles.css?v=20261106-dark">
-<link rel="stylesheet" href="/legal.css?v=20261106-dark">
+<link rel="stylesheet" href="/styles.css?v=20261106-legal">
+<link rel="stylesheet" href="/legal.css?v=20261106-legal">
 </head>
 <body class="utility-page">
-<main class="utility-wrap">
+<main id="conteudo" tabindex="-1" class="utility-wrap">
 <a class="brand" href="/">
 <img src="/assets/mingrx-mark.svg" width="32" height="32" alt="">
 <span>Mingrx</span>
@@ -27,6 +28,13 @@
 <a class="button button-secondary" href="/support.html">Abrir suporte</a>
 </div>
 </section>
+<nav class="utility-footer" aria-label="Links do rodapé">
+<a href="/cookies.html">Cookies</a>
+<a href="/privacy.html">Privacidade</a>
+<a href="/terms.html">Termos</a>
+<a href="/accessibility.html">Acessibilidade</a>
+</nav>
+<p class="cookie-disclosure">Nossos scripts não gravam cookies de publicidade ou de análise. <a href="/cookies.html">Saiba mais</a>.</p>
 </main>
 </body>
 </html>

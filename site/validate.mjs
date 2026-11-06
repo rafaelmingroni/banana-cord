@@ -6,7 +6,7 @@ import path from 'node:path';
 const root=fileURLToPath(new URL('.',import.meta.url));
 const names=await readdir(root);
 const pages=names.filter(name=>name.endsWith('.html'));
-const files=Object.fromEntries(await Promise.all([...pages,'styles.css','legal.css','app.js','CNAME','robots.txt','sitemap.xml'].map(async name=>[name,await readFile(path.join(root,name),'utf8')])));
+const files=Object.fromEntries(await Promise.all([...pages,'styles.css','legal.css','app.js','invite.js','CNAME','robots.txt','sitemap.xml'].map(async name=>[name,await readFile(path.join(root,name),'utf8')])));
 const check=(label,condition)=>{assert(condition,label);console.log(`OK: ${label}`)};
 check('custom domain is mingrx.site',files.CNAME.trim()==='mingrx.site');
 check('clear product and Windows headline',/Mensagens, chamadas e uma tela para compartilhar/.test(files['index.html'])&&/Aplicativo para Windows/.test(files['index.html']));
@@ -24,7 +24,10 @@ check('SVG icons instead of emoji icons',pages.every(name=>!iconEmoji.test(files
 check('privacy covers actual site and app data flows',/Firebase Authentication/.test(files['privacy.html'])&&/criptografadas de ponta a ponta/.test(files['privacy.html'])&&/Mensagens antigas ou criadas por versões anteriores/.test(files['privacy.html'])&&/compartilhamento de atividade/.test(files['privacy.html'])&&/cookies/.test(files['privacy.html'])&&/direitos/.test(files['privacy.html']));
 check('terms and truthful existing contact are supplied',files['terms.html'].includes('Termos e condições')&&[files['privacy.html'],files['terms.html'],files['support.html']].every(html=>html.includes('https://github.com/rafaelmingroni/mingrx-app/issues')&&html.includes('Os chamados são públicos')&&!html.includes('{{')));
 check('download uses a verified repository asset and has a working static fallback',files['app.js'].includes('/releases/latest')&&files['app.js'].includes('controller.abort()')&&!files['app.js'].includes("dataset.loading='true'")&&files['index.html'].includes('https://github.com/rafaelmingroni/mingrx-app/releases/latest'));
-check('invitation handoff is preserved',files['app.js'].includes("params.has('invite')")&&files['invite.html'].includes('mingrx://join/'));
+check('invitation handoff is preserved',files['app.js'].includes("params.has('invite')")&&files['invite.js'].includes('mingrx://join/'));
+check('specific cookie, refund, accessibility and attribution pages',pages.includes('cookies.html')&&pages.includes('refunds.html')&&pages.includes('accessibility.html')&&pages.includes('about.html'));
+check('no unnecessary data collection forms',pages.every(name=>!/<form\b|<input\b|<textarea\b/i.test(files[name])));
+check('future email is explicitly marked inactive',files['about.html'].includes('Rafael Mingroni')&&files['about.html'].includes('atendimento em ativação')&&!pages.some(name=>/href="mailto:mingrxapp@gmail\.com/.test(files[name])));
 check('robots and sitemap use the actual custom domain',files['robots.txt'].includes('https://mingrx.site/sitemap.xml')&&files['sitemap.xml'].includes('<loc>https://mingrx.site/</loc>'));
 const favicon=await readFile(path.join(root,'favicon.ico'));
 check('ICO favicon has actual icon entries',favicon.readUInt16LE(2)===1&&favicon.readUInt16LE(4)>=1);
@@ -32,7 +35,10 @@ for(const name of pages){
   const html=files[name];
   check(`${name}: viewport and favicon`,/name="viewport"/.test(html)&&/rel="icon"[^>]+favicon\.ico/.test(html));
   check(`${name}: one main heading`,[...html.matchAll(/<h1\b/g)].length===1);
-  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(([,id])=>id));
+  const idValues=[...html.matchAll(/\bid="([^"]+)"/g)].map(([,id])=>id);
+  const ids=new Set(idValues);
+  check(`${name}: unique anchor IDs`,ids.size===idValues.length);
+  check(`${name}: local-script security policy`,html.includes("script-src 'self'")&&!/<script(?![^>]*\bsrc=)[^>]*>/i.test(html));
   for(const [,attr,url]of html.matchAll(/\b(href|src)="([^"]+)"/g)){
     if(/^(?:https?:|mailto:|mingrx:)/.test(url)||url==='#')continue;
     const [raw,fragment]=url.split('#');

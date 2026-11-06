@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self'; font-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d0f14">
@@ -11,8 +12,8 @@
 <link rel="icon" href="./favicon.ico" sizes="any">
 <link rel="icon" href="./assets/mingrx-mark.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
-<link rel="stylesheet" href="./styles.css?v=20261106-dark">
-<link rel="stylesheet" href="./legal.css?v=20261106-dark">
+<link rel="stylesheet" href="./styles.css?v=20261106-legal">
+<link rel="stylesheet" href="./legal.css?v=20261106-legal">
 </head>
 <body class="legal-page">
 <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -23,7 +24,7 @@
 </a>
 <a class="legal-back" href="./">Voltar ao site</a>
 </header>
-<main class="legal-layout">
+<main id="conteudo" tabindex="-1" class="legal-layout">
 <nav class="legal-toc" aria-label="Nesta página">
 <span>Nesta página</span>
 <a href="#responsavel">Quem é responsável</a>
@@ -33,76 +34,87 @@
 <a href="#finalidades">Para que usamos os dados</a>
 <a href="#provedores">Provedores e compartilhamento</a>
 <a href="#site">Navegação neste site</a>
+<a href="#formularios">Formulários e minimização</a>
 <a href="#retencao">Retenção e exclusão</a>
 <a href="#direitos">Seus direitos e contato</a>
 <a href="#alteracoes">Atualizações da política</a>
 </nav>
-<article class="legal-article" id="conteudo">
+<article class="legal-article">
 <p class="eyebrow">Mingrx</p>
 <h1>Política de Privacidade</h1>
 <p class="lead">Como o Mingrx trata dados no site e no aplicativo, quais são as suas escolhas e como exercer seus direitos.</p>
 <p class="updated">Atualizado em 6 de novembro de 2026.</p>
-<section id="responsavel">
+<section id="responsavel" tabindex="-1">
 <h2>Quem é responsável</h2>
 <p>Esta política se aplica ao site mingrx.site e ao aplicativo Mingrx para Windows. O responsável pelo tratamento dos dados necessários à operação do Mingrx pode ser contatado pelo canal abaixo.</p>
 <div class="contact-block">
 <p>
-<strong>Responsável pelo projeto:</strong> <a href="https://github.com/rafaelmingroni" target="_blank" rel="noopener noreferrer">rafaelmingroni no GitHub</a>.<br>
-<strong>Canal oficial atual:</strong> <a href="https://github.com/rafaelmingroni/mingrx-app/issues" target="_blank" rel="noopener noreferrer">atendimento no GitHub do Mingrx</a>.</p>
-<p>Os chamados são públicos. Para assuntos de conta ou privacidade, solicite um canal privado de atendimento antes de enviar dados pessoais. Não publique e-mail da conta, documentos ou conteúdo de conversas.</p>
+<strong>Responsável pelo Mingrx:</strong> Rafael Mingroni.</p>
+<p>
+<strong>E-mail de atendimento em ativação:</strong> <span class="pending-email">mingrxapp@gmail.com</span>. O endereço ainda está sendo criado. Não envie mensagens ou dados pessoais para ele até a confirmação de ativação.</p>
+<p>
+<strong>Canal disponível agora:</strong> <a href="https://github.com/rafaelmingroni/mingrx-app/issues" target="_blank" rel="noopener noreferrer">GitHub do Mingrx</a>. Os chamados são públicos. Solicite um canal privado antes de compartilhar dados de conta, documentos ou conversas.</p>
 </div>
 </section>
-<section id="conta">
+<section id="conta" tabindex="-1">
 <h2>Conta, perfil e presença</h2>
 <p>Para criar e manter sua conta, usamos e-mail, identificador da conta, situação de verificação do e-mail e informações de autenticação. O Firebase Authentication processa as credenciais de acesso.</p>
 <p>Seu nome, foto, status e identificador permitem que outras pessoas reconheçam sua conta. Amizades, participações em comunidades, cargos, convites e preferências são usados para organizar a comunicação e aplicar permissões. Dados de sessão e presença permitem mostrar se você está online, ausente ou ocupado.</p>
 </section>
-<section id="mensagens">
+<section id="mensagens" tabindex="-1">
 <h2>Mensagens e chamadas</h2>
 <p>
 <strong>Novas mensagens privadas entre clientes compatíveis</strong> são criptografadas de ponta a ponta no dispositivo antes do armazenamento. As chaves privadas ficam protegidas no armazenamento local do Windows; chaves públicas e mensagens cifradas são sincronizadas. <strong>Mensagens antigas ou criadas por versões anteriores</strong> podem não usar esse formato.</p>
 <p>Mensagens de canais de comunidades não têm essa mesma proteção de ponta a ponta. São armazenadas na nuvem e disponibilizadas conforme a participação e as permissões da comunidade. Identificadores de remetente e destinatário, horários e vínculos de conversa também são necessários para entregar e sincronizar mensagens.</p>
 <p>Chamadas usam WebRTC para transmitir áudio, vídeo e tela. A infraestrutura de conexão pode processar endereços IP e dados técnicos necessários à chamada. O código atual do Mingrx não oferece gravação dessas mídias na nuvem. Outros participantes ainda podem registrar o que recebem em seus próprios dispositivos.</p>
 </section>
-<section id="permissoes">
+<section id="permissoes" tabindex="-1">
 <h2>Permissões e dados no dispositivo</h2>
 <p>Você controla o uso do microfone, da câmera e do compartilhamento de tela nos recursos do aplicativo e nas permissões do Windows. O conteúdo compartilhado durante uma chamada depende da tela ou janela que você selecionar.</p>
 <p>Quando o compartilhamento de atividade está habilitado, o aplicativo pode identificar um jogo ou aplicativo em execução e publicar seu nome e horário de início na presença. Essa opção pode ser desativada nas configurações sociais. Preferências, sessão de login e materiais criptográficos também podem ser mantidos no dispositivo para o funcionamento do app.</p>
 </section>
-<section id="finalidades">
+<section id="finalidades" tabindex="-1">
 <h2>Para que usamos os dados</h2>
 <p>Usamos os dados necessários para prestar o serviço solicitado: autenticar a conta, entregar mensagens, conectar chamadas, sincronizar comunidades, manter preferências e atender pedidos de suporte. Também podemos tratar os dados necessários para prevenir abuso, proteger contas e cumprir obrigações legais.</p>
 <p>O tratamento necessário à conta e aos recursos solicitados está relacionado à execução do serviço. Recursos opcionais dependem das escolhas e permissões correspondentes. Quando o consentimento for a base aplicável, você pode revogá-lo; o recurso que depende desse tratamento poderá deixar de funcionar. Cada solicitação de direitos é avaliada conforme a base legal e os dados envolvidos.</p>
 </section>
-<section id="provedores">
+<section id="provedores" tabindex="-1">
 <h2>Provedores e compartilhamento</h2>
 <p>O Mingrx utiliza serviços do Google Firebase para autenticação e sincronização e do GitHub para hospedar o site, distribuir versões e fornecer atualizações. Serviços de conexão WebRTC também podem participar do estabelecimento de chamadas. Esses provedores podem processar dados em outros países, conforme seus termos e mecanismos aplicáveis de proteção de dados.</p>
 <p>Outros usuários recebem as informações e os conteúdos necessários às interações que você escolhe realizar, respeitados os recursos e as permissões disponíveis. Dados também podem ser fornecidos quando houver obrigação legal aplicável.</p>
 <p>Consulte as informações de <a href="https://firebase.google.com/support/privacy" rel="noopener noreferrer" target="_blank">privacidade e segurança do Firebase</a> e a <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener noreferrer" target="_blank">política de privacidade do GitHub</a>.</p>
 </section>
-<section id="site">
+<section id="site" tabindex="-1">
 <h2>Navegação neste site</h2>
 <p>O código deste site não instala ferramentas de publicidade, pixels de redes sociais ou serviços de análise de audiência. Ele não grava identificadores de rastreamento em cookies ou no armazenamento local do navegador.</p>
 <p>A hospedagem pode registrar informações técnicas de acesso, como IP, navegador e horário da requisição. Para oferecer o instalador atual, o site consulta a API pública de versões do GitHub. Ao acessar o download ou outros links externos, também se aplicam as políticas do serviço de destino.</p>
 </section>
-<section id="retencao">
+<section id="formularios" tabindex="-1">
+<h2>Formulários e dados necessários</h2>
+<p>Esta versão do site não possui formulários de cadastro, contato, newsletter ou pagamento. A conta do aplicativo é criada no próprio Mingrx. Não pedimos CPF, documentos, endereço, telefone ou dados bancários para navegar neste site ou baixar o app.</p>
+<p>Em um pedido de suporte ou de exercício de direitos, envie apenas as informações necessárias para explicar o problema. A verificação de titularidade deve ocorrer por um canal privado e com dados proporcionais ao pedido. Não há cobrança para exercer os direitos previstos na LGPD.</p>
+<p>O funcionamento do site e suas requisições técnicas estão detalhados no <a href="./cookies.html">Aviso de cookies e tecnologias</a>.</p>
+</section>
+<section id="retencao" tabindex="-1">
 <h2>Retenção e exclusão</h2>
 <p>Dados de conta e conteúdos são mantidos para permitir o funcionamento dos recursos e o acesso ao histórico. A versão atual não prevê a exclusão automática de toda conta apenas por inatividade. Você pode solicitar encerramento da conta e exclusão de dados pelo contato desta política.</p>
 <p>Dados necessários ao cumprimento de uma obrigação legal ou ao exercício regular de direitos podem ser conservados nas hipóteses previstas em lei. A solicitação será analisada para informar o alcance da exclusão, os dados que precisarem ser mantidos e o prazo aplicável. Cópias que outras pessoas tenham feito de conteúdos recebidos não estão sob o controle do Mingrx.</p>
 </section>
-<section id="direitos">
+<section id="direitos" tabindex="-1">
 <h2>Seus direitos e contato</h2>
 <p>Nos casos previstos pela LGPD, você pode solicitar confirmação do tratamento, acesso, correção, informações sobre compartilhamento, portabilidade, anonimização, bloqueio ou exclusão de dados desnecessários, excessivos ou tratados irregularmente. Também pode pedir a eliminação de dados tratados com consentimento, revogar consentimento ou se opor ao tratamento quando cabível.</p>
 <p>Envie o pedido pelo contato abaixo. Podemos solicitar somente as informações necessárias para verificar que a conta pertence a você e evitar acesso indevido. Não envie senhas, códigos de verificação ou chaves privadas. Pedidos com dados pessoais não devem ser publicados em chamados públicos no GitHub.</p>
 <div class="contact-block">
 <p>
-<strong>Responsável pelo projeto:</strong> <a href="https://github.com/rafaelmingroni" target="_blank" rel="noopener noreferrer">rafaelmingroni no GitHub</a>.<br>
-<strong>Canal oficial atual:</strong> <a href="https://github.com/rafaelmingroni/mingrx-app/issues" target="_blank" rel="noopener noreferrer">atendimento no GitHub do Mingrx</a>.</p>
-<p>Os chamados são públicos. Para assuntos de conta ou privacidade, solicite um canal privado de atendimento antes de enviar dados pessoais. Não publique e-mail da conta, documentos ou conteúdo de conversas.</p>
+<strong>Responsável pelo Mingrx:</strong> Rafael Mingroni.</p>
+<p>
+<strong>E-mail de atendimento em ativação:</strong> <span class="pending-email">mingrxapp@gmail.com</span>. O endereço ainda está sendo criado. Não envie mensagens ou dados pessoais para ele até a confirmação de ativação.</p>
+<p>
+<strong>Canal disponível agora:</strong> <a href="https://github.com/rafaelmingroni/mingrx-app/issues" target="_blank" rel="noopener noreferrer">GitHub do Mingrx</a>. Os chamados são públicos. Solicite um canal privado antes de compartilhar dados de conta, documentos ou conversas.</p>
 </div>
 <p>Você também pode consultar os <a href="https://www.gov.br/anpd/pt-br/assuntos/titular-de-dados/direito-dos-titulares" rel="noopener noreferrer" target="_blank">direitos dos titulares na ANPD</a> e recorrer aos canais competentes, conforme a legislação aplicável.</p>
 </section>
-<section id="alteracoes">
+<section id="alteracoes" tabindex="-1">
 <h2>Atualizações da política</h2>
 <p>Esta política descreve a versão atual do serviço e pode mudar com a evolução do Mingrx. A data no início da página identifica a revisão vigente. Alterações relevantes serão indicadas nos canais oficiais do produto, conforme aplicável.</p>
 </section>
@@ -115,7 +127,12 @@
 <a href="./support.html">Suporte</a>
 <a href="./privacy.html">Política de privacidade</a>
 <a href="./terms.html">Termos e condições</a>
+<a href="./cookies.html">Cookies</a>
+<a href="./refunds.html">Reembolso</a>
+<a href="./accessibility.html">Acessibilidade</a>
+<a href="./about.html">Responsável e créditos</a>
 </nav>
+<p class="cookie-disclosure">Nossos scripts não gravam cookies de publicidade ou de análise. <a href="./cookies.html">Entenda as tecnologias do site</a>.</p>
 </footer>
 </body>
 </html>

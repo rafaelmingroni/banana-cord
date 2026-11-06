@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self'; font-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d0f14">
@@ -11,9 +12,9 @@
 <link rel="icon" href="./favicon.ico" sizes="any">
 <link rel="icon" href="./assets/mingrx-mark.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
-<link rel="stylesheet" href="./styles.css?v=20261106-dark">
-<link rel="stylesheet" href="./legal.css?v=20261106-dark">
-<script src="./app.js?v=20261106-dark" defer>
+<link rel="stylesheet" href="./styles.css?v=20261106-legal">
+<link rel="stylesheet" href="./legal.css?v=20261106-legal">
+<script src="./app.js?v=20261106-legal" defer>
 </script>
 </head>
 <body class="legal-page">
@@ -25,23 +26,25 @@
 </a>
 <a class="legal-back" href="./">Voltar ao site</a>
 </header>
-<main class="legal-layout support-layout">
-<article class="legal-article" id="conteudo">
+<main id="conteudo" tabindex="-1" class="legal-layout support-layout">
+<article class="legal-article">
 <p class="eyebrow">Mingrx</p>
 <h1>Suporte</h1>
 <p class="lead">Ajuda para baixar o aplicativo, usar convites e resolver problemas de conta ou funcionamento.</p>
 <p class="updated">Atualizado em 6 de novembro de 2026.</p>
-<section id="canais">
+<section id="canais" tabindex="-1">
 <h2>Fale com o Mingrx</h2>
 <p>Para problemas técnicos, informe a versão do aplicativo e descreva o que aconteceu, sem dados pessoais. Para suporte de conta ou pedidos de privacidade, peça um canal privado pelo contato oficial abaixo antes de enviar informações da conta. Não envie sua senha ou códigos de acesso.</p>
 <div class="contact-block">
 <p>
-<strong>Responsável pelo projeto:</strong> <a href="https://github.com/rafaelmingroni" target="_blank" rel="noopener noreferrer">rafaelmingroni no GitHub</a>.<br>
-<strong>Canal oficial atual:</strong> <a href="https://github.com/rafaelmingroni/mingrx-app/issues" target="_blank" rel="noopener noreferrer">atendimento no GitHub do Mingrx</a>.</p>
-<p>Os chamados são públicos. Para assuntos de conta ou privacidade, solicite um canal privado de atendimento antes de enviar dados pessoais. Não publique e-mail da conta, documentos ou conteúdo de conversas.</p>
+<strong>Responsável pelo Mingrx:</strong> Rafael Mingroni.</p>
+<p>
+<strong>E-mail de atendimento em ativação:</strong> <span class="pending-email">mingrxapp@gmail.com</span>. O endereço ainda está sendo criado. Não envie mensagens ou dados pessoais para ele até a confirmação de ativação.</p>
+<p>
+<strong>Canal disponível agora:</strong> <a href="https://github.com/rafaelmingroni/mingrx-app/issues" target="_blank" rel="noopener noreferrer">GitHub do Mingrx</a>. Os chamados são públicos. Solicite um canal privado antes de compartilhar dados de conta, documentos ou conversas.</p>
 </div>
 </section>
-<section id="atalhos">
+<section id="atalhos" tabindex="-1">
 <h2>Downloads e problemas técnicos</h2>
 <div class="support-grid">
 <article class="support-card">
@@ -56,20 +59,20 @@
 </article>
 </div>
 </section>
-<section id="atualizar">
+<section id="atualizar" tabindex="-1">
 <h2>Atualização automática</h2>
 <p>O aplicativo oficial verifica novas versões e pode adiar a instalação enquanto você está em chamada ou editando uma mensagem. Aguarde concluir essa atividade. Para conferir manualmente, use a opção de atualização no menu do ícone do Mingrx perto do relógio do Windows.</p>
 </section>
-<section id="convite">
+<section id="convite" tabindex="-1">
 <h2>Convites de comunidades</h2>
 <p>O link de convite tenta abrir o Mingrx instalado. Se o navegador pedir confirmação, permita a abertura do aplicativo. Se ainda não estiver instalado, use o botão de download da página de convite e abra o mesmo convite depois de instalar.</p>
 <p>Se o código estiver incorreto, expirado ou não permitir o acesso, peça um novo convite a uma pessoa responsável pela comunidade.</p>
 </section>
-<section id="senha">
+<section id="senha" tabindex="-1">
 <h2>Acesso e senha</h2>
 <p>Confirme o e-mail de cadastro antes de entrar. Se esqueceu a senha, utilize a opção de recuperação na tela de login e consulte também a pasta de spam do e-mail. Se o problema continuar, entre em contato pelo suporte.</p>
 </section>
-<section id="dados">
+<section id="dados" tabindex="-1">
 <h2>Privacidade e exclusão</h2>
 <p>Consulte a <a href="./privacy.html">Política de Privacidade</a> para saber como solicitar acesso, correção ou exclusão dos dados. Não publique informações de conta, documentos ou conversas privadas em chamados públicos.</p>
 </section>
@@ -82,7 +85,12 @@
 <a href="./support.html">Suporte</a>
 <a href="./privacy.html">Política de privacidade</a>
 <a href="./terms.html">Termos e condições</a>
+<a href="./cookies.html">Cookies</a>
+<a href="./refunds.html">Reembolso</a>
+<a href="./accessibility.html">Acessibilidade</a>
+<a href="./about.html">Responsável e créditos</a>
 </nav>
+<p class="cookie-disclosure">Nossos scripts não gravam cookies de publicidade ou de análise. <a href="./cookies.html">Entenda as tecnologias do site</a>.</p>
 </footer>
 </body>
 </html>

@@ -1,10 +1,53 @@
 <!doctype html>
-<html lang="pt-BR"><head>
+<html lang="pt-BR">
+<head>
 <meta charset="utf-8">
-<meta name="referrer" content="strict-origin-when-cross-origin"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d0f14"><meta name="robots" content="noindex"><meta name="description" content="Abra seu convite no Mingrx ou baixe o aplicativo para Windows."><title>Convite para comunidade | Mingrx</title>
-<link rel="icon" href="./favicon.ico" sizes="any"><link rel="icon" href="./assets/mingrx-mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./assets/apple-touch-icon.png"><link rel="stylesheet" href="./styles.css?v=20261106-dark"><link rel="stylesheet" href="./legal.css?v=20261106-dark">
-</head><body class="utility-page"><main class="utility-wrap"><a class="brand" href="./"><img src="./assets/mingrx-mark.svg" width="32" height="32" alt=""><span>Mingrx</span></a><section class="utility-card"><p class="eyebrow">Convite para comunidade</p><h1>O grupo se encontra no aplicativo.</h1><p>Abra o Mingrx para entrar na comunidade. Se ainda não tiver o aplicativo, baixe a versão oficial para Windows.</p><div class="invite-code"><span>Código do convite</span><strong id="code">Aguardando código</strong></div><p id="status" class="status" role="status">Preparando seu convite.</p><div class="utility-actions"><a id="openApp" class="button button-primary" href="#">Abrir Mingrx</a><a id="download" class="button button-secondary" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">Baixar para Windows</a></div><p class="utility-hint">A validade do convite e o acesso à comunidade são verificados no aplicativo.</p></section><nav class="utility-footer" aria-label="Links de ajuda"><a href="./support.html">Preciso de ajuda</a><a href="./privacy.html">Privacidade</a><a href="./terms.html">Termos e condições</a></nav></main>
-<script>
-(()=>{const alphabet='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';const normalize=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');const format=v=>{const raw=normalize(v);return raw.length===12?`${raw.slice(0,4)}-${raw.slice(4,8)}-${raw.slice(8)}`:raw.length===8?`${raw.slice(0,4)}-${raw.slice(4)}`:raw};const raw=normalize(new URLSearchParams(location.search).get('invite'));const valid=[8,12].includes(raw.length)&&[...raw].every(ch=>alphabet.includes(ch));const code=format(raw);const codeEl=document.getElementById('code');const status=document.getElementById('status');const open=document.getElementById('openApp');const download=document.getElementById('download');if(!valid){codeEl.textContent='INVÁLIDO';status.textContent='Esse link de convite não é válido.';open.style.display='none';return}codeEl.textContent=code;const deep=`mingrx://join/${encodeURIComponent(code)}`;open.href=deep;status.textContent='Tentando abrir o Mingrx…';let leftPage=false;document.addEventListener('visibilitychange',()=>{if(document.hidden)leftPage=true});fetch('https://api.github.com/repos/rafaelmingroni/mingrx-app/releases/latest',{headers:{Accept:'application/vnd.github+json'}}).then(r=>r.ok?r.json():Promise.reject()).then(release=>{const asset=(release.assets||[]).find(a=>/^Mingrx-Setup-.*-x64\.exe$/i.test(a.name));if(asset?.browser_download_url)download.href=asset.browser_download_url}).catch(()=>{});setTimeout(()=>{location.href=deep},180);setTimeout(()=>{if(leftPage||document.hidden)return;status.textContent='O aplicativo não abriu? Você pode baixar a versão mais recente abaixo.'},1800)})();
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self'; font-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0d0f14">
+<meta name="robots" content="noindex">
+<meta name="description" content="Abra seu convite no Mingrx ou baixe o aplicativo para Windows.">
+<title>Convite para comunidade | Mingrx</title>
+<link rel="icon" href="./favicon.ico" sizes="any">
+<link rel="icon" href="./assets/mingrx-mark.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+<link rel="stylesheet" href="./styles.css?v=20261106-legal">
+<link rel="stylesheet" href="./legal.css?v=20261106-legal">
+</head>
+<body class="utility-page">
+<main id="conteudo" tabindex="-1" class="utility-wrap">
+<a class="brand" href="./">
+<img src="./assets/mingrx-mark.svg" width="32" height="32" alt="">
+<span>Mingrx</span>
+</a>
+<section class="utility-card">
+<p class="eyebrow">Convite para comunidade</p>
+<h1>O grupo se encontra no aplicativo.</h1>
+<p>Abra o Mingrx para entrar na comunidade. Se ainda não tiver o aplicativo, baixe a versão oficial para Windows.</p>
+<div class="invite-code">
+<span>Código do convite</span>
+<strong id="code">Aguardando código</strong>
+</div>
+<p id="status" class="status" role="status">Preparando seu convite.</p>
+<div class="utility-actions">
+<a id="openApp" class="button button-primary" href="#">Abrir Mingrx</a>
+<a id="download" class="button button-secondary" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">Baixar para Windows</a>
+</div>
+<p class="utility-hint">A validade do convite e o acesso à comunidade são verificados no aplicativo.</p>
+</section>
+<nav class="utility-footer" aria-label="Links de ajuda">
+<a href="./support.html">Preciso de ajuda</a>
+<a href="./privacy.html">Privacidade</a>
+<a href="./terms.html">Termos e condições</a>
+<a href="./cookies.html">Cookies</a>
+<a href="./refunds.html">Reembolso</a>
+<a href="./accessibility.html">Acessibilidade</a>
+<a href="./about.html">Responsável e créditos</a>
+</nav>
+<p class="cookie-disclosure">Nossos scripts não gravam cookies de publicidade ou de análise. <a href="./cookies.html">Entenda as tecnologias do site</a>.</p>
+</main>
+<script src="./invite.js?v=20261106-legal" defer>
 </script>
-</body></html>
+</body>
+</html>

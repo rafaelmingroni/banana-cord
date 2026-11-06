@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self'; font-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d0f14">
@@ -11,8 +12,8 @@
 <link rel="icon" href="./favicon.ico" sizes="any">
 <link rel="icon" href="./assets/mingrx-mark.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
-<link rel="stylesheet" href="./styles.css?v=20261106-dark">
-<link rel="stylesheet" href="./legal.css?v=20261106-dark">
+<link rel="stylesheet" href="./styles.css?v=20261106-legal">
+<link rel="stylesheet" href="./legal.css?v=20261106-legal">
 </head>
 <body class="legal-page">
 <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -23,69 +24,83 @@
 </a>
 <a class="legal-back" href="./">Voltar ao site</a>
 </header>
-<main class="legal-layout">
+<main id="conteudo" tabindex="-1" class="legal-layout">
 <nav class="legal-toc" aria-label="Nesta página">
 <span>Nesta página</span>
 <a href="#servico">O serviço e seu responsável</a>
 <a href="#conta">Sua conta</a>
 <a href="#uso">Uso permitido e conduta</a>
-<a href="#conteudo">Conteúdos e comunidades</a>
+<a href="#conteudos">Conteúdos e comunidades</a>
 <a href="#privacidade">Privacidade e segurança</a>
 <a href="#atualizacoes">Atualizações e disponibilidade</a>
 <a href="#encerramento">Encerramento e suporte</a>
+<a href="#pagamentos">Gratuidade e reembolso</a>
+<a href="#imagens">Marcas e imagens</a>
 <a href="#mudancas">Alterações e legislação</a>
 </nav>
-<article class="legal-article" id="conteudo">
+<article class="legal-article">
 <p class="eyebrow">Mingrx</p>
 <h1>Termos e condições</h1>
 <p class="lead">Condições para utilizar o site e o aplicativo Mingrx de forma responsável.</p>
 <p class="updated">Atualizado em 6 de novembro de 2026.</p>
-<section id="servico">
+<section id="servico" tabindex="-1">
 <h2>O serviço e seu responsável</h2>
 <p>O Mingrx é um aplicativo de comunicação para Windows com conta, mensagens, comunidades, chamadas e compartilhamento de tela. O site oferece informações, links de download e abertura de convites. A versão atual é gratuita.</p>
 <div class="contact-block">
 <p>
-<strong>Responsável pelo projeto:</strong> <a href="https://github.com/rafaelmingroni" target="_blank" rel="noopener noreferrer">rafaelmingroni no GitHub</a>.<br>
-<strong>Canal oficial atual:</strong> <a href="https://github.com/rafaelmingroni/mingrx-app/issues" target="_blank" rel="noopener noreferrer">atendimento no GitHub do Mingrx</a>.</p>
-<p>Os chamados são públicos. Para assuntos de conta ou privacidade, solicite um canal privado de atendimento antes de enviar dados pessoais. Não publique e-mail da conta, documentos ou conteúdo de conversas.</p>
+<strong>Responsável pelo Mingrx:</strong> Rafael Mingroni.</p>
+<p>
+<strong>E-mail de atendimento em ativação:</strong> <span class="pending-email">mingrxapp@gmail.com</span>. O endereço ainda está sendo criado. Não envie mensagens ou dados pessoais para ele até a confirmação de ativação.</p>
+<p>
+<strong>Canal disponível agora:</strong> <a href="https://github.com/rafaelmingroni/mingrx-app/issues" target="_blank" rel="noopener noreferrer">GitHub do Mingrx</a>. Os chamados são públicos. Solicite um canal privado antes de compartilhar dados de conta, documentos ou conversas.</p>
 </div>
 </section>
-<section id="conta">
+<section id="conta" tabindex="-1">
 <h2>Sua conta</h2>
 <p>Para usar os recursos do aplicativo, crie uma conta e confirme seu e-mail. Mantenha seus dados de acesso protegidos e informe dados corretos para os recursos que solicitar. Se houver suspeita de uso indevido, entre em contato pelo suporte.</p>
 <p>Quando a legislação exigir representação ou assistência para contratar, o uso deve ocorrer com a participação do responsável legal.</p>
 </section>
-<section id="uso">
+<section id="uso" tabindex="-1">
 <h2>Uso permitido e conduta</h2>
 <p>Use o Mingrx de acordo com a legislação e respeite os demais participantes. Não utilize o serviço para fraude, assédio, exploração, distribuição de malware, violação de direitos de terceiros, acesso não autorizado, spam ou tentativa de contornar os controles de segurança.</p>
 <p>Respeite as permissões das comunidades. Antes de transmitir uma tela, imagem, áudio ou vídeo, confira se você pode compartilhar o conteúdo e se ele contém dados que não devem ser expostos.</p>
 </section>
-<section id="conteudo">
+<section id="conteudos" tabindex="-1">
 <h2>Conteúdos e comunidades</h2>
 <p>Você mantém os direitos que possui sobre o conteúdo que publica. O funcionamento do serviço exige que esse conteúdo seja armazenado, transmitido e exibido aos destinatários que você escolher, conforme os recursos e as permissões do Mingrx.</p>
 <p>Responsáveis por comunidades podem organizar canais e gerir acesso de acordo com as permissões disponíveis. Medidas de restrição ou suspensão podem ser aplicadas em situações de abuso, risco à segurança ou obrigação legal, observados os direitos aplicáveis.</p>
 </section>
-<section id="privacidade">
+<section id="privacidade" tabindex="-1">
 <h2>Privacidade e segurança</h2>
 <p>O tratamento de dados está descrito na <a href="./privacy.html">Política de Privacidade</a>, incluindo as diferenças entre mensagens privadas com criptografia ponta a ponta, mensagens de comunidades e conteúdos de versões anteriores.</p>
 <p>O Mingrx adota controles de acesso e mecanismos de segurança, mas não oferece garantia de risco zero. Você também deve proteger o dispositivo e evitar expor suas credenciais.</p>
 </section>
-<section id="atualizacoes">
+<section id="atualizacoes" tabindex="-1">
 <h2>Atualizações e disponibilidade</h2>
 <p>Versões oficiais para Windows incluem atualização automática para correções, segurança e novos recursos. Versões anteriores podem perder compatibilidade com o serviço.</p>
 <p>A disponibilidade depende do dispositivo, da conexão e dos serviços envolvidos. Recursos podem passar por manutenção ou alterações. Não há promessa de funcionamento ininterrupto ou compatibilidade com todo equipamento e rede.</p>
 </section>
-<section id="encerramento">
+<section id="encerramento" tabindex="-1">
 <h2>Encerramento e suporte</h2>
 <p>Você pode deixar de usar o aplicativo e solicitar encerramento da conta pelo contato abaixo. A desinstalação do aplicativo, sozinha, não equivale à exclusão dos dados armazenados na nuvem. As condições de retenção e exclusão estão na Política de Privacidade.</p>
 <div class="contact-block">
 <p>
-<strong>Responsável pelo projeto:</strong> <a href="https://github.com/rafaelmingroni" target="_blank" rel="noopener noreferrer">rafaelmingroni no GitHub</a>.<br>
-<strong>Canal oficial atual:</strong> <a href="https://github.com/rafaelmingroni/mingrx-app/issues" target="_blank" rel="noopener noreferrer">atendimento no GitHub do Mingrx</a>.</p>
-<p>Os chamados são públicos. Para assuntos de conta ou privacidade, solicite um canal privado de atendimento antes de enviar dados pessoais. Não publique e-mail da conta, documentos ou conteúdo de conversas.</p>
+<strong>Responsável pelo Mingrx:</strong> Rafael Mingroni.</p>
+<p>
+<strong>E-mail de atendimento em ativação:</strong> <span class="pending-email">mingrxapp@gmail.com</span>. O endereço ainda está sendo criado. Não envie mensagens ou dados pessoais para ele até a confirmação de ativação.</p>
+<p>
+<strong>Canal disponível agora:</strong> <a href="https://github.com/rafaelmingroni/mingrx-app/issues" target="_blank" rel="noopener noreferrer">GitHub do Mingrx</a>. Os chamados são públicos. Solicite um canal privado antes de compartilhar dados de conta, documentos ou conversas.</p>
 </div>
 </section>
-<section id="mudancas">
+<section id="pagamentos" tabindex="-1">
+<h2>Gratuidade e reembolso</h2>
+<p>A versão atual é gratuita. Este site não oferece checkout, compra de licença ou assinatura. Consulte a <a href="./refunds.html">Política de reembolso</a> para entender o alcance dessa informação e como relatar uma cobrança atribuída ao Mingrx.</p>
+</section>
+<section id="imagens" tabindex="-1">
+<h2>Marcas, imagens e créditos</h2>
+<p>As marcas e imagens permanecem sujeitas aos direitos de seus titulares. A publicação de um arquivo neste site ou no GitHub não é, por si só, uma licença para reutilizá-lo. A procedência dos elementos visuais está em <a href="./about.html#creditos">Projeto e créditos</a>.</p>
+</section>
+<section id="mudancas" tabindex="-1">
 <h2>Alterações e legislação</h2>
 <p>A data no início desta página identifica os termos vigentes. Alterações relevantes serão indicadas nos canais oficiais do Mingrx, conforme aplicável.</p>
 <p>Estes termos não afastam direitos assegurados pela legislação brasileira, incluindo a legislação de proteção de dados e os direitos do consumidor quando aplicáveis. Questões relacionadas ao serviço podem ser encaminhadas inicialmente pelo contato de suporte, sem prejuízo dos demais canais e autoridades competentes.</p>
@@ -99,7 +114,12 @@
 <a href="./support.html">Suporte</a>
 <a href="./privacy.html">Política de privacidade</a>
 <a href="./terms.html">Termos e condições</a>
+<a href="./cookies.html">Cookies</a>
+<a href="./refunds.html">Reembolso</a>
+<a href="./accessibility.html">Acessibilidade</a>
+<a href="./about.html">Responsável e créditos</a>
 </nav>
+<p class="cookie-disclosure">Nossos scripts não gravam cookies de publicidade ou de análise. <a href="./cookies.html">Entenda as tecnologias do site</a>.</p>
 </footer>
 </body>
 </html>

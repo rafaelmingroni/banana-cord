@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 
-const invite=(await readFile(new URL('./invite.html',import.meta.url),'utf8')).match(/<script>([\s\S]*?)<\/script>/)[1];
+const invite=await readFile(new URL('./invite.js',import.meta.url),'utf8');
 const homepage=await readFile(new URL('./app.js',import.meta.url),'utf8');
 const asset={name:'Mingrx-Setup-3.1.10-x64.exe',browser_download_url:'https://github.com/rafaelmingroni/mingrx-app/releases/download/v3.1.10/Mingrx-Setup-3.1.10-x64.exe'};
 function fixture(search,mode='success'){
