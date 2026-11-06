@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 
 app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
+app.on('window-all-closed', () => {});
 
 ipcMain.handle('update:get-config', async () => ({ repoUrl:'', autoCheck:true, autoDownload:true, currentVersion:'2.0.19' }));
 ipcMain.handle('update:get-state', async () => ({ status:'idle', progress:0, message:'' }));
@@ -21,7 +22,7 @@ app.whenReady().then(async () => {
   await new Promise(r => setTimeout(r, 180));
 
   const result = await win.webContents.executeJavaScript(`
-    (() => {
+    (async () => {
       const now = Date.now();
       const day = 86400000;
       state.user = { id:'me', name:'Rafael', status:'online', customStatus:'Jogando leve', role:'admin' };
@@ -75,6 +76,7 @@ app.whenReady().then(async () => {
       closeModal();
 
       openMemberProfile('admin');
+      await new Promise(resolve=>setTimeout(resolve,120));
       const profile = document.querySelector('.v219-profile-card');
       const profileName = document.querySelector('.v219-profile-heading h2')?.textContent || '';
       const profileRole = document.querySelector('.v219-profile-role')?.textContent || '';
@@ -84,6 +86,19 @@ app.whenReady().then(async () => {
       if (profileAbout !== 'Organizando tudo') return {ok:false,reason:'profile custom status missing',profileAbout};
       if (!document.getElementById('dmFromProfile')) return {ok:false,reason:'profile DM action missing'};
       closeModal();
+
+      for(const name of ['Mingroni','Servidor Banana Cord']){
+        state.user.name=name;state.members.set('me',state.user);
+        openMemberProfile('me');await new Promise(resolve=>setTimeout(resolve,120));
+        const actual=document.querySelector('.v219-profile-heading h2')?.textContent;
+        if(actual!==name)return {ok:false,reason:'own profile name overwritten after observers',actual,expected:name};
+        closeModal();
+        state.members.get('admin').name=name;
+        openMemberProfile('admin');await new Promise(resolve=>setTimeout(resolve,120));
+        const contactName=document.querySelector('.v219-profile-heading h2')?.textContent;
+        if(contactName!==name)return {ok:false,reason:'contact profile name overwritten after observers',actual:contactName,expected:name};
+        closeModal();
+      }
 
       state.viewMode='dm';
       state.activeDmUserId='admin';

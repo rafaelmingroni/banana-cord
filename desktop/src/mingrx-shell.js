@@ -17,6 +17,8 @@
 
   function replaceText(root = document.body) {
     if (!root) return;
+    const isUserContent = node => !!(node?.nodeType === Node.TEXT_NODE ? node.parentElement : node)?.closest?.('[data-user-content]');
+    if (isUserContent(root)) return;
     if (root.nodeType === Node.TEXT_NODE) {
       const next = brandText(root.nodeValue);
       if (next !== root.nodeValue) root.nodeValue = next;
@@ -26,6 +28,7 @@
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     for (const node of nodes) {
+      if (isUserContent(node)) continue;
       if (!node.nodeValue) continue;
       const next = brandText(node.nodeValue);
       if (next !== node.nodeValue) node.nodeValue = next;

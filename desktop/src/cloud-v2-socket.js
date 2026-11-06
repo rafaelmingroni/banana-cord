@@ -359,7 +359,7 @@
         case 'dm:edit': return this.editDm(payload);
         case 'dm:delete': return this.deleteDm(payload);
         case 'dm:react': return this.reactDm(payload);
-        case 'voice:join': return this.joinVoice(payload);
+        case 'voice:join': { await this.joinVoice(payload); ack?.({ok:true}); return; }
         case 'voice:leave': return this.leaveVoice();
         case 'voice:media-state': return this.voiceMedia(payload);
         case 'voice:speaking': return this.voiceSpeaking(payload);

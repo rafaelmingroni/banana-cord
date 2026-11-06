@@ -24,6 +24,8 @@ const firestoreUrl = emulator(process.env.FIRESTORE_EMULATOR_HOST, '127.0.0.1:80
 app.setPath('userData', testData);
 app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
+app.commandLine.appendSwitch('use-fake-device-for-media-stream');
+app.commandLine.appendSwitch('use-fake-ui-for-media-stream');
 // Destroying the final window otherwise invokes Electron's default quit(0)
 // before an assertion failure can propagate to the emulator/CI process.
 app.on('window-all-closed', () => {});
@@ -187,6 +189,50 @@ app.whenReady().then(async () => {
     return snap.exists() && snap.data().state;
   })()`);
   assert.equal(presence, 'online');
+  const call = await win.webContents.executeJavaScript(`(async()=>{
+    const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+    const socket=window.BananaCloudSocket,F=window.MingrxFirebase.firestore;
+    const errors=[];socket.on('app:error',message=>errors.push(message));
+    await socket.createServer('Call regression');
+    const server=state.servers.find(s=>s.name==='Call regression');
+    if(!server)throw new Error('Real community creation did not reach the UI');
+    selectServer(server.id);
+    const channel=server.channels.find(c=>c.type==='voice');selectChannel(channel.id);
+    await joinVoice(channel);
+    for(let i=0;i<100&&!socket.voice;i++)await sleep(50);
+    if(!socket.voice)throw new Error('Call admission failed: '+errors.join(' | '));
+    const current=socket.voice,track=state.voice.localAudio?.getAudioTracks()[0];
+    await socket.voiceMedia({muted:true,camera:false,screen:false});
+    await socket.voiceSpeaking({speaking:true});await socket.refreshVoiceLease();
+    const candidate={candidate:'candidate:1 1 UDP 2122260223 192.0.2.1 50000 typ host',sdpMid:'0',sdpMLineIndex:0,usernameFragment:'test'};
+    await F.setDoc(F.doc(F.collection(current.slotRef,'signals')),{fromUserId:socket.user.uid,fromSocketId:socket.id,fromSlot:current.slotRef.id,fromUser:current.user,targetSessionId:socket.id,targetUserId:socket.user.uid,data:{candidate},createdAt:F.serverTimestamp()});
+    await sleep(200);
+    if(!socket.voice)throw new Error('Authorized signal listener revoked the call');
+    await leaveVoice();
+    const visible=element=>element?.getClientRects().length>0&&getComputedStyle(element).display!=='none';
+    if(state.voice.channelId||state.voice.serverId||visible(els.voiceControls)||visible(document.getElementById('v218ActiveCall')))throw new Error('Local call indicator stayed connected after leave');
+    if(track?.readyState!=='ended')throw new Error('Leaving the call did not stop the microphone');
+    for(let i=0;i<100&&(await F.getDoc(current.slotRef)).exists();i++)await sleep(50);
+    if((await F.getDoc(current.slotRef)).exists())throw new Error('Call slot was not removed');
+    if((state.voicePresence.get(channel.id)||[]).some(row=>row.socketId===socket.id))throw new Error('Own presence row remained after leaving');
+    const originalProfile=socket.publicUser,originalJoin=socket.joinVoice;
+    let releaseProfile,admission;
+    const profileGate=new Promise(resolve=>{releaseProfile=resolve});
+    socket.publicUser=async function(...args){await profileGate;return originalProfile.apply(this,args)};
+    socket.joinVoice=function(...args){admission=originalJoin.apply(this,args);return admission};
+    await joinVoice(channel);await leaveVoice();releaseProfile();await admission;
+    socket.publicUser=originalProfile;socket.joinVoice=originalJoin;
+    if(socket.voice||state.voice.channelId||visible(els.voiceControls))throw new Error('A late admission re-entered a call after leaving');
+    // Admission rejection must also roll the optimistic UI back immediately.
+    const original=socket.joinVoice;
+    socket.joinVoice=async()=>{throw new Error('Synthetic denied admission')};
+    await joinVoice(channel);await sleep(150);socket.joinVoice=original;
+    if(state.voice.channelId||visible(els.voiceControls))throw new Error('Rejected admission left a connected indicator');
+    if(errors.some(message=>!message.includes('Synthetic denied')))throw new Error('Unexpected real call error: '+errors.join(' | '));
+    return {joined:true,ice:true,left:true,rejectedAdmissionCleaned:true};
+  })()`);
+  assert(call.joined&&call.ice&&call.left&&call.rejectedAdmissionCleaned);
+  console.log('Real Firebase call: admission, media, speaking, lease, ICE, leave and denied-admission UI cleanup: OK');
   await isolatedSession.flushStorageData();
   await new Promise(resolve => {
     win.webContents.once('did-finish-load', resolve);

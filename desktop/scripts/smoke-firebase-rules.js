@@ -1,7 +1,7 @@
 require('./test-local-emulators');
 const fs=require('fs'),path=require('path');
 const {initializeTestEnvironment,assertSucceeds,assertFails}=require('@firebase/rules-unit-testing');
-const {doc,collection,getDoc,getDocs,setDoc,updateDoc,deleteDoc,writeBatch,serverTimestamp,Timestamp}=require('firebase/firestore');
+const {doc,collection,getDoc,getDocs,setDoc,updateDoc,deleteDoc,writeBatch,serverTimestamp,Timestamp,query,where}=require('firebase/firestore');
 const {ref,set,get}=require('firebase/database');
 const envelope={version:1,algorithm:'X25519-AES-256-GCM',senderKeyId:'a'.repeat(32),recipientKeyId:'b'.repeat(32),iv:'MTIzNDU2Nzg5MDEy',ciphertext:'ZW5jcnlwdGVk',tag:'MTIzNDU2Nzg5MDEyMzQ1Ng=='};
 async function main(){
@@ -68,6 +68,12 @@ async function main(){
     await no(setDoc(inbox(a,'forged'),{...signal,fromSocketId:'socket-of-somebody-else'}));
     await no(setDoc(inbox(o,'outsider'),{...signal,fromUserId:'outsider'}));
     await yes(deleteDoc(inbox(b,'offer')));
+    const candidate={candidate:'candidate:1 1 UDP 2122260223 192.0.2.1 50000 typ host',sdpMid:'0',sdpMLineIndex:0,usernameFragment:'test'};
+    await yes(setDoc(inbox(a,'ice'),{...signal,data:{candidate}}));
+    await yes(getDocs(query(collection(b,'servers','s','channels','voice','voiceSessions','1','signals'),where('targetSessionId','==','session-b'),where('targetUserId','==','bob'))));
+    await yes(deleteDoc(inbox(b,'ice')));
+    await no(setDoc(inbox(a,'oversize-ice'),{...signal,data:{candidate:{...candidate,candidate:'x'.repeat(4097)}}}));
+    await no(setDoc(inbox(o,'forged-ice'),{...signal,fromUserId:'outsider',data:{candidate}}));
     await yes(setDoc(doc(a,'dmThreads','alice_bob','voiceSessions','0'),session('alice','private-a')));
     await no(setDoc(doc(o,'dmThreads','alice_bob','voiceSessions','1'),session('outsider','private-o')));
     await yes(updateDoc(doc(a,'relationships','alice_bob'),{status:'blocked',blockedBy:'alice',updatedAt:serverTimestamp()}));

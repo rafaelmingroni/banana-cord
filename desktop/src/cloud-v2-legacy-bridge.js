@@ -118,7 +118,7 @@
 
     // O modal original da v1.2.1 é mantido porque seus handlers são maduros;
     // apenas o texto legado de "mesmo host" é convertido para a arquitetura Cloud.
-    if (document.getElementById('newServerName')) {
+    if (els.modalBody.querySelector('#newServerName')) {
       const head = els.modalBody.querySelector('h2');
       if (head && head.textContent !== 'Servidor') head.textContent = 'Servidor';
       const paragraph = els.modalBody.querySelector('p');

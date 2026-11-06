@@ -61,6 +61,8 @@
 
   function normalizeText(root = document.body) {
     if (!root) return;
+    const isUserContent = node => !!(node?.nodeType === Node.TEXT_NODE ? node.parentElement : node)?.closest?.('[data-user-content]');
+    if (isUserContent(root)) return;
     if (root.nodeType === Node.TEXT_NODE) {
       const next = cleanText(root.nodeValue);
       if (next !== root.nodeValue) root.nodeValue = next;
@@ -71,6 +73,7 @@
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     for (const node of nodes) {
+      if (isUserContent(node)) continue;
       const next = cleanText(node.nodeValue);
       if (next !== node.nodeValue) node.nodeValue = next;
     }
@@ -79,6 +82,7 @@
       if (root.matches?.('[title],[placeholder],[aria-label]')) attrs.push(root);
       for (const el of root.querySelectorAll?.('[title],[placeholder],[aria-label]') || []) attrs.push(el);
       for (const el of attrs) {
+        if (isUserContent(el)) continue;
         for (const attr of ['title','placeholder','aria-label']) {
           if (!el.hasAttribute(attr)) continue;
           const before = el.getAttribute(attr);

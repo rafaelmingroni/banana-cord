@@ -143,7 +143,7 @@ service cloud.firestore {
             && data.data.description.sdp is string && data.data.description.sdp.size() <= 65536)
           || (data.data.keys().hasOnly(['candidate']) && data.data.candidate is map
             && data.data.candidate.keys().hasOnly(['candidate','sdpMid','sdpMLineIndex','usernameFragment'])
-            && data.data.candidate.candidate is string && data.data.candidate.candidate.candidate.size() <= 4096
+            && data.data.candidate.candidate is string && data.data.candidate.candidate.size() <= 4096
             && (!('sdpMid' in data.data.candidate) || data.data.candidate.sdpMid == null || (data.data.candidate.sdpMid is string && data.data.candidate.sdpMid.size() <= 256))
             && (!('usernameFragment' in data.data.candidate) || data.data.candidate.usernameFragment == null || (data.data.candidate.usernameFragment is string && data.data.candidate.usernameFragment.size() <= 256))
             && (!('sdpMLineIndex' in data.data.candidate) || data.data.candidate.sdpMLineIndex == null || data.data.candidate.sdpMLineIndex is int)));

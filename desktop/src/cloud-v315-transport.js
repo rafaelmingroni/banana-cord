@@ -187,7 +187,8 @@
       const active={};
       for(const [channel,sessions] of Object.entries(tree)) {
         active[channel]={};
-        for(const [id,row] of Object.entries(sessions))if(alive(row))active[channel][id]=row;
+        for(const [id,row] of Object.entries(sessions))if(alive(row)
+          && (row.sessionId!==this.id || this.voice || this.__voiceJoining))active[channel][id]=row;
       }
       return active;
     };
@@ -223,6 +224,8 @@
     };
     socket.watchSignals=function() {}; // inbox is owned by an authorized room slot
     socket.joinVoice=async function(payload={}) {
+      if(this.voice)await this.leaveVoice();
+      const generation=this.__voiceGeneration=(this.__voiceGeneration||0)+1;
       const direct=String(payload.directUserId||'');
       let base,serverId=String(payload.serverId||''),channelId=String(payload.channelId||'');
       if(direct){
@@ -233,51 +236,71 @@
         if(!server?.channels.some(c=>c.id===channelId&&c.type==='voice'))throw new Error('Você não tem acesso a essa sala de voz.');
         base=['servers',serverId,'channels',channelId];
       }
-      if(this.voice)await this.leaveVoice();
       const room=collection(this.db,...base,'voiceSessions');
       const slots=Array.from({length:direct?2:5},(_,i)=>doc(room,String(i)));
       const profile=await this.publicUser(uid);
       const user={id:uid,name:String(profile.name||'Usuário').slice(0,32),avatar:String(profile.avatar||'').slice(0,800000),status:profile.status||'online'};
-      const peers=await runTransaction(this.db,async tx=>{
+      if(generation!==this.__voiceGeneration || !this.connected)return;
+      const joinedAt=Math.max(Date.now(),(this.__voiceLastJoinAt||0)+1);this.__voiceLastJoinAt=joinedAt;
+      this.__voiceJoining=true;
+      let peers;
+      try{peers=await runTransaction(this.db,async tx=>{
         const snaps=await Promise.all(slots.map(r=>tx.get(r)));
         let index=snaps.findIndex(s=>s.exists()&&s.data().userId===uid);
         if(index<0)index=snaps.findIndex(s=>!s.exists()||!alive(s.data()));
         if(index<0)throw new Error('Essa sala está cheia.');
         const slotRef=slots[index];
         tx.set(slotRef,{userId:uid,sessionId:this.id,user,mediaState:media(),speaking:false,
-          updatedAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+leaseMs),joinedAt:Date.now()});
+          updatedAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+leaseMs),joinedAt});
         return {slotRef,rows:snaps.filter((s,i)=>i!==index&&s.exists()&&alive(s.data())).map(s=>({slot:s.id,...s.data()}))};
-      });
+      });}finally{if(generation===this.__voiceGeneration)this.__voiceJoining=false;}
+      if(generation!==this.__voiceGeneration || !this.connected){
+        await runTransaction(this.db,async tx=>{
+          const snap=await tx.get(peers.slotRef);
+          if(snap.exists()&&snap.data().sessionId===this.id&&snap.data().joinedAt===joinedAt)tx.delete(peers.slotRef);
+        }).catch(()=>{});
+        return;
+      }
       this.voice={serverId,channelId,directPeerId:direct||undefined,base,slotRef:peers.slotRef,user,initialPeers:peers.rows};
+      const admitted=this.voice;
       const off=onSnapshot(query(collection(peers.slotRef,'signals'),where('targetSessionId','==',this.id),where('targetUserId','==',uid)),snap=>{
         for(const change of snap.docChanges())if(change.type==='added'){
           const s=change.doc.data();
           if(s.targetSessionId===this.id&&stamp(s.createdAt)>Date.now()-60000)this.receive('webrtc:signal',{fromSocketId:s.fromSocketId,fromUser:s.fromUser,data:s.data});
           deleteDoc(change.doc.ref).catch(()=>{});
         }
-      },()=>{if(this.connected)this.receive('voice:revoked');});
+      },()=>{if(this.connected&&this.voice===admitted){this.receive('voice:revoked');this.leaveVoice().catch(()=>{});}});
       this.__voiceInbox=off;
       if(direct){
         this.__directRoomOff=onSnapshot(room,snap=>{
           const tree={direct:Object.fromEntries(snap.docs.map(d=>{const data=d.data();return[data.sessionId,{...data,slot:d.id}];}))};
           this.__voiceTrees.set(serverId,tree);this.processVoiceServer(serverId,this.activeVoiceTree(tree));
-        },()=>{this.receive('voice:revoked');this.leaveVoice().catch(()=>{});});
+        },()=>{if(this.voice===admitted){this.receive('voice:revoked');this.leaveVoice().catch(()=>{});}});
       }
-      this.__voiceTimer=setInterval(()=>this.refreshVoiceLease().catch(()=>{this.receive('voice:revoked');this.leaveVoice().catch(()=>{});}),30000);
+      this.__voiceTimer=setInterval(()=>this.refreshVoiceLease().catch(()=>{if(this.voice===admitted){this.receive('voice:revoked');this.leaveVoice().catch(()=>{});}}),30000);
       this.receive('voice:peers',{channelId,peers:peers.rows.map(e=>({socketId:e.sessionId,user:e.user,mediaState:e.mediaState}))});
     };
     socket.refreshVoiceLease=async function() {
       const current=this.voice;if(!current)return;
       await runTransaction(this.db,async tx=>{
         const snapshot=await tx.get(current.slotRef);
+        if(this.voice!==current)return;
         if(!snapshot.exists()||snapshot.data().sessionId!==this.id)throw new Error('Sessão de voz substituída.');
         tx.update(current.slotRef,{updatedAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+leaseMs)});
       });
     };
     socket.leaveVoice=async function() {
+      this.__voiceGeneration=(this.__voiceGeneration||0)+1;this.__voiceJoining=false;
       const current=this.voice;this.voice=null;
       clearInterval(this.__voiceTimer);this.__voiceInbox?.();this.__voiceInbox=null;
       this.__directRoomOff?.();this.__directRoomOff=null;
+      if(current){
+        const tree=this.__voiceTrees.get(current.serverId);
+        if(tree){
+          for(const sessions of Object.values(tree))for(const [id,row]of Object.entries(sessions))if(row.sessionId===this.id)delete sessions[id];
+          this.processVoiceServer(current.serverId,this.activeVoiceTree(tree));
+        }
+      }
       if(current?.directPeerId){this.__voiceTrees.delete(current.serverId);await this.endDirectCallV212?.(current.directPeerId);}
       if(current?.slotRef)await runTransaction(this.db,async tx=>{
         const s=await tx.get(current.slotRef);
