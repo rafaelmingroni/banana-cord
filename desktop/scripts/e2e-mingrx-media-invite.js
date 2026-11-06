@@ -89,7 +89,7 @@ app.whenReady().then(async () => {
       if(document.querySelector('.premium-invite')) failures.push('legacy premium invite modal still won the click');
       if(elapsed>500) failures.push('invite modal blocked UI for '+Math.round(elapsed)+'ms');
       if(!(els.modalBody.textContent||'').includes('MING-RX88') && !(els.modalBody.textContent||'').includes('MINGRX88')) failures.push('permanent invite code missing');
-      if(!(els.modalBody.textContent||'').includes('mingrx://join/')) failures.push('Mingrx invite link missing');
+      if(!(els.modalBody.textContent||'').includes('https://mingrx.site/?invite=')) failures.push('Mingrx public invite link missing');
       document.getElementById('mxInviteTemporary')?.click();
       await sleep(60);
       if(!document.getElementById('mxInviteTempResult') || document.getElementById('mxInviteTempResult')?.classList.contains('hidden')) failures.push('temporary invite result missing');

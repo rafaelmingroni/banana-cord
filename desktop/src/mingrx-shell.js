@@ -85,6 +85,21 @@
     bar.appendChild(spacer);
   }
 
+  const membersPreferenceKey = 'mingrx.membersVisible.v1';
+  function setMembersVisible(open, { persist = true } = {}) {
+    document.body.classList.toggle('mingrx-members-open', open);
+    const toggle = document.querySelector('.mingrx-members-toggle');
+    toggle?.classList.toggle('active', open);
+    toggle?.setAttribute('aria-pressed', String(open));
+    toggle?.setAttribute('aria-expanded', String(open));
+    if (persist) try { localStorage.setItem(membersPreferenceKey, String(open)); } catch {}
+    window.dispatchEvent(new CustomEvent('mingrx:members-change'));
+  }
+  window.MingrxSetMembersVisible = setMembersVisible;
+  let membersInitiallyVisible = true;
+  try { membersInitiallyVisible = localStorage.getItem(membersPreferenceKey) !== 'false'; } catch {}
+  setMembersVisible(membersInitiallyVisible, { persist:false });
+
   function buildMemberToggle() {
     const header = document.querySelector('.main > header');
     if (!header || header.querySelector('.mingrx-members-toggle')) return;
@@ -93,10 +108,12 @@
     button.className = 'mingrx-members-toggle';
     button.textContent = 'Membros';
     button.title = 'Mostrar ou ocultar membros';
+    const initiallyOpen = document.body.classList.contains('mingrx-members-open');
+    button.classList.toggle('active', initiallyOpen);
+    button.setAttribute('aria-pressed', String(initiallyOpen));
+    button.setAttribute('aria-expanded', String(initiallyOpen));
     button.addEventListener('click', () => {
-      const open = document.body.classList.toggle('mingrx-members-open');
-      button.classList.toggle('active', open);
-      button.setAttribute('aria-pressed', String(open));
+      setMembersVisible(!document.body.classList.contains('mingrx-members-open'));
     });
     header.appendChild(button);
   }
@@ -260,9 +277,8 @@
 
   window.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
-    if (document.body.classList.contains('mingrx-members-open')) {
-      document.body.classList.remove('mingrx-members-open');
-      document.querySelector('.mingrx-members-toggle')?.classList.remove('active');
+    if (window.innerWidth < 980 && document.body.classList.contains('mingrx-members-open')) {
+      setMembersVisible(false);
     }
     const community = document.getElementById('mingrxCommunityModal');
     if (community && !community.classList.contains('hidden')) community._mingrxClose?.();

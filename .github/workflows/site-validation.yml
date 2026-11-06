@@ -25,4 +25,4 @@ jobs:
         with:
           node-version: 20
       - name: Validate static site
-        run: node site/validate.mjs
+        run: node site/validate.mjs && node site/test-invites.mjs

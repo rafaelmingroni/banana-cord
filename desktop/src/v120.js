@@ -2,7 +2,7 @@
 (() => {
   const { ipcRenderer } = window.MingrxDesktop;
   const VERSION = window.BananaCloudMode ? '2 Cloud Preview' : '1.2.1';
-  const PUBLIC_INVITE_BASE = 'https://rafaelmingroni.github.io/mingrx-app/?invite=';
+  const PUBLIC_INVITE_BASE = 'https://mingrx.site/?invite=';
   const INVITE_LEAD = window.BananaCloudMode
     ? 'Compartilhe o código ou um link. O servidor fica disponível no Mingrx Cloud.'
     : 'Compartilhe o código ou um link. O Mingrx encontra o host automaticamente.';

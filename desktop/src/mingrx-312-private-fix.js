@@ -106,7 +106,7 @@
   function polishIntro(sidebar, nav) {
     const intro = sidebar.querySelector('.v214-private-intro');
     if (!intro) return;
-    intro.innerHTML = '<b>Seu espaço privado</b><span>Converse diretamente com seus amigos, adicione novos contatos e gerencie suas amizades.</span>';
+    if (!window.__mingrxObsidianLoaded) intro.innerHTML = '<b>Seu espaço privado</b><span>Converse diretamente com seus amigos, adicione novos contatos e gerencie suas amizades.</span>';
     if (intro.previousElementSibling !== nav) nav.insertAdjacentElement('afterend', intro);
   }
 
@@ -169,6 +169,13 @@
     if (!sidebar) return;
     sidebar.classList.add('mingrx312-private-sidebar');
     const nav = ensurePrivateNav(sidebar);
+    // These controls remain as the handlers behind the primary navigation.
+    // Hide the whole group regardless of nesting or later theme styles.
+    const legacyActions = sidebar.querySelector('.v1-dm-tools');
+    if (legacyActions) {
+      legacyActions.hidden = true;
+      legacyActions.style.setProperty('display', 'none', 'important');
+    }
     polishIntro(sidebar, nav);
     hideFriendQuick(sidebar);
     decorateRecents(sidebar);

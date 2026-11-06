@@ -47,6 +47,9 @@ jobs:
       - name: Updater remains usable before login
         working-directory: desktop
         run: npm run smoke:updater-auth
+      - name: Community members and public invite links
+        working-directory: desktop
+        run: npm run smoke:members-invites && node ../site/test-invites.mjs
       - name: Real Electron interactions with production isolation
         working-directory: desktop
         run: npm run smoke:e2e-v2

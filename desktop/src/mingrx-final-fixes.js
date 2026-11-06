@@ -9,6 +9,7 @@
 
   const closeMembers = ({ restoreFocus = false } = {}) => {
     const wasOpen = document.body.classList.contains('mingrx-members-open');
+    window.MingrxSetMembersVisible?.(false);
     document.body.classList.remove('mingrx-members-open');
     toggle?.classList.remove('active');
     toggle?.setAttribute('aria-pressed', 'false');
@@ -47,19 +48,32 @@
         const open = document.body.classList.contains('mingrx-members-open');
         toggle.setAttribute('aria-expanded', String(open));
         drawer.setAttribute('aria-hidden', String(!open));
-        if (open) drawer.querySelector('.mingrx-members-close')?.focus();
+        if (open && window.innerWidth < 980) drawer.querySelector('.mingrx-members-close')?.focus();
       });
     });
   }
 
+  function syncMembersVisibility() {
+    const open = document.body.classList.contains('mingrx-members-open')
+      && !document.getElementById('app')?.classList.contains('dm-mode');
+    drawer.setAttribute('aria-hidden', String(!open));
+    drawer.inert = !open;
+    toggle?.setAttribute('aria-expanded', String(open));
+  }
+  window.addEventListener('mingrx:members-change', syncMembersVisibility);
+  const app = document.getElementById('app');
+  if (app) new MutationObserver(syncMembersVisibility).observe(app, { attributes:true, attributeFilter:['class'] });
+  syncMembersVisibility();
+
   document.addEventListener('pointerdown', event => {
+    if (window.innerWidth >= 980) return;
     if (!document.body.classList.contains('mingrx-members-open')) return;
     if (drawer.contains(event.target) || toggle?.contains(event.target)) return;
     closeMembers();
   });
 
   window.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && document.body.classList.contains('mingrx-members-open')) {
+    if (window.innerWidth < 980 && event.key === 'Escape' && document.body.classList.contains('mingrx-members-open')) {
       closeMembers({ restoreFocus:true });
     }
   });

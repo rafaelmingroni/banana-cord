@@ -40,7 +40,7 @@
     const s = state.selectedServer;
     if (!s) return;
     const code = formatCode(s.inviteCode || '');
-    const link = code ? `mingrx://join/${cleanCode(code)}` : '';
+    const link = code ? `https://mingrx.site/?invite=${encodeURIComponent(code)}` : '';
     const admin = typeof can === 'function' ? can('admin') : false;
 
     // Open immediately. No network/database await is allowed before the modal is visible.
@@ -49,7 +49,7 @@
         <div class="mingrx-invite-head">
           <span class="mingrx-invite-kicker">CONVIDAR AMIGOS</span>
           <h2>${escape(s.name || 'Comunidade')}</h2>
-          <p>Compartilhe o código ou o link do Mingrx. Quem receber pode entrar diretamente nesta comunidade.</p>
+          <p>Compartilhe o link. Ele abre esta comunidade no Mingrx e oferece o download para quem ainda não tem o app.</p>
         </div>
         ${code ? `<div class="mingrx-invite-code"><span>Código da comunidade</span><strong>${escape(code)}</strong><div class="mingrx-invite-actions"><button id="mxInviteCopyCode" class="primary">Copiar código</button><button id="mxInviteCopyLink">Copiar link</button></div></div>` : '<div class="premium-invite-warning">Esta comunidade ainda não possui um código de convite.</div>'}
         ${link ? `<div class="mingrx-invite-link-card"><code>${escape(link)}</code><button id="mxInviteCopyLinkCard" class="mingrx-invite-copy-link">Copiar</button></div>` : ''}
@@ -72,8 +72,10 @@
         if (!temp) throw new Error('O servidor não retornou um código válido.');
         const expires = result.expiresAt ? new Date(result.expiresAt).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '';
         box.classList.remove('hidden');
-        box.innerHTML = `<strong>${escape(temp)}</strong><small>${expires ? `Expira em ${escape(expires)}` : 'Convite temporário criado.'}</small><button id="mxInviteTempCopy">Copiar</button>`;
+        const tempLink = `https://mingrx.site/?invite=${encodeURIComponent(temp)}`;
+        box.innerHTML = `<strong>${escape(temp)}</strong><small>${expires ? `Expira em ${escape(expires)}` : 'Convite temporário criado.'}</small><button id="mxInviteTempCopy">Copiar código</button><button id="mxInviteTempLinkCopy">Copiar link</button>`;
         document.getElementById('mxInviteTempCopy')?.addEventListener('click', () => copy(temp, 'Convite temporário copiado.'));
+        document.getElementById('mxInviteTempLinkCopy')?.addEventListener('click', () => copy(tempLink, 'Link temporário copiado.'));
       } catch (error) {
         toast(error?.message || 'Não consegui criar o convite temporário.', 4500);
       } finally {

@@ -1,6 +1,6 @@
 {
   "name": "banana-cord",
-  "version": "3.1.7",
+  "version": "3.1.8",
   "description": "Mingrx - comunicação leve por voz, chat e compartilhamento de tela",
   "private": true,
   "main": "main-v120.js",
@@ -24,7 +24,8 @@
     "security:audit": "npm audit --omit=dev --audit-level=high",
     "smoke:hotfix315": "node scripts/smoke-hotfix315.js && node scripts/test-cloud-transport-lifecycle.js && node scripts/test-automatic-update.js",
     "smoke:cloud-boot": "firebase emulators:exec --project demo-banana-cord --config ../firebase/firebase.json --only auth,firestore \"electron scripts/e2e-cloud-boot.js\"",
-    "smoke:updater-auth": "electron scripts/e2e-updater-auth-gate.js"
+    "smoke:updater-auth": "electron scripts/e2e-updater-auth-gate.js",
+    "smoke:members-invites": "electron scripts/e2e-members-invites.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

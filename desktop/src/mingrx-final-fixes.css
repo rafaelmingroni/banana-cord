@@ -60,11 +60,24 @@ body.mingrx-ui .dm-message-body{
 }
 body.mingrx-ui .composer input{min-width:0;flex:1 1 auto}
 
-/* Members are an overlay drawer and never reserve a grid column. */
+/* Compact windows use the members drawer. Desktop keeps the list beside chat. */
 body.mingrx-ui .members{
   grid-column:auto!important;
   grid-row:auto!important;
   max-width:min(300px,calc(100vw - 24px));
+}
+body.mingrx-ui .app.dm-mode > .members,
+body.mingrx-ui .app.dm-mode .mingrx-members-toggle{display:none!important}
+@media(min-width:980px){
+  body.mingrx-ui.mingrx-members-open .app:not(.dm-mode){
+    grid-template-columns:var(--mx-private-sidebar,272px) minmax(0,1fr) 224px!important;
+  }
+  body.mingrx-ui.mingrx-members-open .app:not(.dm-mode) > .members{
+    position:relative!important;inset:auto!important;grid-column:3!important;grid-row:2!important;
+    width:auto!important;max-width:none;min-width:0;min-height:0;overflow-y:auto;
+    transform:none;opacity:1;pointer-events:auto;border-radius:0;box-shadow:none;
+    border-width:0 0 0 1px;
+  }
 }
 body.mingrx-ui .mingrx-members-head{
   display:flex;

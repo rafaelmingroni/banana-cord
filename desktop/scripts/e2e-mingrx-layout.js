@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 
 app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
+app.on('window-all-closed', () => {});
 
 function handle(channel, fn) { try { ipcMain.handle(channel, fn); } catch {} }
 handle('update:get-config', async () => ({ repoUrl:'', autoCheck:true, autoDownload:true, currentVersion:'2.1.0' }));
@@ -98,18 +99,12 @@ app.whenReady().then(async () => {
         const gridParts=before.grid.trim().split(' ').filter(Boolean);
         if(gridParts.length!==2) fail.push('app is not a two-column grid: '+before.grid);
 
-        const toggle=document.querySelector('.mingrx-members-toggle');
-        toggle?.click();
-        await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
         const afterMain=rect(main);
         const close=document.querySelector('.mingrx-members-close');
         const drawer=document.querySelector('.members');
-        const drawerOpen=document.body.classList.contains('mingrx-members-open');
         if(!close) fail.push('members close button missing');
-        if(!drawerOpen) fail.push('members drawer did not open');
-        if(Math.abs(afterMain.width-before.main.width)>3) fail.push('members drawer reserved layout width');
-        close?.click();
-        if(document.body.classList.contains('mingrx-members-open')) fail.push('members close button did not close drawer');
+        if(drawer.getClientRects().length) fail.push('community members must stay hidden in private messages');
+        if(Math.abs(afterMain.width-before.main.width)>3) fail.push('members preference changed private layout width');
         return {ok:fail.length===0,fail,before,afterMain,drawer:rect(drawer)};
       })();
     `, true);

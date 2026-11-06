@@ -57,7 +57,7 @@ assert(!ux31.includes('file.size > 550000'), 'Limite legado de 550 KB reapareceu
 assert(invite.includes('cloneNode(true)') && invite.includes('old.replaceWith(fresh)'), 'Invite ainda pode herdar listeners legados que congelam a UI.');
 assert(invite.includes('openModal(`') && invite.indexOf('openModal(`') < invite.indexOf("emitWithAck('invite:create-temporary'"), 'Modal de convite não abre antes das operações assíncronas.');
 assert(invite.includes('setTimeout(() =>') && invite.includes('6500'), 'Invite temporário não possui timeout anti-freeze.');
-assert(invite.includes('mingrx://join/'), 'Novo link de convite Mingrx ausente.');
+assert(invite.includes('https://mingrx.site/?invite='), 'Link público de convite Mingrx ausente.');
 assert(inviteCss.includes('.mingrx-invite') && inviteCss.includes('.mingrx-temp-card'), 'Modal Mingrx de convite não está estilizado.');
 
 assert(!firebaseJson.storage, 'firebase.json ainda declara Firebase Storage, incompatível com a estratégia Spark da 3.1.');

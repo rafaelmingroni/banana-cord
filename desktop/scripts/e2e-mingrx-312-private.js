@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 
 app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
+app.on('window-all-closed', () => {});
 const safeHandle = (name, fn) => { try { ipcMain.handle(name, fn); } catch {} };
 safeHandle('clipboard:write', async () => true);
 safeHandle('update:get-config', async () => ({ repoUrl:'',autoCheck:true,autoDownload:true,currentVersion:'3.1.2' }));
@@ -44,6 +45,7 @@ app.whenReady().then(async () => {
       localStorage.removeItem(window.Mingrx312?.hiddenRecentsKey || 'mingrx.hiddenDmRecents.v1');
       els.setup.classList.add('hidden');
       els.app.classList.remove('hidden');
+      document.getElementById('cloudGate')?.classList.add('hidden');
 
       if(!window.Mingrx312) failures.push('Mingrx312 runtime missing');
       renderDmSidebar();
@@ -53,7 +55,12 @@ app.whenReady().then(async () => {
       if(nav.length!==3) failures.push('private nav does not have exactly three actions: '+JSON.stringify(nav));
       if(!/Mensagens privadas/i.test(nav[0]||'') || !/Amigos/i.test(nav[1]||'') || !/Adicionar amigo/i.test(nav[2]||'')) failures.push('private nav order/labels are wrong: '+JSON.stringify(nav));
       const intro=document.querySelector('.mingrx312-private-sidebar .v214-private-intro');
-      if(!intro || !/Seu espaço privado/i.test(intro.textContent||'')) failures.push('private-space card missing');
+      if(!intro || !/Amigos e mensagens/i.test(intro.textContent||'')) failures.push('private-space card missing');
+      const tools=document.querySelector('.mingrx312-private-sidebar .v1-dm-tools');
+      if(!tools || tools.getClientRects().length) failures.push('duplicate legacy navigation is still visible');
+      for(const button of tools?.querySelectorAll('button')||[]) {
+        if(button.getClientRects().length) failures.push('duplicate navigation button remains visible: '+button.textContent);
+      }
       const quick=document.getElementById('v1FriendQuick');
       if(quick && getComputedStyle(quick).display!=='none') failures.push('legacy quick-friends list is still visible');
 
@@ -76,10 +83,26 @@ app.whenReady().then(async () => {
       renderDmSidebar();
       await new Promise(r=>setTimeout(r,20));
       if(!document.querySelector('.mingrx312-recent-item[data-user-id="ari"]')) failures.push('new message did not restore hidden recent conversation');
+      const themeSheet=document.querySelector('link[href="mingrx-obsidian.css"]');
+      if(themeSheet) document.head.appendChild(themeSheet);
+      window.dispatchEvent(new CustomEvent('mingrx:theme-change'));
+      await new Promise(r=>setTimeout(r,30));
+      if(document.querySelector('.v1-dm-tools')?.getClientRects().length) failures.push('theme refresh restored duplicate navigation');
+      if(document.querySelectorAll('.mingrx312-private-nav').length!==1) failures.push('sidebar redraw duplicated primary navigation');
 
       const ensureSource=String(window.Mingrx312?.ensureFriendThread || '');
       if(!/socket.ensureFriendThread/.test(ensureSource)) failures.push('fresh-DM repair must delegate to bundled transport');
       if(/require\\('firebase/.test(ensureSource)) failures.push('DM repair must not load a second Firebase runtime');
+
+      for(const tab of ['friends','add']) {
+        document.querySelector('[data-mingrx312-nav="'+tab+'"]').click();
+        await new Promise(r=>setTimeout(r,30));
+        if(!document.querySelector('.mingrx-social-tab.active[data-mx-tab="'+tab+'"]')) failures.push('primary navigation action failed: '+tab);
+        closeModal();
+      }
+      document.querySelector('[data-mingrx312-nav="messages"]').click();
+      await new Promise(r=>setTimeout(r,30));
+      if(state.viewMode!=='dm' || state.activeDmUserId) failures.push('primary messages action did not open private home');
 
       return {ok:failures.length===0,failures,nav,recentCount:document.querySelectorAll('.mingrx312-recent-item').length,historyCount:(state.dmMessages.get('ari')||[]).length};
     })();
