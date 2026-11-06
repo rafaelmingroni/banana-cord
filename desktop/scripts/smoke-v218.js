@@ -37,7 +37,7 @@ expect(ui.includes('está falando') && ui.includes('Você está falando'), 'spea
 expect(ui.includes("ipcRenderer.send('banana-call:attention', true)"), 'Windows attention request missing');
 expect(!e2eeUi.includes('O Firebase recebe somente conteúdo cifrado'), 'technical Firebase wording leaked into user-facing E2EE banner');
 expect(e2eeUi.includes('Só você e seu contato conseguem ler'), 'plain-language E2EE explanation missing');
-expect(updater.includes('autoUpdater.autoInstallOnAppQuit=false'), 'automatic install on quit must stay disabled');
+expect(updater.includes('autoUpdater.autoInstallOnAppQuit=true'), 'automatic install on quit must stay enabled');
 expect(updater.includes('autoUpdater.autoRunAppAfterInstall=true'), 'updater must prefer reopening after install');
 expect(updater.includes('autoUpdater.quitAndInstall(true,true)'), 'electron-updater 6 silent install + forced relaunch missing');
 expect(shutdown.includes('originalQuitAndInstall(options, legacyIsForceRunAfter)'), 'graceful updater wrapper must preserve positional relaunch arguments');

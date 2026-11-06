@@ -50,7 +50,7 @@ async function main(){
     }};
   vm.runInNewContext(fs.readFileSync(path.join(root,'update-service.js'),'utf8'),updateContext);
   updateContext.module.exports.configureUpdater();
-  assert.equal(updater.autoInstallOnAppQuit,false);assert.equal(updater.autoDownload,true);assert.equal(updater.autoRunAppAfterInstall,true);assert.equal(updater.feed.repo,'mingrx-app');
+  assert.equal(updater.autoInstallOnAppQuit,true);assert.equal(updater.autoDownload,true);assert.equal(updater.autoRunAppAfterInstall,true);assert.equal(updater.feed.repo,'mingrx-app');
   assert.throws(()=>updaterHandlers.get('update:save-config')({}, {repoUrl:'https://evil.invalid'}));
   events.get('update-downloaded')({version:'3.1.6'});
   assert.equal(updaterHandlers.get('update:get-state')(),updaterHandlers.get('banana-updater:get-state')());

@@ -13,7 +13,9 @@ ipcMain.handle('clipboard:write', async () => true);
 ipcMain.handle('banana-updater:get-state', async () => updaterState);
 ipcMain.handle('banana-updater:get-version', async () => '2.0.17');
 ipcMain.handle('banana-updater:check', async () => ({ ok: true }));
+ipcMain.handle('update:defer', async () => true);
 ipcMain.on('banana-updater:install', () => { installRequested = true; });
+app.on('window-all-closed', () => {});
 
 const hardTimeout = setTimeout(() => {
   console.error('V2.0.17 updater E2E failed: hard timeout');

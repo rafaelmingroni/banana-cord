@@ -26,6 +26,9 @@
         <button id="bananaUpdaterInstall" class="banana-updater-primary" type="button">Atualizar agora</button>
         <button id="bananaUpdaterLater" class="banana-updater-secondary" type="button">Depois</button>
       </div>
+      <div id="bananaUpdaterDownloadActions" class="banana-updater-actions hidden">
+        <button id="bananaUpdaterDownload" class="banana-updater-primary" type="button">Baixar atualização</button>
+      </div>
       <div id="bananaUpdaterRetryWrap" class="banana-updater-actions hidden">
         <button id="bananaUpdaterRetry" class="banana-updater-secondary" type="button">Tentar novamente</button>
       </div>
@@ -55,6 +58,8 @@
   const speed = document.getElementById('bananaUpdaterSpeed');
   const actions = document.getElementById('bananaUpdaterActions');
   const retryWrap = document.getElementById('bananaUpdaterRetryWrap');
+  const downloadActions = document.getElementById('bananaUpdaterDownloadActions');
+  const downloadBtn = document.getElementById('bananaUpdaterDownload');
   const installBtn = document.getElementById('bananaUpdaterInstall');
   const laterBtn = document.getElementById('bananaUpdaterLater');
   const retryBtn = document.getElementById('bananaUpdaterRetry');
@@ -108,6 +113,8 @@
     overlay.classList.toggle('hidden', phase !== 'installing');
     retryWrap.classList.add('hidden');
     actions.classList.add('hidden');
+    downloadActions.classList.add('hidden');
+    downloadBtn.disabled = false;
     progressWrap.classList.remove('hidden');
     closeBtn.classList.remove('hidden');
     badge.classList.remove('ready');
@@ -148,10 +155,27 @@
       return;
     }
 
+    if (phase === 'available') {
+      clearAutoHide();
+      title.textContent = version ? `Mingrx ${version} disponível` : 'Nova atualização disponível';
+      subtitle.textContent = 'O download automático está desativado. Você pode iniciar o download aqui.';
+      progressWrap.classList.add('hidden');
+      downloadActions.classList.remove('hidden');
+      setBadge('↓ Atualização disponível');
+      showCard();
+      return;
+    }
+
     if (phase === 'ready') {
       clearAutoHide();
       title.textContent = version ? `Banana Cord ${version} está pronto` : 'Atualização pronta';
-      subtitle.textContent = 'Reinicie quando quiser. A aplicação será feita silenciosamente.';
+      subtitle.textContent = currentState.installDeferReason === 'user'
+        ? 'A atualização será aplicada automaticamente ao sair do Mingrx.'
+        : currentState.installDeferReason === 'activity'
+          ? 'A atualização está pronta. O Mingrx aguardará a chamada e o texto em edição antes de reiniciar.'
+        : currentState.autoInstallPending
+          ? 'O Mingrx reiniciará automaticamente. Se houver chamada ou texto em edição, ele aguardará.'
+          : 'Reinicie quando quiser. A aplicação será feita silenciosamente.';
       progress.style.width = '100%';
       percent.textContent = '100%';
       speed.textContent = 'Pronto para reiniciar';
@@ -185,13 +209,23 @@
   });
 
   closeBtn.addEventListener('click', hideCard);
-  laterBtn.addEventListener('click', hideCard);
+  laterBtn.addEventListener('click', async () => {
+    try { await ipcRenderer.invoke('update:defer'); }
+    catch { return; }
+    hideCard();
+  });
   installBtn.addEventListener('click', () => {
     overlay.classList.remove('hidden');
     installBtn.disabled = true;
     setTimeout(() => ipcRenderer.send('banana-updater:install'), 220);
   });
   retryBtn.addEventListener('click', () => ipcRenderer.invoke('banana-updater:check').catch(() => {}));
+  downloadBtn.addEventListener('click', async () => {
+    downloadBtn.disabled = true;
+    try { await ipcRenderer.invoke('update:download'); }
+    catch { render({ phase:'error' }); }
+    finally { downloadBtn.disabled = false; }
+  });
 
   ipcRenderer.on('banana-updater:state', (_event, state) => render(state));
   ipcRenderer.invoke('banana-updater:get-state').then(render).catch(() => {});

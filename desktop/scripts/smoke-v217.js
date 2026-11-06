@@ -24,7 +24,7 @@ const pkg = JSON.parse(read('package.json'));
 
 assert(versionAtLeast(pkg.version, '2.0.17'), 'package version must be 2.0.17 or newer');
 assert(updater.includes('autoUpdater.autoDownload=config.autoDownload'), 'automatic background download must remain enabled');
-assert(updater.includes('autoUpdater.autoInstallOnAppQuit=false'), 'visible/implicit install-on-quit path must stay disabled');
+assert(updater.includes('autoUpdater.autoInstallOnAppQuit=true'), 'downloaded updates must apply automatically on quit');
 assert(updater.includes('autoUpdater.autoRunAppAfterInstall=true'), 'updater should prefer reopening after install');
 assert(
   updater.includes('autoUpdater.quitAndInstall(true,true)'),

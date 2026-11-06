@@ -3,7 +3,7 @@ const invoke = new Set(['banana-updater:check','banana-updater:get-state','banan
   'banana-v21:get-settings','banana-v21:set-settings','banana-v21:get-system-languages',
   'clipboard:write','e2ee:decrypt','e2ee:encrypt','e2ee:ensure-keypair','e2ee:status',
   'invite:code-for-server','invite:create-temporary','invite:resolve-short',
-  'update:check','update:download','update:get-config','update:get-state','update:install','update:save-config',
+  'update:check','update:download','update:get-config','update:get-state','update:install','update:save-config','update:defer',
   'external:open','capture:sources','capture:select','capture:cancel','ptt:configure','rtc:configuration']);
 const outgoing = new Set(['banana-call:attention','banana-call:focus','banana-updater:install']);
 const incoming = new Set(['host:status','banana-updater:state','banana-v21:system-state','invite:deep-link',

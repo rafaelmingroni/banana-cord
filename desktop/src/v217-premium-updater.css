@@ -3,7 +3,7 @@
   right: 22px;
   bottom: 22px;
   width: min(420px, calc(100vw - 44px));
-  z-index: 9998;
+  z-index: 10020;
   transition: opacity .18s ease, transform .18s ease;
 }
 

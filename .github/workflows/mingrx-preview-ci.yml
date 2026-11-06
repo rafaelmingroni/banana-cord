@@ -97,6 +97,9 @@ jobs:
       - name: Real Firebase login and persisted-session boot
         working-directory: desktop
         run: npm run smoke:cloud-boot
+      - name: Updater remains usable before login
+        working-directory: desktop
+        run: npm run smoke:updater-auth
 
       - name: Electron interaction suite
         working-directory: desktop
