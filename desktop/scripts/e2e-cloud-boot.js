@@ -96,6 +96,17 @@ async function authRequest(action, data, admin = false) {
   return result;
 }
 
+async function waitForAuthMessage(expected) {
+  const deadline = Date.now() + 5000;
+  let message;
+  while (Date.now() < deadline) {
+    message = await win.webContents.executeJavaScript("document.getElementById('cloudAuthError')?.textContent || ''");
+    if (expected instanceof RegExp ? expected.test(message) : message === expected) return;
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  throw new Error(`Auth message was not shown: ${expected}; actual: ${message}`);
+}
+
 let win;
 let finished = false;
 const fatalErrors = [];
@@ -136,7 +147,7 @@ async function waitForShell(label) {
 
 app.whenReady().then(async () => {
   const email = `boot-${process.pid}-${Date.now()}@example.test`;
-  const password = 'cloud-boot-regression-123';
+  let password = 'cloud-boot-regression-123';
   const account = await authRequest('signUp', { email, password, returnSecureToken: true });
   await authRequest('update', { localId: account.localId, emailVerified: true, displayName: 'Cloud Boot' }, true);
   const bundle = await testBundle();
@@ -172,6 +183,35 @@ app.whenReady().then(async () => {
     }
   });
   await win.loadFile(path.join(root, 'src/index.html'));
+  // Use the actual Forgot password button and Firebase SDK against Auth's
+  // emulator. No real mail is sent, and no production account is touched.
+  await win.webContents.executeJavaScript("document.getElementById('cloudForgot').click()");
+  await waitForAuthMessage('Digite seu e-mail primeiro.');
+  await win.webContents.executeJavaScript(`(() => {
+    document.getElementById('cloudLoginEmail').value = 'invalid-address';
+    document.getElementById('cloudForgot').click();
+  })()`);
+  // Auth emulator reports USER_NOT_FOUND for this malformed address; a
+  // production Auth backend can instead return INVALID_EMAIL.
+  await waitForAuthMessage(/Digite um e-mail válido\.|auth\/user-not-found/);
+  await win.webContents.executeJavaScript(`(() => {
+    document.getElementById('cloudLoginEmail').value = ${JSON.stringify(email)};
+    document.getElementById('cloudForgot').click();
+  })()`);
+  await waitForAuthMessage('E-mail de redefinição enviado.');
+  const oobResponse = await fetch(`${authUrl.origin}/emulator/v1/projects/${projectId}/oobCodes`);
+  assert(oobResponse.ok, 'Could not inspect emulator-only reset actions');
+  const { oobCodes } = await oobResponse.json();
+  const reset = oobCodes.find(code => code.email === email && code.requestType === 'PASSWORD_RESET');
+  assert(reset?.oobCode, 'The real reset request did not create an email action');
+  assert.equal(new URL(reset.oobLink).searchParams.get('mode'), 'resetPassword');
+  const nextPassword = 'cloud-reset-replacement-456';
+  const completed = await authRequest('resetPassword', { oobCode: reset.oobCode, newPassword: nextPassword });
+  assert.equal(completed.email, email);
+  await assert.rejects(authRequest('signInWithPassword', { email, password, returnSecureToken: true }), /INVALID_LOGIN_CREDENTIALS|INVALID_PASSWORD/);
+  await assert.rejects(authRequest('resetPassword', { oobCode: reset.oobCode, newPassword: 'another-password-789' }), /INVALID_OOB_CODE/);
+  password = nextPassword;
+  console.log('Forgot password: empty/invalid email, reset action, password change, old-password rejection and one-use link: OK');
   await win.webContents.executeJavaScript(`(() => {
     localStorage.setItem('banana.status', 'online');
     document.getElementById('cloudLoginEmail').value = ${JSON.stringify(email)};
