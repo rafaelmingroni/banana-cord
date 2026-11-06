@@ -21,6 +21,9 @@ function finish(code, message) {
   setTimeout(() => app.exit(code), 40);
 }
 
+// Keep the harness alive until its explicit success/failure exit code runs.
+app.on('window-all-closed', () => {});
+
 app.whenReady().then(async () => {
   const win = new BrowserWindow({
     show: false,

@@ -24,6 +24,9 @@ const firestoreUrl = emulator(process.env.FIRESTORE_EMULATOR_HOST, '127.0.0.1:80
 app.setPath('userData', testData);
 app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
+// Destroying the final window otherwise invokes Electron's default quit(0)
+// before an assertion failure can propagate to the emulator/CI process.
+app.on('window-all-closed', () => {});
 
 // Non-auth platform integrations are outside this test. Keep the production
 // preload/isolation and the real Firebase SDK, rules, writes and listeners.
@@ -94,17 +97,18 @@ async function authRequest(action, data, admin = false) {
 }
 
 let win;
+let finished = false;
 const fatalErrors = [];
 const blockedRequests = [];
 const hardTimeout = setTimeout(() => finish(1, 'Cloud boot E2E failed: hard timeout'), 90000);
 function finish(code, message) {
+  if (finished) return;
+  finished = true;
   clearTimeout(hardTimeout);
   if (message) (code ? console.error : console.log)(message);
   try { win?.destroy(); } catch {}
-  setTimeout(() => {
-    try { fs.rmSync(testData, { recursive: true, force: true }); } catch {}
-    app.exit(code);
-  }, 50);
+  try { fs.rmSync(testData, { recursive: true, force: true }); } catch {}
+  app.exit(code);
 }
 
 async function waitForShell(label) {

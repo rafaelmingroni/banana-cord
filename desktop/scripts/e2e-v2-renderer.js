@@ -22,6 +22,9 @@ function finish(code, message) {
 }
 function fail(message) { finish(1, `V2 Electron E2E failed: ${message}`); }
 
+// Keep the harness alive until its explicit success/failure exit code runs.
+app.on('window-all-closed', () => {});
+
 app.whenReady().then(async () => {
   const win = new BrowserWindow({
     show: false,

@@ -2,7 +2,9 @@ name: Mingrx Windows Release
 on:
   push:
     branches: [main]
-    paths: ['desktop/**', 'firebase/**', 'RELEASE_NOTES-*.md', '.github/workflows/release-windows.yml']
+    # Tests and workflow maintenance alone must not rebuild an immutable release.
+    # Use workflow_dispatch when a workflow-only change needs a new publication.
+    paths: ['desktop/*.js', 'desktop/package*.json', 'desktop/src/**', 'desktop/cloud/**', 'desktop/assets/**', 'desktop/server/**', 'desktop/scripts/merge-source.js', 'desktop/scripts/build-cloud-browser.js', 'desktop/scripts/generate-icons.js', 'desktop/scripts/inject-firebase-config.js', 'firebase/**', 'RELEASE_NOTES-*.md']
   workflow_dispatch:
 permissions:
   contents: write
