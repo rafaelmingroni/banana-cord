@@ -16,6 +16,13 @@ async function main(){
   const session=(uid,sid)=>({userId:uid,sessionId:sid,user:{id:uid,name:uid,avatar:'',status:'online'},mediaState:{muted:false,camera:false,screen:false},speaking:false,joinedAt:Date.now(),updatedAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+90000)});
   try{
     await env.clearFirestore();await env.clearDatabase();
+    const clock=doc(a,'users','alice','limits','clock');
+    await yes(setDoc(clock,{updatedAt:serverTimestamp()}));
+    await yes(getDoc(clock));
+    await no(getDoc(doc(b,'users','alice','limits','clock')));
+    await no(setDoc(doc(b,'users','alice','limits','clock'),{updatedAt:serverTimestamp()}));
+    await no(setDoc(clock,{updatedAt:Timestamp.fromMillis(Date.now()+600000)}));
+    await no(setDoc(clock,{updatedAt:serverTimestamp(),messageKey:'cannot-bypass-chat-limit'}));
     await no(setDoc(doc(env.unauthenticatedContext().firestore(),'publicProfiles','n'),{displayName:'n'}));
     const create=writeBatch(a);
     create.set(server(a),{name:'Teste',ownerId:'alice',inviteCode:'ABCD1234',categories:[],createdAt:serverTimestamp()});

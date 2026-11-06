@@ -32,6 +32,7 @@ async function main() {
     serverTimestamp: () => ({ serverTimestamp: true }),
     Timestamp: { fromMillis: value => ({ toMillis: () => value }) },
     getDoc: async ref => ({ id: ref.id, ref, exists: () => false, data: () => ({}) }),
+    getDocFromServer:async()=>({data:()=>({updatedAt:{toMillis:()=>Date.now()}})}),
     getDocs: async () => emptySnapshot,
     setDoc: async (ref, data) => { writes.push({ path: ref.path, data }); },
     updateDoc: async () => {},
@@ -40,15 +41,16 @@ async function main() {
       set(ref, data) { writes.push({ path: ref.path, data }); },
       async commit() {}
     }),
-    onSnapshot(ref, callback) {
+    onSnapshot(ref, options, listener) {
+      const callback=typeof options==='function'?options:listener;
       const record = { ref, callback, active: true };
       snapshots.add(record);
-      queueMicrotask(() => { if (record.active) callback(emptySnapshot); });
+      queueMicrotask(() => { if (record.active) callback({...emptySnapshot,metadata:{hasPendingWrites:false}}); });
       return () => { record.active = false; snapshots.delete(record); };
     }
   };
   const context = {
-    crypto: webcrypto, queueMicrotask, Map, Set, Date, Promise,
+    crypto: webcrypto, queueMicrotask, Map, Set, Date, Promise, performance,
     console: {
       log() {}, warn() {},
       error: (...args) => failures.push(args.map(value => value?.message || String(value)).join(' '))

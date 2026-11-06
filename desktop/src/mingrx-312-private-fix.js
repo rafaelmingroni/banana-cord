@@ -12,11 +12,12 @@
     body.mingrx-ui .mingrx312-private-sidebar>.channel-section-title:not(.v1-recent-title),
     body.mingrx-ui .mingrx312-private-sidebar>.v1-dm-tools,
     body.mingrx-ui .mingrx312-private-sidebar>#v1FriendQuick{display:none!important}
+    body.mingrx-ui .mingrx312-private-sidebar .v214-private-intro{display:none!important}
     body.mingrx-ui .mingrx312-private-sidebar .v214-private-section-title:not(.v1-recent-title){display:none!important}
     body.mingrx-ui .mingrx312-private-nav{display:flex;flex-direction:column;gap:5px;margin:0 0 12px}
     body.mingrx-ui .mingrx312-private-nav button{width:100%;min-height:43px;display:flex;align-items:center;gap:11px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--mx-text,#e7edf6);padding:0 12px;font-size:13px;font-weight:800;text-align:left;cursor:pointer;transition:background .14s,border-color .14s,transform .14s}
     body.mingrx-ui .mingrx312-private-nav button:hover{background:color-mix(in srgb,var(--mx-accent,#5b8cff) 11%,transparent);border-color:color-mix(in srgb,var(--mx-accent,#5b8cff) 22%,transparent)}
-    body.mingrx-ui .mingrx312-private-nav button.active{background:linear-gradient(90deg,color-mix(in srgb,var(--mx-accent,#5b8cff) 30%,#151b25),color-mix(in srgb,var(--mx-accent,#5b8cff) 14%,#151b25));border-color:color-mix(in srgb,var(--mx-accent,#5b8cff) 34%,transparent);box-shadow:inset 3px 0 0 var(--mx-accent,#5b8cff)}
+    body.mingrx-ui .mingrx312-private-nav button.active{background:linear-gradient(90deg,color-mix(in srgb,var(--mx-accent,#5b8cff) 30%,var(--mx-panel-2,#151b25)),color-mix(in srgb,var(--mx-accent,#5b8cff) 14%,var(--mx-panel-2,#151b25)));border-color:color-mix(in srgb,var(--mx-accent,#5b8cff) 34%,transparent);box-shadow:inset 3px 0 0 var(--mx-accent,#5b8cff)}
     body.mingrx-ui .mingrx312-private-nav .mingrx312-nav-icon{width:22px;text-align:center;font-size:16px;line-height:1}
     body.mingrx-ui .mingrx312-private-sidebar .v214-private-intro{order:0;position:relative;margin:0 0 16px;padding:15px 14px 15px 55px!important;min-height:72px;border:1px solid color-mix(in srgb,var(--mx-accent,#5b8cff) 36%,#273244)!important;border-radius:14px!important;background:radial-gradient(circle at 100% 100%,color-mix(in srgb,var(--mx-accent,#5b8cff) 25%,transparent),transparent 42%),linear-gradient(135deg,color-mix(in srgb,var(--mx-accent,#5b8cff) 14%,#111a25),#111923)!important;box-shadow:0 10px 28px #0003!important;overflow:hidden}
     body.mingrx-ui .mingrx312-private-sidebar .v214-private-intro::before{content:'👥';position:absolute;left:14px;top:15px;width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:color-mix(in srgb,var(--mx-accent,#5b8cff) 22%,#172131);font-size:16px}
@@ -87,17 +88,11 @@
       nav.className = 'mingrx312-private-nav';
       nav.innerHTML = `
         <button type="button" class="active" data-mingrx312-nav="messages"><span class="mingrx312-nav-icon">💬</span><span>Mensagens privadas</span></button>
-        <button type="button" data-mingrx312-nav="friends"><span class="mingrx312-nav-icon">👥</span><span>Amigos</span></button>
-        <button type="button" data-mingrx312-nav="add"><span class="mingrx312-nav-icon">👤+</span><span>Adicionar amigo</span></button>`;
+        <button type="button" data-mingrx312-nav="friends"><span class="mingrx312-nav-icon">👥</span><span>Amigos</span></button>`;
       nav.querySelector('[data-mingrx312-nav="messages"]').onclick = () => {
         if (typeof showDmHome === 'function') showDmHome();
       };
       nav.querySelector('[data-mingrx312-nav="friends"]').onclick = () => document.getElementById('v1FriendsBtn')?.click();
-      nav.querySelector('[data-mingrx312-nav="add"]').onclick = () => {
-        const add = document.getElementById('v207AddFriendBtn');
-        if (add) add.click();
-        else window.BananaOpenFriendSearch?.();
-      };
       sidebar.prepend(nav);
     }
     return nav;
@@ -106,8 +101,8 @@
   function polishIntro(sidebar, nav) {
     const intro = sidebar.querySelector('.v214-private-intro');
     if (!intro) return;
-    if (!window.__mingrxObsidianLoaded) intro.innerHTML = '<b>Seu espaço privado</b><span>Converse diretamente com seus amigos, adicione novos contatos e gerencie suas amizades.</span>';
-    if (intro.previousElementSibling !== nav) nav.insertAdjacentElement('afterend', intro);
+    intro.hidden=true;
+    intro.style.setProperty('display','none','important');
   }
 
   function hideFriendQuick(sidebar) {

@@ -172,6 +172,17 @@
   };
 
   const LITERALS = [
+    ['Encontrar amigos','Find friends','Encontrar amigos'],
+    ['Sua primeira conversa começa aqui.','Your first conversation starts here.','Tu primera conversación empieza aquí.'],
+    ['Continue suas conversas.','Continue your conversations.','Continúa tus conversaciones.'],
+    ['Suas pessoas, por perto.','Your people, close by.','Tu gente, cerca de ti.'],
+    ['SEU PRIVADO','YOUR PRIVATE SPACE','TU ESPACIO PRIVADO'],
+    ['CONVERSAS RECENTES','RECENT CONVERSATIONS','CONVERSACIONES RECIENTES'],
+    ['PRONTOS PARA CONVERSAR','READY TO CHAT','LISTOS PARA CONVERSAR'],
+    ['Encontre um amigo para trocar mensagens e fazer chamadas, só entre vocês.','Find a friend to exchange messages and make private calls.','Encuentra un amigo para intercambiar mensajes y hacer llamadas privadas.'],
+    ['Abra uma conversa abaixo ou encontre mais amigos no Mingrx.','Open a conversation below or find more friends on Mingrx.','Abre una conversación abajo o encuentra más amigos en Mingrx.'],
+    ['As conversas que você iniciar ficam na lateral. É fácil voltar quando quiser.','Your conversations stay in the sidebar, ready whenever you return.','Tus conversaciones quedan en la barra lateral para volver cuando quieras.'],
+    ['Mensagens e chamadas, no seu ritmo.','Messages and calls, at your pace.','Mensajes y llamadas, a tu ritmo.'],
     ['Mensagens privadas','Private messages','Mensajes privados'],
     ['Criar ou entrar em servidor','Create or join a server','Crear o unirse a un servidor'],
     ['Convidar','Invite','Invitar'],

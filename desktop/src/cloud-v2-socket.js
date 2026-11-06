@@ -182,8 +182,12 @@
 
     watchServerRefs() {
       const q = query(collection(this.db, 'users', this.user.uid, 'serverRefs'), orderBy('joinedAt', 'asc'));
-      const off = onSnapshot(q, async snap => {
+      const off = onSnapshot(q, {includeMetadataChanges:true}, async snap => {
         try {
+          // A local serverRef can precede its membership batch on the server.
+          // Starting protected reads here poisons the shared listener with a
+          // permission error before create/join has actually been committed.
+          if(snap.metadata.hasPendingWrites)return;
           const ids = snap.docs.map(d => d.id);
           const previous = new Set(this.knownServerIds);
           const isInitial = !this.initialRefsReady;

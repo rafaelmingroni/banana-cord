@@ -4,12 +4,11 @@
  */
 (() => {
   const F = require('firebase/firestore');
-  const { doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot,
+  const { doc, collection, getDoc, getDocFromServer, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot,
     query, where, limit, writeBatch, runTransaction, serverTimestamp, Timestamp } = F;
   const leaseMs = 90000;
   const pairId = (a,b) => [String(a),String(b)].sort().join('_');
   const stamp = value => value?.toMillis?.() || Number(value) || 0;
-  const alive = value => stamp(value?.expiresAt) > Date.now();
   const media = value => ({ muted:!!value?.muted, camera:!!value?.camera, screen:!!value?.screen });
   const previousAttach = window.BananaLegacy?.attachSocket;
 
@@ -26,6 +25,27 @@
     socket.__voiceInbox = null;
     socket.__presenceRefs = new Map();
     socket.__sendQueue = Promise.resolve();
+    socket.serverNow = function() {
+      if(!this.__serverClock)throw new Error('Aguarde a sincronização com o Mingrx Cloud.');
+      return this.__serverClock.time + performance.now() - this.__serverClock.monotonic;
+    };
+    socket.syncServerClock = async function() {
+      if(this.__clockSync)return this.__clockSync;
+      this.__clockSync=(async()=>{
+        const reference=doc(this.db,'users',uid,'limits','clock');
+        await setDoc(reference,{updatedAt:serverTimestamp()});
+        const acknowledgedAt=performance.now();
+        const snapshot=await getDocFromServer(reference);
+        const time=stamp(snapshot.data()?.updatedAt);
+        if(!Number.isFinite(time)||time<=0)throw new Error('Não foi possível sincronizar a hora do Mingrx Cloud.');
+        // Use elapsed monotonic time thereafter. Changing the Windows clock
+        // must never expire a healthy call or revive an abandoned room slot.
+        this.__serverClock={time,monotonic:acknowledgedAt};
+      })();
+      try{await this.__clockSync;}finally{this.__clockSync=null;}
+    };
+    const now=()=>socket.serverNow();
+    const alive=value=>stamp(value?.expiresAt)>now();
     let lastSend = 0;
     const originalPublicUser = socket.publicUser.bind(socket);
     socket.publicUser = async function(uid) {
@@ -112,7 +132,7 @@
       const refs=[doc(this.db,'presence',uid,'connections',this.id)];
       // Scope community presence to communities actually joined, never a global directory.
       for(const serverId of this.knownServerIds) refs.push(doc(this.db,'servers',serverId,'presence',uid,'connections',this.id));
-      const data={state:this.__presenceState,activity:this.__activity,updatedAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+120000)};
+      const data={state:this.__presenceState,activity:this.__activity,updatedAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(now()+120000)};
       for(let i=0;i<refs.length;i+=100){
         const batch=writeBatch(this.db);
         refs.slice(i,i+100).forEach(r=>{batch.set(r,data);this.__presenceRefs.set(r.path,r);});
@@ -120,6 +140,7 @@
       }
     };
     socket.startSession = async function() {
+      await this.syncServerClock();
       await this.publishPresence();
       this.__presenceTimer=setInterval(()=>this.publishPresence().catch(()=>{}),60000);
       this.__expiryTimer=setInterval(()=>{
@@ -142,7 +163,7 @@
     };
     socket.setActivityV21 = async function(payload) {
       const a=payload.activity;
-      this.__activity=a ? {id:String(a.id||'').slice(0,64),name:String(a.name||'').slice(0,80),startedAt:Number(a.startedAt)||Date.now()}:null;
+      this.__activity=a ? {id:String(a.id||'').slice(0,64),name:String(a.name||'').slice(0,80),startedAt:Number(a.startedAt)||now()}:null;
       await this.publishPresence();
     };
     const deleteServer=socket.deleteServer.bind(socket);
@@ -226,6 +247,7 @@
     socket.joinVoice=async function(payload={}) {
       if(this.voice)await this.leaveVoice();
       const generation=this.__voiceGeneration=(this.__voiceGeneration||0)+1;
+      await this.syncServerClock();
       const direct=String(payload.directUserId||'');
       let base,serverId=String(payload.serverId||''),channelId=String(payload.channelId||'');
       if(direct){
@@ -241,7 +263,7 @@
       const profile=await this.publicUser(uid);
       const user={id:uid,name:String(profile.name||'Usuário').slice(0,32),avatar:String(profile.avatar||'').slice(0,800000),status:profile.status||'online'};
       if(generation!==this.__voiceGeneration || !this.connected)return;
-      const joinedAt=Math.max(Date.now(),(this.__voiceLastJoinAt||0)+1);this.__voiceLastJoinAt=joinedAt;
+      const joinedAt=Math.max(now(),(this.__voiceLastJoinAt||0)+1);this.__voiceLastJoinAt=joinedAt;
       this.__voiceJoining=true;
       let peers;
       try{peers=await runTransaction(this.db,async tx=>{
@@ -251,7 +273,7 @@
         if(index<0)throw new Error('Essa sala está cheia.');
         const slotRef=slots[index];
         tx.set(slotRef,{userId:uid,sessionId:this.id,user,mediaState:media(),speaking:false,
-          updatedAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+leaseMs),joinedAt});
+          updatedAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(now()+leaseMs),joinedAt});
         return {slotRef,rows:snaps.filter((s,i)=>i!==index&&s.exists()&&alive(s.data())).map(s=>({slot:s.id,...s.data()}))};
       });}finally{if(generation===this.__voiceGeneration)this.__voiceJoining=false;}
       if(generation!==this.__voiceGeneration || !this.connected){
@@ -261,12 +283,12 @@
         }).catch(()=>{});
         return;
       }
-      this.voice={serverId,channelId,directPeerId:direct||undefined,base,slotRef:peers.slotRef,user,initialPeers:peers.rows};
+      this.voice={serverId,channelId,directPeerId:direct||undefined,base,slotRef:peers.slotRef,user,joinedAt,initialPeers:peers.rows};
       const admitted=this.voice;
       const off=onSnapshot(query(collection(peers.slotRef,'signals'),where('targetSessionId','==',this.id),where('targetUserId','==',uid)),snap=>{
         for(const change of snap.docChanges())if(change.type==='added'){
           const s=change.doc.data();
-          if(s.targetSessionId===this.id&&stamp(s.createdAt)>Date.now()-60000)this.receive('webrtc:signal',{fromSocketId:s.fromSocketId,fromUser:s.fromUser,data:s.data});
+          if(s.targetSessionId===this.id&&stamp(s.createdAt)>now()-60000)this.receive('webrtc:signal',{fromSocketId:s.fromSocketId,fromUser:s.fromUser,data:s.data});
           deleteDoc(change.doc.ref).catch(()=>{});
         }
       },()=>{if(this.connected&&this.voice===admitted){this.receive('voice:revoked');this.leaveVoice().catch(()=>{});}});
@@ -286,7 +308,7 @@
         const snapshot=await tx.get(current.slotRef);
         if(this.voice!==current)return;
         if(!snapshot.exists()||snapshot.data().sessionId!==this.id)throw new Error('Sessão de voz substituída.');
-        tx.update(current.slotRef,{updatedAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+leaseMs)});
+        tx.update(current.slotRef,{updatedAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(now()+leaseMs)});
       });
     };
     socket.leaveVoice=async function() {
@@ -317,9 +339,29 @@
       if(!target||!alive(target))return;
       const targetRef=doc(this.db,...current.base,'voiceSessions',target.slot);
       const data=JSON.parse(JSON.stringify(payload.data||{}));
-      await setDoc(doc(collection(targetRef,'signals')),{fromUserId:uid,fromSocketId:this.id,
-        fromSlot:current.slotRef.id,fromUser:current.user,
-        targetSessionId:payload.targetSocketId,targetUserId:target.userId,data,createdAt:serverTimestamp()});
+      const signalRef=doc(collection(targetRef,'signals'));
+      // Room membership remains enforced by the signal write rules. Check the
+      // fresh leases too, so queued ICE/SDP cannot target a replaced admission.
+      const readLeases=()=>Promise.all([getDocFromServer(current.slotRef),getDocFromServer(targetRef)]);
+      const matches=([source,destination])=>{
+        if(this.voice!==current || !source.exists() || !destination.exists())return false;
+        const from=source.data(),to=destination.data();
+        return from.sessionId===this.id && from.userId===uid && alive(from) && from.joinedAt===current.joinedAt
+          && to.sessionId===payload.targetSocketId && to.userId===target.userId && alive(to) && to.joinedAt===target.joinedAt;
+      };
+      const leases=await readLeases();if(!matches(leases))return;
+      const from=leases[0].data(),to=leases[1].data();
+      try{
+        await setDoc(signalRef,{fromUserId:uid,fromSocketId:this.id,
+          fromSlot:current.slotRef.id,fromUser:from.user,
+          targetSessionId:to.sessionId,targetUserId:to.userId,data,createdAt:serverTimestamp()});
+      }catch(error){
+        // Rules can reject a departure that races the preceding reads. Silence
+        // only a confirmed stale lease; real authorization failures propagate.
+        if(error.code!=='permission-denied')throw error;
+        if(this.voice!==current)return;
+        if(matches(await readLeases()))throw error;
+      }
     };
     const disconnect=socket.disconnect.bind(socket);
     socket.disconnect=async function(...args) {
@@ -345,8 +387,11 @@
     require('./chat-history')(socket);
     const online=()=>{
       if(!socket.connected || socket.auth.currentUser?.uid!==uid) return;
-      if(socket.voice) socket.refreshVoiceLease().catch(()=>socket.receive('voice:revoked'));
-      socket.publishPresence().catch(()=>{});
+      socket.syncServerClock().then(()=>{
+        if(!socket.connected || socket.auth.currentUser?.uid!==uid)return;
+        if(socket.voice)socket.refreshVoiceLease().catch(()=>socket.receive('voice:revoked'));
+        socket.publishPresence().catch(()=>{});
+      }).catch(()=>{});
     };
     window.addEventListener('online',online);
     socket.cleanup.push(()=>window.removeEventListener('online',online));

@@ -99,25 +99,27 @@ async function authRequest(action, data, admin = false) {
 }
 
 let win;
+let peerWindow;
 let finished = false;
 const fatalErrors = [];
 const blockedRequests = [];
-const hardTimeout = setTimeout(() => finish(1, 'Cloud boot E2E failed: hard timeout'), 90000);
+const hardTimeout = setTimeout(() => finish(1, 'Cloud boot E2E failed: hard timeout'), 150000);
 function finish(code, message) {
   if (finished) return;
   finished = true;
   clearTimeout(hardTimeout);
   if (message) (code ? console.error : console.log)(message);
   try { win?.destroy(); } catch {}
+  try { peerWindow?.destroy(); } catch {}
   try { fs.rmSync(testData, { recursive: true, force: true }); } catch {}
   app.exit(code);
 }
 
-async function waitForShell(label) {
+async function waitForShell(label, target = win) {
   const deadline = Date.now() + 25000;
   let state;
   while (Date.now() < deadline) {
-    state = await win.webContents.executeJavaScript(`(() => ({
+    state = await target.webContents.executeJavaScript(`(() => ({
       visible: document.getElementById('app')?.classList.contains('hidden') === false,
       gateHidden: document.getElementById('cloudGate')?.classList.contains('hidden') === true,
       uid: window.BananaCloud?.auth?.currentUser?.uid || '',
@@ -136,13 +138,8 @@ async function waitForShell(label) {
   throw new Error(`${label} did not open the shell: ${JSON.stringify(state)}; renderer errors: ${fatalErrors.join(' | ')}`);
 }
 
-app.whenReady().then(async () => {
-  const email = `boot-${process.pid}-${Date.now()}@example.test`;
-  const password = 'cloud-boot-regression-123';
-  const account = await authRequest('signUp', { email, password, returnSecureToken: true });
-  await authRequest('update', { localId: account.localId, emailVerified: true, displayName: 'Cloud Boot' }, true);
-  const bundle = await testBundle();
-  const isolatedSession = session.fromPartition(`persist:cloud-boot-${process.pid}`);
+async function openClient(bundle, suffix) {
+  const isolatedSession = session.fromPartition(`persist:cloud-boot-${process.pid}-${suffix}`);
   isolatedSession.webRequest.onBeforeRequest((details, callback) => {
     const url = new URL(details.url);
     if (['http:', 'https:', 'ws:', 'wss:'].includes(url.protocol) && !['localhost', '127.0.0.1'].includes(url.hostname)) {
@@ -162,18 +159,32 @@ app.whenReady().then(async () => {
     }); }
     catch { return new Response('Not found', { status: 404 }); }
   });
-  win = new BrowserWindow({ show: false, width: 1280, height: 800,
+  const client = new BrowserWindow({ show: false, width: 1280, height: 800,
     webPreferences: { session: isolatedSession, preload: path.join(root, 'preload.js'),
       nodeIntegration: false, contextIsolation: true, sandbox: true }
   });
-  win.webContents.on('console-message', (...args) => {
+  client.webContents.on('console-message', (...args) => {
     const details = args[1];
     const message = typeof details === 'object' ? details.message : args[2];
     if (/Uncaught|Cloud socket boot|ReferenceError|TypeError/.test(String(message))) {
       fatalErrors.push(String(message)); console.error('renderer:', message);
     }
   });
-  await win.loadFile(path.join(root, 'src/index.html'));
+  await client.loadFile(path.join(root, 'src/index.html'));
+  // Production diagnosis found the affected client's leases 117 seconds
+  // behind Firebase. A valid login must still admit a real voice session.
+  await client.webContents.executeJavaScript(`window.__realDateNow=Date.now;Date.now=()=>window.__realDateNow()+${suffix==='peer'?300000:-117000};void 0;`);
+  return client;
+}
+
+app.whenReady().then(async () => {
+  const email = `boot-${process.pid}-${Date.now()}@example.test`;
+  const password = 'cloud-boot-regression-123';
+  const account = await authRequest('signUp', { email, password, returnSecureToken: true });
+  await authRequest('update', { localId: account.localId, emailVerified: true, displayName: 'Cloud Boot' }, true);
+  const bundle = await testBundle();
+  win = await openClient(bundle, 'owner');
+  const isolatedSession = win.webContents.session;
   await win.webContents.executeJavaScript(`(() => {
     localStorage.setItem('banana.status', 'online');
     document.getElementById('cloudLoginEmail').value = ${JSON.stringify(email)};
@@ -186,9 +197,11 @@ app.whenReady().then(async () => {
   const presence = await win.webContents.executeJavaScript(`(async () => {
     const F=window.MingrxFirebase.firestore, socket=window.BananaCloudSocket;
     const snap=await F.getDoc(F.doc(socket.db,'presence',socket.user.uid,'connections',socket.id));
-    return snap.exists() && snap.data().state;
+    const data=snap.data();
+    return {state:data.state,leaseMs:data.expiresAt.toMillis()-data.updatedAt.toMillis(),clockErrorMs:Math.abs(socket.serverNow()-window.__realDateNow())};
   })()`);
-  assert.equal(presence, 'online');
+  assert.equal(presence.state, 'online');
+  assert(presence.leaseMs>115000&&presence.leaseMs<=125000&&presence.clockErrorMs<5000,'Presence must use server time despite a clock 117 seconds behind');
   const call = await win.webContents.executeJavaScript(`(async()=>{
     const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
     const socket=window.BananaCloudSocket,F=window.MingrxFirebase.firestore;
@@ -204,6 +217,8 @@ app.whenReady().then(async () => {
     const current=socket.voice,track=state.voice.localAudio?.getAudioTracks()[0];
     await socket.voiceMedia({muted:true,camera:false,screen:false});
     await socket.voiceSpeaking({speaking:true});await socket.refreshVoiceLease();
+    const oldNow=Date.now;Date.now=()=>window.__realDateNow()+86400000;
+    await socket.refreshVoiceLease();await socket.publishPresence();Date.now=oldNow;
     const candidate={candidate:'candidate:1 1 UDP 2122260223 192.0.2.1 50000 typ host',sdpMid:'0',sdpMLineIndex:0,usernameFragment:'test'};
     await F.setDoc(F.doc(F.collection(current.slotRef,'signals')),{fromUserId:socket.user.uid,fromSocketId:socket.id,fromSlot:current.slotRef.id,fromUser:current.user,targetSessionId:socket.id,targetUserId:socket.user.uid,data:{candidate},createdAt:F.serverTimestamp()});
     await sleep(200);
@@ -233,6 +248,99 @@ app.whenReady().then(async () => {
   })()`);
   assert(call.joined&&call.ice&&call.left&&call.rejectedAdmissionCleaned);
   console.log('Real Firebase call: admission, media, speaking, lease, ICE, leave and denied-admission UI cleanup: OK');
+  const peerEmail = `peer-${process.pid}-${Date.now()}@example.test`;
+  const peerAccount = await authRequest('signUp', { email: peerEmail, password, returnSecureToken: true });
+  await authRequest('update', { localId: peerAccount.localId, emailVerified: true, displayName: 'Call Peer' }, true);
+  peerWindow = await openClient(bundle, 'peer');
+  await peerWindow.webContents.executeJavaScript(`(() => {
+    document.getElementById('cloudLoginEmail').value = ${JSON.stringify(peerEmail)};
+    document.getElementById('cloudLoginPassword').value = ${JSON.stringify(password)};
+    document.getElementById('cloudLoginForm').requestSubmit();
+  })()`);
+  await waitForShell('Second verified account', peerWindow);
+  const room = await win.webContents.executeJavaScript(`(async()=>{
+    let stage='profile';try{
+    const socket=window.BananaCloudSocket,F=window.MingrxFirebase.firestore;
+    // Existing production profiles include avatars; retain that payload shape.
+    await socket.updateProfile({name:'Cloud Boot',avatar:'data:image/png;base64,'+'A'.repeat(29130)});
+    // Match an existing community: no parent memberRoles, an owner and admin,
+    // an unrestricted channel and a channel restricted to administrators.
+    stage='create existing-schema server';await socket.createServer('Existing schema call regression');
+    const server=state.servers.find(s=>s.name==='Existing schema call regression');
+    stage='create restricted channel';await socket.createChannel({serverId:server.id,name:'Admin voice',type:'voice',allowedRoles:['admin']});
+    await F.updateDoc(F.doc(socket.db,'servers',server.id),{createdAt:F.Timestamp.fromMillis(1700000000000)});
+    const loaded=await socket.loadServer(server.id);
+    return {id:server.id,invite:loaded.inviteCode,publicChannel:'voice-general',adminChannel:loaded.channels.find(c=>c.name==='Admin voice').id};
+    }catch(error){throw new Error(stage+': '+error.code+' '+error.message)}
+  })()`);
+  console.log('Two-account fixture created');
+  await peerWindow.webContents.executeJavaScript(`window.BananaCloudSocket.joinServer(${JSON.stringify(room.invite)}).catch(error=>{throw new Error('Peer invite join: '+error.code+' '+error.message)})`);
+  console.log('Peer joined existing-schema community');
+  await win.webContents.executeJavaScript(`(async()=>{
+    const socket=window.BananaCloudSocket,F=window.MingrxFirebase.firestore;
+    await F.updateDoc(F.doc(socket.db,'servers',${JSON.stringify(room.id)},'members',${JSON.stringify(peerAccount.localId)}),{role:'admin'});
+  })()`);
+  for (const client of [win,peerWindow]) {
+    await client.webContents.executeJavaScript(`(() => {
+      const socket=window.BananaCloudSocket;window.__callFailures=[];
+      for(const method of ['joinVoice','voiceMedia','voiceSpeaking','signal','refreshVoiceLease']){
+        const original=socket[method];socket[method]=async function(...args){
+          try{return await original.apply(this,args)}catch(error){window.__callFailures.push(method+': '+(error.code||error.message));throw error;}
+        };
+      }
+    })()`);
+  }
+  async function enter(client, channelId) {
+    await client.webContents.executeJavaScript(`(async()=>{
+      const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),socket=window.BananaCloudSocket;
+      const server=await socket.loadServer(${JSON.stringify(room.id)});
+      for(let i=0;i<100&&!state.servers.some(s=>s.id===server.id);i++)await sleep(50);
+      selectServer(server.id);const channel=server.channels.find(c=>c.id===${JSON.stringify(channelId)});selectChannel(channel.id);
+      await joinVoice(channel);
+      for(let i=0;i<100&&!socket.voice;i++)await sleep(50);
+      if(!socket.voice)throw new Error('Two-account admission failed: '+window.__callFailures.join(' | '));
+    })()`);
+  }
+  async function connected(client, label) {
+    let last;
+    for(let i=0;i<150;i++){
+      last=await client.webContents.executeJavaScript(`(async() => ({
+        admitted:!!window.BananaCloudSocket.voice,channel:state.voice.channelId,
+        failures:window.__callFailures,peers:await Promise.all([...state.voice.peers.values()].map(async p=>{
+          const stats=await p.pc.getStats();let packets=0;stats.forEach(row=>{if(row.type==='inbound-rtp'&&row.kind==='audio')packets+=row.packetsReceived||0});
+          return {state:p.pc.connectionState,ice:p.pc.iceConnectionState,audio:p.remoteStream.getAudioTracks().filter(t=>t.readyState==='live').length,packets};
+        }))
+      }))()`);
+      if(last.failures.length)throw new Error(label+': '+JSON.stringify(last));
+      if(last.admitted&&last.peers.length===1&&last.peers[0].state==='connected'&&last.peers[0].audio===1&&last.peers[0].packets>0)return;
+      await new Promise(resolve=>setTimeout(resolve,100));
+    }
+    throw new Error(label+' did not establish real peer audio: '+JSON.stringify(last));
+  }
+  async function leave(client) {
+    const left=await client.webContents.executeJavaScript(`(async()=>{
+      const socket=window.BananaCloudSocket,F=window.MingrxFirebase.firestore,current=socket.voice;
+      const track=state.voice.localAudio?.getAudioTracks()[0];await leaveVoice();
+      const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+      for(let i=0;i<100&&current&&(await F.getDoc(current.slotRef)).exists();i++)await sleep(50);
+      const visible=el=>el?.getClientRects().length>0&&getComputedStyle(el).display!=='none';
+      return {transport:!!socket.voice,channel:state.voice.channelId,mic:track?.readyState,indicator:visible(document.getElementById('v218ActiveCall')),slot:current&&(await F.getDoc(current.slotRef)).exists(),failures:window.__callFailures};
+    })()`);
+    assert.deepEqual(left,{transport:false,channel:null,mic:'ended',indicator:false,slot:false,failures:[]});
+  }
+  for (const channelId of [room.publicChannel,room.adminChannel]) {
+    await enter(win,channelId);await enter(peerWindow,channelId);
+    await connected(win,'Owner');await connected(peerWindow,'Administrator');
+    await peerWindow.webContents.executeJavaScript(`(async()=>{const s=window.BananaCloudSocket;await s.voiceMedia({muted:true,camera:false,screen:false});await s.voiceSpeaking({speaking:false});await s.refreshVoiceLease()})()`);
+    await leave(peerWindow);await enter(peerWindow,channelId);
+    await connected(win,'Owner after peer re-entry');await connected(peerWindow,'Administrator after re-entry');
+    await win.webContents.executeJavaScript('reconnectCurrentVoice()');
+    await connected(win,'Owner after reconnect');await connected(peerWindow,'Administrator after owner reconnect');
+    await leave(peerWindow);await leave(win);
+  }
+  console.log('Two isolated Firebase accounts: clock skew -117s/+300s, existing schema, owner/admin, public/restricted voice, received audio packets, leave/re-entry/reconnect and clean indicators: OK');
+  await peerWindow.webContents.executeJavaScript('window.BananaCloud.signOut()');
+  peerWindow.destroy();peerWindow=null;
   await isolatedSession.flushStorageData();
   await new Promise(resolve => {
     win.webContents.once('did-finish-load', resolve);

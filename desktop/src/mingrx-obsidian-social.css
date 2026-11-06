@@ -1,341 +1,68 @@
-/* Mingrx Obsidian — Social Hub overrides.
- * Builds on mingrx-social-polish without replacing social/network behavior.
- */
-
-body.mingrx-ui .modal-card:has(.mingrx-social-hub){
-  width:min(820px,calc(100vw - 48px))!important;
-  min-height:min(560px,calc(100vh - 48px));
-  padding:0!important;
-  overflow:hidden!important;
-}
-
-body.mingrx-ui .modal-card:has(.mingrx-social-hub) .modal-close{
-  top:15px!important;
-  right:15px!important;
-  z-index:3;
-}
-
-body.mingrx-ui .mingrx-social-hub{
-  width:100%!important;
-  min-height:556px;
-  display:grid!important;
-  grid-template-columns:176px minmax(0,1fr)!important;
-  grid-template-rows:auto minmax(0,1fr)!important;
-  grid-template-areas:"head head" "tabs body";
-  gap:0!important;
-  color:var(--mx-text)!important;
-  background:var(--mx-bg);
-}
-
-body.mingrx-ui .mingrx-social-head{
-  grid-area:head;
-  min-height:80px;
-  padding:20px 58px 17px 22px!important;
-  border-bottom:1px solid var(--mx-line-soft);
-  background:linear-gradient(110deg,color-mix(in srgb,var(--mx-panel) 92%,var(--mx-accent) 8%),var(--mx-bg));
-}
-body.mingrx-ui .mingrx-social-head h2{
-  margin:0 0 4px!important;
-  font-size:20px!important;
-  font-weight:760!important;
-  letter-spacing:-.04em!important;
-}
-body.mingrx-ui .mingrx-social-head p{
-  max-width:560px;
-  margin:0!important;
-  color:var(--mx-muted)!important;
-  font-size:10.5px!important;
-  line-height:1.5!important;
-}
-
-body.mingrx-ui .mingrx-social-tabs{
-  grid-area:tabs;
-  align-self:stretch;
-  display:flex!important;
-  flex-direction:column!important;
-  align-items:stretch!important;
-  gap:3px!important;
-  padding:14px 10px!important;
-  border:0!important;
-  border-right:1px solid var(--mx-line-soft)!important;
-  border-radius:0!important;
-  background:color-mix(in srgb,var(--mx-panel) 96%,#000 4%)!important;
-  overflow:visible!important;
-}
-body.mingrx-ui .mingrx-social-tab{
-  position:relative;
-  flex:0 0 auto!important;
-  justify-content:space-between!important;
-  min-height:37px!important;
-  width:100%!important;
-  padding:0 10px!important;
-  border:0!important;
-  border-radius:9px!important;
-  background:transparent!important;
-  color:var(--mx-muted)!important;
-  font-size:10.5px!important;
-  font-weight:650!important;
-  letter-spacing:-.005em;
-  transition:background-color var(--mx-fast) var(--mx-ease),color var(--mx-fast) var(--mx-ease),transform var(--mx-fast) var(--mx-ease)!important;
-}
-body.mingrx-ui .mingrx-social-tab:hover{
-  background:var(--mx-hover)!important;
-  color:var(--mx-text)!important;
-}
-body.mingrx-ui .mingrx-social-tab.active{
-  background:color-mix(in srgb,var(--mx-accent) 10%,var(--mx-panel-2))!important;
-  color:var(--mx-text)!important;
-  box-shadow:none!important;
-}
-body.mingrx-ui .mingrx-social-tab.active::before{
-  content:"";
-  position:absolute;
-  left:-10px;
-  top:9px;
-  bottom:9px;
-  width:2px;
-  border-radius:0 2px 2px 0;
-  background:var(--mx-accent);
-}
-body.mingrx-ui .mingrx-social-tab:active{transform:scale(.985)}
-body.mingrx-ui .mingrx-social-tab-count{
-  min-width:18px!important;
-  height:18px!important;
-  padding:0 5px!important;
-  border-radius:999px!important;
-  background:transparent!important;
-  color:color-mix(in srgb,var(--mx-muted) 82%,transparent)!important;
-  font-size:8px!important;
-  font-weight:720!important;
-}
-body.mingrx-ui .mingrx-social-tab.active .mingrx-social-tab-count{
-  background:var(--mx-accent-soft)!important;
-  color:var(--mx-accent)!important;
-}
-body.mingrx-ui .mingrx-social-tab[data-mx-tab="add"]{
-  margin-top:auto!important;
-  border:1px solid color-mix(in srgb,var(--mx-accent) 34%,var(--mx-line))!important;
-  background:color-mix(in srgb,var(--mx-accent) 8%,var(--mx-panel))!important;
-  color:color-mix(in srgb,var(--mx-accent) 72%,var(--mx-text))!important;
-}
-body.mingrx-ui .mingrx-social-tab[data-mx-tab="add"] .mingrx-social-tab-count{display:none!important}
-
-body.mingrx-ui .mingrx-social-body{
-  grid-area:body;
-  min-height:0!important;
-  max-height:none!important;
-  overflow:auto!important;
-  padding:20px 20px 22px!important;
-  background:var(--mx-bg);
-}
-body.mingrx-ui .mingrx-social-section{gap:10px!important}
-body.mingrx-ui .mingrx-social-section-head{
-  padding:0 2px 8px!important;
-  border-bottom:1px solid var(--mx-line-soft);
-}
-body.mingrx-ui .mingrx-social-section-head h3{
-  color:var(--mx-text-2)!important;
-  font-size:9.5px!important;
-  font-weight:700!important;
-  letter-spacing:.08em!important;
-}
-body.mingrx-ui .mingrx-social-section-head small{font-size:9px!important;color:var(--mx-muted)!important}
-body.mingrx-ui .mingrx-social-list{gap:2px!important}
-
-body.mingrx-ui .mingrx-social-row{
-  position:relative;
-  grid-template-columns:42px minmax(0,1fr) auto!important;
-  min-height:58px!important;
-  gap:11px!important;
-  padding:7px 8px!important;
-  border:1px solid transparent!important;
-  border-radius:11px!important;
-  background:transparent!important;
-  transition:background-color var(--mx-fast) var(--mx-ease),border-color var(--mx-fast) var(--mx-ease),transform var(--mx-fast) var(--mx-ease)!important;
-}
-body.mingrx-ui .mingrx-social-row:hover{
-  background:var(--mx-panel-2)!important;
-  border-color:var(--mx-line-soft)!important;
-  transform:translateX(1px);
-}
-body.mingrx-ui .mingrx-social-row .avatar{
-  width:40px!important;
-  height:40px!important;
-  border-radius:13px!important;
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mx-text) 8%,transparent);
-}
-body.mingrx-ui .mingrx-social-copy{gap:2px!important}
-body.mingrx-ui .mingrx-social-copy b{
-  color:var(--mx-text)!important;
-  font-size:11px!important;
-  font-weight:680!important;
-}
-body.mingrx-ui .mingrx-social-copy small{
-  color:var(--mx-muted)!important;
-  font-size:9.5px!important;
-}
-body.mingrx-ui .mingrx-social-actions{
-  gap:5px!important;
-  opacity:.56;
-  transform:translateX(2px);
-  transition:opacity var(--mx-fast) var(--mx-ease),transform var(--mx-fast) var(--mx-ease);
-}
-body.mingrx-ui .mingrx-social-row:hover .mingrx-social-actions{
-  opacity:1;
-  transform:none;
-}
-body.mingrx-ui .mingrx-social-action{
-  min-height:30px!important;
-  padding:0 10px!important;
-  border:1px solid var(--mx-line)!important;
-  border-radius:8px!important;
-  background:var(--mx-panel-3)!important;
-  color:var(--mx-text-2)!important;
-  font-size:9.5px!important;
-  font-weight:650!important;
-  box-shadow:none!important;
-}
-body.mingrx-ui .mingrx-social-action:hover{background:var(--mx-hover)!important;color:var(--mx-text)!important}
-body.mingrx-ui .mingrx-social-action.primary{
-  background:var(--mx-accent)!important;
-  border-color:var(--mx-accent)!important;
-  color:#fff!important;
-}
-body.mingrx-ui .mingrx-social-action.icon-only{
-  width:30px!important;
-  padding:0!important;
-  display:grid!important;
-  place-items:center!important;
-}
-body.mingrx-ui .mingrx-social-action.icon-only .mx-button-icon{width:14px;height:14px}
-body.mingrx-ui .mingrx-social-action[data-mx-remove]{
-  background:transparent!important;
-  color:var(--mx-muted)!important;
-}
-body.mingrx-ui .mingrx-social-action[data-mx-remove]:hover{
-  background:var(--mx-danger-bg)!important;
-  border-color:color-mix(in srgb,#f0525d 34%,var(--mx-line))!important;
-  color:#ffabb1!important;
-}
-
-body.mingrx-ui .mingrx-social-avatar-wrap{
-  position:relative;
-  width:40px;
-  height:40px;
-}
+/* Friends: one header, compact tabs and a list whose rows never stretch. */
+body.mingrx-ui .modal-card:has(.mingrx-social-hub){width:min(780px,calc(100vw - 40px))!important;min-height:0!important;padding:0!important;overflow:hidden!important}
+body.mingrx-ui .modal-card:has(.mingrx-social-hub) .modal-close{top:15px!important;right:15px!important;z-index:3}
+body.mingrx-ui .mingrx-social-hub{width:100%!important;height:min(530px,calc(100vh - 48px));min-height:0;display:flex!important;flex-direction:column;gap:0!important;background:var(--mx-bg);color:var(--mx-text)!important}
+body.mingrx-ui .mingrx-social-head{flex:none;align-items:center;gap:16px;padding:26px 58px 22px 26px!important;background:linear-gradient(115deg,color-mix(in srgb,var(--mx-accent) 8%,var(--mx-panel)),var(--mx-bg))}
+body.mingrx-ui .mingrx-social-head>div{flex:1;min-width:0}
+body.mingrx-ui .mingrx-social-head h2{margin:0 0 5px!important;font-size:23px!important;font-weight:750!important;letter-spacing:-.035em!important}
+body.mingrx-ui .mingrx-social-head p{margin:0!important;color:var(--mx-muted)!important;font-size:12px!important;line-height:1.5}
+body.mingrx-ui .mingrx-social-add-button{flex:none;width:auto!important;min-height:36px!important;margin:0!important;padding:0 13px!important;border:1px solid var(--mx-accent)!important;border-radius:9px!important;background:var(--mx-accent)!important;color:var(--mx-on-accent,#fff)!important;font-size:12px!important;font-weight:650!important}
+body.mingrx-ui .mingrx-social-add-button:hover{background:var(--mx-accent-hover)!important}
+body.mingrx-ui .mingrx-social-tabs{flex:none;display:flex!important;flex-direction:row!important;align-items:center!important;gap:6px!important;padding:0 26px 13px!important;border:0!important;border-bottom:1px solid var(--mx-line-soft)!important;border-radius:0!important;background:transparent!important;overflow-x:auto!important}
+body.mingrx-ui .mingrx-social-tab{position:relative;flex:0 0 auto!important;justify-content:center!important;gap:7px!important;width:auto!important;min-height:35px!important;padding:0 11px!important;border:1px solid transparent!important;border-radius:8px!important;background:transparent!important;color:var(--mx-muted)!important;font-size:12px!important;font-weight:650!important;transition:background-color .15s,color .15s!important}
+body.mingrx-ui .mingrx-social-tab:hover{background:var(--mx-hover)!important;color:var(--mx-text)!important}
+body.mingrx-ui .mingrx-social-tab.active{background:var(--mx-accent-soft)!important;border-color:color-mix(in srgb,var(--mx-accent) 24%,transparent)!important;color:var(--mx-text)!important;box-shadow:none!important}
+body.mingrx-ui .mingrx-social-tab.active::before{display:none}
+body.mingrx-ui .mingrx-social-tab-count{min-width:19px!important;height:19px!important;padding:0 5px!important;background:var(--mx-panel-3)!important;color:var(--mx-muted)!important;font-size:10px!important;font-weight:650!important;border-radius:6px!important}
+body.mingrx-ui .mingrx-social-tab.active .mingrx-social-tab-count{background:color-mix(in srgb,var(--mx-accent) 22%,transparent)!important;color:var(--mx-text)!important}
+body.mingrx-ui .mingrx-social-body{flex:1;min-height:0!important;max-height:none!important;display:block!important;overflow:auto!important;padding:18px 26px 24px!important;background:var(--mx-bg)}
+body.mingrx-ui .mingrx-social-section{display:flex!important;flex-direction:column;gap:10px!important}
+body.mingrx-ui .mingrx-social-section-head{padding:0 10px 5px!important}
+body.mingrx-ui .mingrx-social-section-head h3{font-size:10px!important;font-weight:650!important;letter-spacing:.08em!important;color:var(--mx-muted)!important}
+body.mingrx-ui .mingrx-social-section-head small{font-size:11px!important;color:var(--mx-muted)!important}
+body.mingrx-ui .mingrx-social-list{display:flex!important;flex-direction:column;gap:3px!important}
+body.mingrx-ui .mingrx-social-row{position:relative;flex:none;grid-template-columns:42px minmax(0,1fr) auto!important;min-height:76px!important;gap:13px!important;padding:11px 10px!important;border:1px solid transparent!important;border-bottom-color:var(--mx-line-soft)!important;border-radius:10px!important;background:transparent!important;transition:background-color .15s,border-color .15s!important}
+body.mingrx-ui .mingrx-social-row:hover,body.mingrx-ui .mingrx-social-row:focus-within{background:var(--mx-panel-2)!important;border-color:var(--mx-line-soft)!important;transform:none}
+body.mingrx-ui .mingrx-social-row .avatar{width:42px!important;height:42px!important;border-radius:14px!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mx-text) 10%,transparent)}
+body.mingrx-ui .mingrx-social-avatar-wrap{position:relative;width:42px;height:42px}
 body.mingrx-ui .mingrx-social-avatar-wrap>.avatar{width:100%!important;height:100%!important}
-body.mingrx-ui .mingrx-social-status{
-  position:absolute;
-  right:-1px;
-  bottom:-1px;
-  width:10px;
-  height:10px;
-  border-radius:50%;
-  border:2px solid var(--mx-bg);
-  background:#616775;
-}
-body.mingrx-ui .mingrx-social-status.online{background:#39d98a;box-shadow:0 0 8px color-mix(in srgb,#39d98a 32%,transparent)}
+body.mingrx-ui .mingrx-social-status{position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:50%;border:3px solid var(--mx-bg);background:#737986}
+body.mingrx-ui .mingrx-social-status.online{background:#39d98a}
 body.mingrx-ui .mingrx-social-status.away{background:#f5b942}
 body.mingrx-ui .mingrx-social-status.busy{background:#f0525d}
-
-body.mingrx-ui .mingrx-social-empty{
-  min-height:190px!important;
-  padding:28px!important;
-  border:1px dashed color-mix(in srgb,var(--mx-line) 78%,transparent)!important;
-  border-radius:14px!important;
-  background:color-mix(in srgb,var(--mx-panel-2) 52%,transparent)!important;
-}
-body.mingrx-ui .mingrx-social-empty b{font-size:11.5px!important;font-weight:680!important}
-body.mingrx-ui .mingrx-social-empty span{font-size:10px!important;color:var(--mx-muted)!important}
-
-/* Add friend is intentionally flat: no card-inside-card. */
-body.mingrx-ui .mingrx-add-friend{
-  gap:15px!important;
-  padding:0!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-}
-body.mingrx-ui .mingrx-add-friend-copy{
-  padding-bottom:12px;
-  border-bottom:1px solid var(--mx-line-soft);
-}
-body.mingrx-ui .mingrx-add-friend-copy h3{
-  margin:0 0 4px!important;
-  color:var(--mx-text)!important;
-  font-size:16px!important;
-  font-weight:740!important;
-  letter-spacing:-.03em!important;
-}
-body.mingrx-ui .mingrx-add-friend-copy p{
-  max-width:500px;
-  font-size:10.5px!important;
-  line-height:1.5!important;
-}
-body.mingrx-ui .mingrx-add-friend-form{
-  position:relative;
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) auto!important;
-  gap:6px!important;
-  padding:4px!important;
-  border:1px solid var(--mx-line)!important;
-  border-radius:12px!important;
-  background:var(--mx-input)!important;
-}
-body.mingrx-ui .mingrx-add-friend-form::before{
-  content:"";
-  position:absolute;
-  left:14px;
-  top:50%;
-  width:14px;
-  height:14px;
-  transform:translateY(-50%);
-  opacity:.55;
-  background:center/14px 14px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23a4a9b6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
-  pointer-events:none;
-}
-body.mingrx-ui .mingrx-add-friend-form input{
-  min-height:38px!important;
-  height:38px!important;
-  padding:0 10px 0 34px!important;
-  border:0!important;
-  border-radius:8px!important;
-  background:transparent!important;
-  box-shadow:none!important;
-}
-body.mingrx-ui .mingrx-add-friend-form button{
-  min-width:78px!important;
-  height:38px!important;
-  border-radius:8px!important;
-  font-size:10px!important;
-  font-weight:680!important;
-}
-body.mingrx-ui .mingrx-add-friend-results{gap:2px!important}
-body.mingrx-ui .mingrx-social-waiting{font-size:9.5px!important}
-
-@media(max-width:720px){
-  body.mingrx-ui .modal-card:has(.mingrx-social-hub){width:min(650px,calc(100vw - 28px))!important}
-  body.mingrx-ui .mingrx-social-hub{
-    grid-template-columns:1fr!important;
-    grid-template-rows:auto auto minmax(0,1fr)!important;
-    grid-template-areas:"head" "tabs" "body";
-  }
-  body.mingrx-ui .mingrx-social-tabs{
-    flex-direction:row!important;
-    overflow-x:auto!important;
-    padding:7px 10px!important;
-    border-right:0!important;
-    border-bottom:1px solid var(--mx-line-soft)!important;
-  }
-  body.mingrx-ui .mingrx-social-tab{width:auto!important;padding:0 10px!important}
-  body.mingrx-ui .mingrx-social-tab.active::before{display:none}
-  body.mingrx-ui .mingrx-social-tab[data-mx-tab="add"]{margin-top:0!important;margin-left:auto!important}
-}
-
-@media(max-width:520px){
-  body.mingrx-ui .mingrx-social-body{padding:15px!important}
-  body.mingrx-ui .mingrx-social-row{grid-template-columns:40px minmax(0,1fr)!important}
-  body.mingrx-ui .mingrx-social-actions{grid-column:2;justify-content:flex-start;opacity:1;transform:none}
-  body.mingrx-ui .mingrx-add-friend-form{grid-template-columns:1fr!important}
-  body.mingrx-ui .mingrx-add-friend-form button{width:100%!important}
+body.mingrx-ui .mingrx-social-copy{gap:3px!important}
+body.mingrx-ui .mingrx-social-copy b{font-size:14px!important;font-weight:650!important;color:var(--mx-text)!important;line-height:1.3}
+body.mingrx-ui .mingrx-social-copy small{font-size:11px!important;color:var(--mx-muted)!important;line-height:1.3}
+body.mingrx-ui .mingrx-social-identity{display:flex;align-items:center;gap:5px;min-width:0;color:var(--mx-muted)}
+body.mingrx-ui .mingrx-social-identity code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;letter-spacing:.015em;color:var(--mx-muted);font-family:ui-monospace,Consolas,monospace}
+body.mingrx-ui .mingrx-social-identity button{flex:none;display:grid;place-items:center;width:20px!important;height:18px!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:4px!important;background:transparent!important;color:var(--mx-muted)!important;font-size:14px!important}
+body.mingrx-ui .mingrx-social-identity button:hover{background:var(--mx-hover)!important;color:var(--mx-text)!important}
+body.mingrx-ui .mingrx-social-actions{gap:6px!important;opacity:1;transform:none}
+body.mingrx-ui .mingrx-social-row:hover .mingrx-social-actions{opacity:1}
+body.mingrx-ui .mingrx-social-action{min-height:33px!important;padding:0 11px!important;border:1px solid var(--mx-line)!important;border-radius:9px!important;background:var(--mx-panel-3)!important;color:var(--mx-text-2)!important;font-size:11px!important;font-weight:600!important;box-shadow:none!important}
+body.mingrx-ui .mingrx-social-action:hover{background:var(--mx-hover)!important;color:var(--mx-text)!important}
+body.mingrx-ui .mingrx-social-action.primary{background:var(--mx-accent)!important;border-color:var(--mx-accent)!important;color:var(--mx-on-accent,#fff)!important}
+body.mingrx-ui .mingrx-social-action.icon-only{display:grid!important;place-items:center;width:33px!important;padding:0!important}
+body.mingrx-ui .mingrx-social-action.icon-only .mx-button-icon{width:15px;height:15px}
+body.mingrx-ui .mingrx-social-action[data-mx-remove]{background:transparent!important;color:var(--mx-muted)!important}
+body.mingrx-ui .mingrx-social-action[data-mx-remove]:hover{background:var(--mx-danger-bg)!important;color:#ffabb1!important}
+body.mingrx-ui .mingrx-social-empty{min-height:180px!important;padding:30px!important;border:1px dashed var(--mx-line)!important;border-radius:12px!important;background:color-mix(in srgb,var(--mx-panel-2) 55%,transparent)!important}
+body.mingrx-ui .mingrx-social-empty b{font-size:14px!important;font-weight:650!important}
+body.mingrx-ui .mingrx-social-empty span{font-size:12px!important;color:var(--mx-muted)!important;line-height:1.6}
+body.mingrx-ui .mingrx-add-friend{display:flex!important;flex-direction:column;gap:18px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important}
+body.mingrx-ui .mingrx-add-friend-copy h3{margin:0 0 6px!important;color:var(--mx-text)!important;font-size:17px!important;font-weight:650!important}
+body.mingrx-ui .mingrx-add-friend-copy p{margin:0;font-size:12px!important;line-height:1.6;color:var(--mx-muted)}
+body.mingrx-ui .mingrx-add-friend-form{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:8px!important;padding:4px!important;border:1px solid var(--mx-line)!important;border-radius:11px!important;background:var(--mx-input)!important}
+body.mingrx-ui .mingrx-add-friend-form input{min-height:38px!important;height:38px!important;padding:0 12px!important;border:0!important;border-radius:7px!important;background:transparent!important;font-size:13px!important}
+body.mingrx-ui .mingrx-add-friend-form button{min-width:84px!important;height:38px!important;border-radius:7px!important;font-size:12px!important}
+body.mingrx-ui .mingrx-add-friend-results{display:flex!important;flex-direction:column;gap:3px!important}
+body.mingrx-ui .mingrx-social-waiting{font-size:11px!important;white-space:normal}
+@media(max-width:640px){
+  body.mingrx-ui .mingrx-social-head{padding:22px 48px 18px 18px!important;align-items:flex-start;flex-direction:column;gap:12px}
+  body.mingrx-ui .mingrx-social-tabs{padding:0 14px 12px!important;gap:3px!important}
+  body.mingrx-ui .mingrx-social-tab{padding:0 8px!important;font-size:11px!important}
+  body.mingrx-ui .mingrx-social-body{padding:16px 14px!important}
+  body.mingrx-ui .mingrx-social-row{grid-template-columns:38px minmax(0,1fr)!important;gap:9px!important}
+  body.mingrx-ui .mingrx-social-actions{grid-column:2;justify-content:flex-start!important}
+  body.mingrx-ui .mingrx-social-row .avatar,body.mingrx-ui .mingrx-social-avatar-wrap{width:38px!important;height:38px!important}
 }

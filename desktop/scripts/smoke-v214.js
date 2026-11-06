@@ -14,7 +14,7 @@ expect(/renderChannels\s*=\s*function[\s\S]*?if\s*\(state\.viewMode\s*===\s*['"]
 expect(ui.includes('MutationObserver'), 'Privado self-healing observer is missing.');
 expect(ui.includes('restoreServerReference'), 'Privado must preserve a server reference across reconnects.');
 expect(ui.includes('Adicionar amigo'), 'Privado add-friend action is missing.');
-expect(ui.includes('Nova mensagem'), 'Privado new-message action is missing.');
+expect(ui.includes('data-welcome-dm') && ui.includes('startDm(user.id,user)'), 'Privado must open recent or friend conversations directly.');
 expect(ui.includes('Amigos'), 'Privado friends action is missing.');
 expect(ui.includes('v214-private-home'), 'Privado home redesign is missing.');
 expect(ui.includes('v214-private-request'), 'Friend-request indicator is missing.');

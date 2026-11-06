@@ -99,6 +99,7 @@
   function decoratePrivateHome() {
     const home = document.querySelector('.v214-private-home');
     if (!home) return;
+    if(home.classList.contains('mingrx-private-welcome'))return;
     const heading = home.querySelector('h2');
     const copy = home.querySelector('p');
     const privateLabel = window.BananaI18n?.getLocale?.() === 'en-US' ? 'Private' : 'Privado';

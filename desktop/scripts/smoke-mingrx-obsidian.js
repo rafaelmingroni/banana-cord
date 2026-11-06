@@ -26,7 +26,7 @@ assert(css.includes('.v214-private-sidebar .v1-dm-tools'), 'Privado não recebeu
 assert(css.includes('.v214-private-home'), 'Landing de Privado não recebeu composição Obsidian.');
 assert(css.includes('.mx-presence-dot'), 'Privado não comunica presença com o novo sistema.');
 
-assert(socialCss.includes('grid-template-areas:"head head" "tabs body"'), 'Central social não usa a composição premium em duas áreas.');
+assert(socialCss.includes('flex-direction:row!important') && socialCss.includes('.mingrx-social-list{display:flex!important;flex-direction:column'), 'Amigos precisa de abas horizontais e linhas sem espaçamento elástico.');
 assert(socialCss.includes('.mingrx-social-tab.active::before'), 'Navegação social não possui indicador ativo Mingrx.');
 assert(socialCss.includes('.mingrx-social-row:hover .mingrx-social-actions'), 'Ações sociais não usam progressive disclosure.');
 assert(socialCss.includes('.mingrx-add-friend') && socialCss.includes('border:0!important'), 'Adicionar amigo ainda está preso ao card-inside-card antigo.');

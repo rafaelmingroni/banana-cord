@@ -53,10 +53,10 @@ app.whenReady().then(async () => {
       await new Promise(r=>setTimeout(r,20));
 
       const nav=[...document.querySelectorAll('.mingrx312-private-nav button')].map(b=>String(b.textContent||'').replace(/\\s+/g,' ').trim());
-      if(nav.length!==3) failures.push('private nav does not have exactly three actions: '+JSON.stringify(nav));
-      if(!/Mensagens privadas/i.test(nav[0]||'') || !/Amigos/i.test(nav[1]||'') || !/Adicionar amigo/i.test(nav[2]||'')) failures.push('private nav order/labels are wrong: '+JSON.stringify(nav));
+      if(nav.length!==2) failures.push('private nav must contain only messages and friends: '+JSON.stringify(nav));
+      if(!/Mensagens privadas/i.test(nav[0]||'') || !/Amigos/i.test(nav[1]||'')) failures.push('private nav order/labels are wrong: '+JSON.stringify(nav));
       const intro=document.querySelector('.mingrx312-private-sidebar .v214-private-intro');
-      if(!intro || !/Amigos e mensagens/i.test(intro.textContent||'')) failures.push('private-space card missing');
+      if(intro?.getClientRects().length) failures.push('removed purple summary card is still visible');
       const tools=document.querySelector('.mingrx312-private-sidebar .v1-dm-tools');
       if(!tools || tools.getClientRects().length) failures.push('duplicate legacy navigation is still visible');
       for(const button of tools?.querySelectorAll('button')||[]) {
@@ -95,12 +95,16 @@ app.whenReady().then(async () => {
       if(!/socket.ensureFriendThread/.test(ensureSource)) failures.push('fresh-DM repair must delegate to bundled transport');
       if(/require\\('firebase/.test(ensureSource)) failures.push('DM repair must not load a second Firebase runtime');
 
-      for(const tab of ['friends','add']) {
+      for(const tab of ['friends']) {
         document.querySelector('[data-mingrx312-nav="'+tab+'"]').click();
         await new Promise(r=>setTimeout(r,30));
         if(!document.querySelector('.mingrx-social-tab.active[data-mx-tab="'+tab+'"]')) failures.push('primary navigation action failed: '+tab);
         closeModal();
       }
+      document.querySelector('[data-mingrx312-nav="friends"]').click();
+      document.querySelector('.mingrx-social-add-button')?.click();
+      if(!document.getElementById('mingrxFriendQuery'))failures.push('Add friend is not reachable inside Friends');
+      closeModal();
       document.querySelector('[data-mingrx312-nav="messages"]').click();
       await new Promise(r=>setTimeout(r,30));
       if(state.viewMode!=='dm' || state.activeDmUserId) failures.push('primary messages action did not open private home');

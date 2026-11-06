@@ -40,7 +40,7 @@
     avatar.before(wrap);
     wrap.appendChild(avatar);
     const status = document.createElement('i');
-    status.className = `mingrx-social-status ${statusClass(peerById(id))}`;
+    status.className = `mingrx-social-status ${statusClass({status:avatar.dataset.socialStatus||peerById(id)?.status})}`;
     status.setAttribute('aria-hidden', 'true');
     wrap.appendChild(status);
   }
@@ -53,7 +53,7 @@
     const description = head?.querySelector('p');
     if (description && description.dataset.mxObsidian !== 'true') {
       description.dataset.mxObsidian = 'true';
-      description.textContent = 'Seus amigos, pedidos e conversas diretas.';
+      description.textContent = 'Suas pessoas, por perto.';
     }
 
     for (const avatar of hub.querySelectorAll('[data-social-avatar]')) decorateAvatar(avatar);

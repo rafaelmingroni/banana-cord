@@ -131,23 +131,30 @@
     els.channelDesc.textContent = 'Amigos, mensagens e chamadas';
     els.textView.classList.add('hidden');
     els.voiceView.classList.add('hidden');
+    const social=state.v1?.social||{};
+    const hidden=window.Mingrx312?.readHiddenRecents?.()||{};
+    const recents=(window.Mingrx312?.orderedConversations?.()||state.dmConversations||[])
+      .filter(row=>row.user?.id&&(!hidden[row.user.id]||Number(row.lastMessage?.at||0)>hidden[row.user.id])).slice(0,3);
+    const friends=[...(social.friends||[])].sort((a,b)=>Number(b.status==='online')-Number(a.status==='online')).slice(0,3);
+    const people=recents.length?recents.map(row=>row.user):friends;
+    const requests=(social.incoming||[]).length;
     els.emptyView.innerHTML = `
-      <div class="v214-private-home">
-        <img src="../assets/banana-cord.png" alt="Banana Cord">
-        <div>
-          <h2>Privado</h2>
-          <p>Converse diretamente com seus amigos, inicie chamadas privadas e acompanhe suas mensagens em um espaço separado dos servidores.</p>
-          <div class="v214-private-home-actions">
-            <button id="v214HomeFriend" class="primary" type="button">＋ Adicionar amigo</button>
-            <button id="v214HomeMessage" class="secondary" type="button">💬 Nova mensagem</button>
-            <button id="v214HomeFriends" class="secondary" type="button">👥 Amigos</button>
-          </div>
+      <div class="v214-private-home mingrx-private-welcome">
+        <div class="mingrx-welcome-heading"><span class="mingrx-welcome-icon" aria-hidden="true">✦</span><div><span class="mingrx-welcome-eyebrow">SEU PRIVADO</span><h2>${people.length?'Continue suas conversas.':'Sua primeira conversa começa aqui.'}</h2></div></div>
+        <p>${people.length?'Abra uma conversa abaixo ou encontre mais amigos no Mingrx.':'Encontre um amigo para trocar mensagens e fazer chamadas, só entre vocês.'}</p>
+        <div class="mingrx-welcome-actions"><button id="v214HomeFriend" class="primary" type="button">＋ Encontrar amigos</button>${requests?`<button id="v214WelcomeRequests" class="secondary" type="button">${requests} solicitaç${requests===1?'ão':'ões'} de amizade</button>`:''}</div>
+        ${people.length?`<section class="mingrx-welcome-people"><h3>${recents.length?'CONVERSAS RECENTES':'PRONTOS PARA CONVERSAR'}</h3>${people.map(user=>`<button type="button" class="mingrx-welcome-person" data-welcome-dm="${escapeHtml(user.id)}"><span class="avatar" data-welcome-avatar="${escapeHtml(user.id)}"></span><span class="mingrx-welcome-person-copy" data-user-content><b>${escapeHtml(user.name||'Usuário')}</b><small>${escapeHtml(user.customStatus||(user.status==='online'?'Online':'Continuar conversa'))}</small></span><span aria-hidden="true">→</span></button>`).join('')}</section>`:`<div class="mingrx-welcome-tip"><span aria-hidden="true">↗</span><p>As conversas que você iniciar ficam na lateral. É fácil voltar quando quiser.</p></div>`}
+        <div class="mingrx-welcome-footer">Mensagens e chamadas, no seu ritmo.</div>
         </div>
-      </div>`;
+      `;
     els.emptyView.classList.remove('hidden');
     document.getElementById('v214HomeFriend')?.addEventListener('click', () => window.BananaOpenFriendSearch?.());
-    document.getElementById('v214HomeMessage')?.addEventListener('click', () => document.getElementById('newDmBtn')?.click());
-    document.getElementById('v214HomeFriends')?.addEventListener('click', () => document.getElementById('v1FriendsBtn')?.click());
+    document.getElementById('v214WelcomeRequests')?.addEventListener('click',()=>window.MingrxOpenFriends?.('incoming'));
+    for(const button of els.emptyView.querySelectorAll('[data-welcome-dm]')){
+      const user=people.find(person=>person.id===button.dataset.welcomeDm);
+      avatarStyle(button.querySelector('[data-welcome-avatar]'),user);
+      button.addEventListener('click',()=>startDm(user.id,user));
+    }
   }
 
   const renderDmSidebarBase = renderDmSidebar;
@@ -229,6 +236,9 @@
     bindSocketBase(socket);
     if (!socket || socket.__bananaV214PrivateBound) return;
     socket.__bananaV214PrivateBound = true;
+    for(const event of ['social:state','dm:conversations'])socket.on(event,()=>queueMicrotask(()=>{
+      if(state.viewMode==='dm'&&!state.activeDmUserId)renderPrivateHome();
+    }));
     socket.on('auth:ready', () => {
       if (state.viewMode !== 'dm') return;
       restoreServerReference();

@@ -451,3 +451,29 @@ body.mingrx-ui .mx-social-status.busy{background:#f0525d}
 /* Keep private navigation usable with classic system scrollbars as well. */
 body.mingrx-ui .app.dm-mode .channels{padding-inline:8px!important;scrollbar-width:thin!important}
 body.mingrx-ui .app.dm-mode .channels::-webkit-scrollbar{width:4px}
+
+/* A useful Private start page, including for an account with no contacts. */
+body.mingrx-ui #emptyView:has(.mingrx-private-welcome):not(.hidden){display:flex!important;align-items:flex-start!important;justify-content:flex-start!important;padding:clamp(24px,5vw,64px)!important;overflow:auto!important;text-align:left!important}
+body.mingrx-ui .v214-private-home.mingrx-private-welcome{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:0!important;width:min(100%,620px)!important;max-width:620px!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;text-align:left!important}
+body.mingrx-ui .mingrx-welcome-heading{display:flex;align-items:center;gap:15px;margin-bottom:16px}
+body.mingrx-ui .mingrx-welcome-icon{flex:none;display:grid;place-items:center;width:46px;height:46px;border:1px solid var(--mx-accent-border);border-radius:15px;background:var(--mx-accent-soft);color:var(--mx-accent);font-size:26px}
+body.mingrx-ui .mingrx-welcome-eyebrow{display:block;margin-bottom:6px;color:var(--mx-muted);font-size:10px;font-weight:700;letter-spacing:.12em}
+body.mingrx-ui .mingrx-private-welcome h2{margin:0!important;color:var(--mx-text)!important;font-size:20px!important;font-weight:650!important;line-height:1.35;letter-spacing:-.025em!important}
+body.mingrx-ui .mingrx-private-welcome>p{max-width:440px!important;margin:0!important;color:var(--mx-muted)!important;font-size:13px!important;line-height:1.7!important}
+body.mingrx-ui .mingrx-welcome-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:22px 0 28px}
+body.mingrx-ui .mingrx-welcome-actions button{min-height:37px!important;padding:0 14px!important;border:1px solid var(--mx-line)!important;border-radius:9px!important;background:var(--mx-panel-2)!important;color:var(--mx-text)!important;font-size:12px!important;font-weight:600!important}
+body.mingrx-ui .mingrx-welcome-actions .primary{background:var(--mx-accent)!important;border-color:var(--mx-accent)!important;color:var(--mx-on-accent,#fff)!important}
+body.mingrx-ui .mingrx-welcome-actions button:hover{filter:brightness(1.1)}
+body.mingrx-ui .mingrx-welcome-people{display:flex;flex-direction:column;gap:5px}
+body.mingrx-ui .mingrx-welcome-people h3{margin:0 0 9px;color:var(--mx-muted);font-size:10px;font-weight:650;letter-spacing:.09em}
+body.mingrx-ui .mingrx-welcome-person{display:flex!important;align-items:center;gap:12px;width:100%;padding:12px!important;border:1px solid var(--mx-line-soft)!important;border-radius:11px!important;background:var(--mx-panel)!important;color:var(--mx-muted)!important;text-align:left!important}
+body.mingrx-ui .mingrx-welcome-person:hover{background:var(--mx-panel-2)!important;border-color:var(--mx-accent-border)!important;color:var(--mx-text)!important}
+body.mingrx-ui .mingrx-welcome-person .avatar{flex:none;width:36px!important;height:36px!important;border-radius:11px!important}
+body.mingrx-ui .mingrx-welcome-person-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+body.mingrx-ui .mingrx-welcome-person-copy b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mx-text);font-size:13px;font-weight:650}
+body.mingrx-ui .mingrx-welcome-person-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mx-muted);font-size:11px}
+body.mingrx-ui .mingrx-welcome-tip{display:flex;align-items:flex-start;gap:12px;max-width:440px;padding:16px;border:1px solid var(--mx-line-soft);border-radius:11px;background:var(--mx-panel)}
+body.mingrx-ui .mingrx-welcome-tip>span{font-size:18px;color:var(--mx-accent)}
+body.mingrx-ui .mingrx-welcome-tip p{margin:0!important;color:var(--mx-muted)!important;font-size:12px!important;line-height:1.65!important;text-align:left!important}
+body.mingrx-ui .mingrx-welcome-footer{margin-top:24px;padding-top:16px;border-top:1px solid var(--mx-line-soft);color:var(--mx-muted);font-size:11px}
+@media(max-width:760px){body.mingrx-ui #emptyView:has(.mingrx-private-welcome):not(.hidden){padding:24px!important}body.mingrx-ui .mingrx-welcome-heading{align-items:flex-start}body.mingrx-ui .mingrx-private-welcome h2{font-size:18px!important}}
