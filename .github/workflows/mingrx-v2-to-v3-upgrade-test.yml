@@ -15,7 +15,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout Mingrx V3 branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: v3.0.0-mingrx-ui-polish
 
