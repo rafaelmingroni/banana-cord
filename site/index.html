@@ -1,231 +1,81 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#09070f" />
-  <meta name="description" content="Mingrx — voz, mensagens, comunidades e compartilhamento de tela para grupos de amigos no Windows." />
-  <meta name="application-name" content="Mingrx" />
-  <meta name="robots" content="index,follow" />
-  <link rel="canonical" href="https://mingrx.site/" />
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="Mingrx" />
-  <meta property="og:title" content="Mingrx — Entre na call. Chame a galera." />
-  <meta property="og:description" content="Voz, mensagens, comunidades, câmera e compartilhamento de tela em um app para Windows." />
-  <meta property="og:url" content="https://mingrx.site/" />
-  <meta property="og:image" content="https://mingrx.site/assets/mingrx-mark.svg" />
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Mingrx — Entre na call. Chame a galera." />
-  <meta name="twitter:description" content="Voz, mensagens, comunidades e compartilhamento de tela para grupos de amigos." />
-  <title>Mingrx — Entre na call. Chame a galera.</title>
-  <link rel="icon" href="./assets/mingrx-mark.svg" type="image/svg+xml" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./editorial-v3.css" />
-  <link rel="stylesheet" href="./real-ui-v4.css" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Mingrx","applicationCategory":"CommunicationApplication","operatingSystem":"Windows 10, Windows 11","url":"https://mingrx.site/","downloadUrl":"https://github.com/rafaelmingroni/mingrx-app/releases/latest","offers":{"@type":"Offer","price":"0","priceCurrency":"BRL"}}</script>
+  <meta charset="utf-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f8f8f5">
+  <meta name="description" content="Mingrx é um aplicativo gratuito para Windows com mensagens privadas, comunidades, chamadas de voz, câmera e compartilhamento de tela.">
+  <meta name="application-name" content="Mingrx">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://mingrx.site/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mingrx">
+  <meta property="og:title" content="Mingrx | Mensagens, chamadas e tela no Windows">
+  <meta property="og:description" content="Converse no privado, reúna amigos em comunidades e compartilhe uma tela durante a chamada.">
+  <meta property="og:url" content="https://mingrx.site/">
+  <meta property="og:image" content="https://mingrx.site/assets/mingrx-private.webp">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>Mingrx | Mensagens, chamadas e tela no Windows</title>
+  <link rel="icon" href="./favicon.ico" sizes="any">
+  <link rel="icon" href="./assets/mingrx-mark.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="./styles.css?v=20261106-clean">
+  <script src="./app.js?v=20261106-clean" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
-  <div class="noise" aria-hidden="true"></div>
-  <div class="cursor-glow" aria-hidden="true"></div>
-
-  <header class="topbar">
-    <a class="brand" href="#top" aria-label="Mingrx início">
-      <img src="./assets/mingrx-mark.svg" alt="" />
-      <span>Mingrx</span>
-    </a>
-    <button class="menu-button" type="button" aria-label="Abrir menu" aria-expanded="false">MENU</button>
-    <nav class="topnav" aria-label="Navegação principal">
-      <a href="#recursos">Recursos</a>
-      <a href="#comunidade">Comunidade</a>
-      <a href="#seguranca">Privacidade</a>
-      <a href="#faq">Perguntas</a>
-      <a href="./support.html">Suporte</a>
-    </nav>
-    <a class="top-download download-link" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">Baixar <span>↘</span></a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="./" aria-label="Mingrx, início"><img src="./assets/mingrx-mark.svg" width="32" height="32" alt=""><span>Mingrx</span></a>
+      <button class="menu-button" type="button" aria-controls="main-nav" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menu</button>
+      <nav class="topnav" id="main-nav" aria-label="Navegação principal">
+        <a href="#recursos">Recursos</a><a href="#comecar">Como começar</a><a href="#privacidade">Privacidade</a><a href="./support.html">Suporte</a>
+      </nav>
+      <a class="button button-small button-dark header-download download-link" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">Baixar o app<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5"/></svg></a>
+    </div>
   </header>
-
   <main id="conteudo">
-    <section class="hero" id="top">
-      <div class="hero-grid shell">
-        <aside class="hero-index" aria-hidden="true">
-          <span>01</span>
-          <i></i>
-          <b>MINGRX / WINDOWS</b>
-        </aside>
-
-        <div class="hero-copy">
-          <p class="kicker" id="timeLine">[ VOZ · MENSAGENS · TELA · COMUNIDADES ]</p>
-          <h1>ENTRE NA<br><em>CALL.</em><br><span>CHAME A GALERA.</span></h1>
-          <p class="hero-lede">Voz, mensagens, comunidades, câmera e compartilhamento de tela em um app para grupos de amigos no Windows.</p>
-          <div class="hero-actions">
-            <a class="cta cta-primary download-link" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">BAIXAR PARA WINDOWS <span>↘</span></a>
-            <a class="cta cta-text" href="#recursos">VER O QUE TEM <span>→</span></a>
-          </div>
-          <div class="hero-meta">
-            <span class="release-note">Windows 10/11 · Grátis na versão atual · Atualizações automáticas</span>
-            <span class="return-copy">Um lugar para encontrar sua galera e seguir dali.</span>
-          </div>
-        </div>
-
-        <div class="product-stage" aria-label="Prévia fiel da interface atual do Mingrx">
-          <div class="stage-orbit orbit-a" aria-hidden="true"></div>
-          <div class="stage-orbit orbit-b" aria-hidden="true"></div>
-          <div class="floating-chip chip-online"><span></span> WINDOWS · CONECTADO</div>
-          <div class="floating-chip chip-share">DM · E2EE</div>
-          <div class="app-shell">
-            <div class="app-frame real-app">
-              <div class="app-titlebar">
-                <div><img src="./assets/mingrx-mark.svg" alt=""> <b>Mingrx</b></div>
-                <span>— □ ×</span>
-              </div>
-              <div class="real-serverbar">
-                <span class="real-server-home"><img src="./assets/mingrx-mark.svg" alt=""></span>
-                <span class="real-server-divider"></span>
-                <span class="real-server-icon">N</span>
-                <span class="real-server-add">+</span>
-              </div>
-              <div class="real-workspace">
-                <aside class="real-private">
-                  <div class="real-private-title">Privado</div>
-                  <div class="real-private-card"><b>Seu espaço privado</b><span>Amigos, mensagens diretas e chamadas sem depender de servidor.</span></div>
-                  <div class="real-private-actions">
-                    <span>👥 Amigos</span>
-                    <span class="active">💬 Mensagem</span>
-                    <span>＋ Adicionar amigo</span>
-                  </div>
-                  <div class="real-section-label"><span>AMIGOS</span><span>2</span></div>
-                  <div class="real-friend"><i class="real-avatar purple">L</i><span><b>Luna</b><small>Disponível</small></span><em class="real-dot"></em></div>
-                  <div class="real-friend"><i class="real-avatar green">N</i><span><b>Nico</b><small>na call</small></span><em class="real-dot"></em></div>
-                  <div class="real-section-label"><span>RECENTES</span><span></span></div>
-                  <div class="real-recent"><i class="real-avatar green">N</i><span><b>Nico</b><small>🔒 Mensagem criptografada</small></span><em class="real-x">×</em></div>
-                  <div class="real-recent active"><i class="real-avatar purple">L</i><span><b>Luna</b><small>Iniciar conversa</small></span><em class="real-x">×</em></div>
-                  <div class="real-self"><i class="real-avatar self">M</i><span><b>mingrx</b><small>● Disponível</small></span><em class="real-gear">⚙</em></div>
-                </aside>
-                <section class="real-chat">
-                  <header class="real-chat-head"><b>@ Luna</b><button class="real-call" type="button">☎ Ligar</button><span class="real-online">conectado</span><span class="real-members">Membros</span></header>
-                  <div class="real-encryption">🔒 Mensagens privadas protegidas <span>com criptografia ponta a ponta entre clientes compatíveis</span></div>
-                  <div class="real-chat-empty"><div><strong>Comece a conversa 👋</strong><span>As mensagens ficam sincronizadas no Mingrx Cloud.</span></div></div>
-                  <div class="real-composer"><span>Mensagem para Luna</span><b class="real-send">↗</b></div>
-                </section>
-              </div>
-            </div>
-          </div>
-        </div>
+    <section class="hero shell" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="square" aria-hidden="true"></span>Aplicativo para Windows</p>
+        <h1 id="hero-title">Mensagens, chamadas e uma tela para compartilhar.</h1>
+        <p class="hero-description">Converse no privado, reúna seus amigos em comunidades e mostre uma tela ou janela durante a chamada.</p>
+        <div class="hero-actions"><a class="button button-primary download-link" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">Baixar para Windows<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5"/></svg></a><a class="text-link" href="#recursos">Conhecer os recursos<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a></div>
+        <p class="release-note" aria-live="polite">Windows 10 e 11. Download gratuito na versão atual.</p>
       </div>
-
-      <div class="ticker" aria-hidden="true">
-        <div>ENTRE NA CALL ✦ CHAME A GALERA ✦ COMPARTILHE A TELA ✦ CONTINUE NO JOGO ✦ ENTRE NA CALL ✦ CHAME A GALERA ✦ COMPARTILHE A TELA ✦ CONTINUE NO JOGO ✦</div>
+      <figure class="product-figure">
+        <div class="figure-heading"><span>Por dentro do aplicativo</span><a href="./assets/mingrx-private.webp" target="_blank" rel="noopener">Ampliar captura<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6m0-6-8 8M10 4H4v16h16v-6"/></svg></a></div>
+        <a class="product-image" href="./assets/mingrx-private.webp" target="_blank" rel="noopener" aria-label="Ampliar captura real da tela inicial do Mingrx"><img src="./assets/mingrx-private.webp" width="1280" height="773" alt="Tela inicial do Privado no aplicativo Mingrx, com navegação para mensagens e amigos e um botão para encontrar amigos." fetchpriority="high"></a>
+        <figcaption>Captura real do Mingrx 3.1.10, com uma conta de demonstração e sem conversas reais.</figcaption>
+      </figure>
+    </section>
+    <section class="features shell section" id="recursos" aria-labelledby="features-title">
+      <div class="section-heading"><p class="eyebrow">Recursos</p><h2 id="features-title">Do primeiro oi à chamada em grupo.</h2><p>Escolha como conversar, sem precisar trocar de aplicativo no meio.</p></div>
+      <div class="feature-grid">
+        <article class="feature"><svg class="feature-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 5h20v16H14l-8 6V5Z"/><path d="M11 11h10M11 16h7"/></svg><h3>Mensagens privadas</h3><p>Adicione amigos, troque mensagens e volte às conversas pela lista de recentes.</p></article>
+        <article class="feature"><svg class="feature-icon" viewBox="0 0 32 32" aria-hidden="true"><rect x="12" y="3" width="8" height="17" rx="4"/><path d="M7 14v2a9 9 0 0 0 18 0v-2M16 25v4m-5 0h10"/></svg><h3>Voz e câmera</h3><p>Faça uma chamada privada ou entre em uma sala de voz. Ative a câmera quando quiser.</p></article>
+        <article class="feature"><svg class="feature-icon" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="5" width="26" height="18" rx="2"/><path d="M11 29h10m-5-6v6M12 14h8m-4-4 4 4-4 4"/></svg><h3>Compartilhamento de tela</h3><p>Mostre uma tela ou janela durante a chamada para jogar, estudar ou acompanhar algo juntos.</p></article>
+        <article class="feature"><svg class="feature-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="12" cy="10" r="5"/><path d="M3 28v-4a9 9 0 0 1 18 0v4M23 5a5 5 0 0 1 0 10m2 5a7 7 0 0 1 4 6v2"/></svg><h3>Comunidades e canais</h3><p>Separe assuntos em canais de texto e voz. Convide o grupo por um link do mingrx.site.</p></article>
       </div>
     </section>
-
-    <section class="manifesto shell reveal" id="recursos">
-      <div class="section-code">[ 02 / O ESSENCIAL ]</div>
-      <div class="manifesto-copy">
-        <p class="overline">UM APP. O GRUPO TODO.</p>
-        <h2>O QUE SUA GALERA USA,<br><span>REUNIDO NO MESMO LUGAR.</span></h2>
-        <p>Converse no privado, organize servidores e canais, entre em chamadas e compartilhe a tela sem precisar mudar de contexto a cada momento.</p>
-      </div>
+    <section class="start-section" id="comecar" aria-labelledby="start-title"><div class="shell start-grid">
+      <div class="section-heading"><p class="eyebrow">Como começar</p><h2 id="start-title">Instale. Encontre seus amigos. Converse.</h2><p>O site apresenta o Mingrx. As conversas e chamadas acontecem no aplicativo para Windows.</p></div>
+      <ol class="steps"><li><h3>Baixe o aplicativo</h3><p>Instale a versão oficial para Windows 10 ou 11, distribuída pelo GitHub do projeto.</p></li><li><h3>Crie e confirme sua conta</h3><p>Cadastre seu e-mail e confirme o endereço para entrar no Mingrx.</p></li><li><h3>Encontre o seu grupo</h3><p>Adicione um amigo pelo nome ou abra um convite para entrar em uma comunidade.</p></li></ol>
+    </div></section>
+    <section class="privacy-section shell section" id="privacidade" aria-labelledby="privacy-title">
+      <div class="privacy-symbol" aria-hidden="true"><svg viewBox="0 0 80 80"><rect x="20" y="34" width="40" height="32" rx="4"/><path d="M28 34V24a12 12 0 0 1 24 0v10M40 46v9"/></svg></div>
+      <div><p class="eyebrow">Privacidade</p><h2 id="privacy-title">Saiba como suas conversas são tratadas.</h2><p>Mensagens privadas trocadas entre clientes compatíveis usam criptografia ponta a ponta: o conteúdo é criptografado no dispositivo antes de ir para a nuvem.</p><p>Perfis, amizades, canais e mensagens de comunidades são sincronizados para o serviço funcionar. A política explica quais dados são usados e como solicitar sua exclusão.</p><a class="text-link" href="./privacy.html">Ler a política de privacidade<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a></div>
     </section>
-
-    <section class="mosaic shell">
-      <article class="tile tile-share reveal">
-        <div class="tile-label">01 / TELA</div>
-        <div class="screen-visual">
-          <div class="screen-top">AO VIVO <span>●</span></div>
-          <div class="screen-center"><strong>▣</strong><b>COMPARTILHANDO TELA</b><small>entre na call · assista junto · pare quando quiser</small></div>
-          <div class="screen-wave"></div>
-        </div>
-        <div class="tile-copy"><h3>Mostre o que está vendo.</h3><p>Compartilhe uma tela ou janela durante a call para gameplay, estudo, vídeo ou qualquer coisa que faça sentido para o grupo.</p></div>
-      </article>
-
-      <article class="tile tile-voice reveal">
-        <div class="tile-label">02 / VOZ</div>
-        <div class="voice-rings" aria-hidden="true"><i></i><i></i><i></i><span>4</span></div>
-        <h3>Entre na call e fique por lá.</h3>
-        <p>Use salas de voz nas comunidades ou faça chamadas privadas com seus amigos.</p>
-      </article>
-
-      <article class="tile tile-private reveal">
-        <div class="tile-label">03 / PRIVADO</div>
-        <div class="dm-stack">
-          <div><i class="avatar avatar-b"></i><span><b>Nico</b><small>mensagem protegida</small></span><em>●</em></div>
-          <div><i class="avatar avatar-a"></i><span><b>Luna</b><small>disponível agora</small></span><em>●</em></div>
-        </div>
-        <h3>Conversa direta, sem depender de servidor.</h3>
-        <p>Amigos, mensagens e chamadas privadas ficam em uma área própria. Mensagens privadas entre clientes compatíveis usam criptografia ponta a ponta.</p>
-      </article>
-
-      <article class="tile tile-light reveal">
-        <div class="tile-label">04 / CÂMERA</div>
-        <div class="light-word">VÍDEO<br>NA CALL</div>
-        <p>Ligue a câmera quando quiser aparecer para o grupo, sem sair da conversa ou do compartilhamento.</p>
-      </article>
-    </section>
-
-    <section class="community-break" id="comunidade">
-      <div class="shell community-grid">
-        <div class="community-mark" aria-hidden="true">M</div>
-        <div class="community-copy reveal">
-          <div class="section-code dark">[ 03 / COMUNIDADES ]</div>
-          <h2>UM ESPAÇO PARA<br>CADA GALERA.</h2>
-          <p>Crie servidores, organize canais de texto e voz e use convites para reunir amigos, time ou guilda.</p>
-          <a class="ink-link download-link" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">BAIXAR E CRIAR O MEU <span>↘</span></a>
-        </div>
-        <div class="community-list reveal" aria-label="Recursos de comunidade">
-          <span><b>01</b> Servidores</span>
-          <span><b>02</b> Canais de texto</span>
-          <span><b>03</b> Salas de voz</span>
-          <span><b>04</b> Links de convite</span>
-        </div>
-      </div>
-    </section>
-
-    <section class="security shell" id="seguranca">
-      <div class="section-code">[ 04 / PRIVACIDADE ]</div>
-      <div class="security-grid">
-        <div class="security-copy reveal">
-          <p class="overline">PRIVACIDADE SEM COMPLICAÇÃO.</p>
-          <h2>NA DM, A PROTEÇÃO<br>COMEÇA NO DISPOSITIVO.</h2>
-          <p>Nas mensagens privadas entre clientes compatíveis, o conteúdo é criptografado de ponta a ponta no dispositivo antes de ser armazenado na nuvem.</p>
-        </div>
-        <div class="security-seal reveal" aria-label="Criptografia ponta a ponta para mensagens privadas entre clientes compatíveis">
-          <div class="seal-core">⌁</div>
-          <span>DM / E2EE / PROTEGIDA</span>
-        </div>
-      </div>
-    </section>
-
-    <section class="faq shell" id="faq">
-      <div class="faq-intro reveal">
-        <div class="section-code">[ 05 / PERGUNTAS ]</div>
-        <h2>SEM<br>ENROLAÇÃO.</h2>
-      </div>
-      <div class="faq-list reveal">
-        <details><summary><span>01</span>O Mingrx é gratuito?<b>+</b></summary><p>Sim. A versão atual do Mingrx pode ser baixada gratuitamente para Windows.</p></details>
-        <details><summary><span>02</span>Em quais sistemas ele funciona?<b>+</b></summary><p>Hoje a versão oficial é voltada para Windows 10 e Windows 11.</p></details>
-        <details><summary><span>03</span>Preciso criar uma conta?<b>+</b></summary><p>Sim. A conta mantém seu perfil, amizades, servidores e conversas associados ao seu usuário.</p></details>
-        <details><summary><span>04</span>As mensagens privadas são criptografadas?<b>+</b></summary><p>Sim. Mensagens privadas trocadas entre clientes compatíveis usam criptografia ponta a ponta.</p></details>
-        <details><summary><span>05</span>Ele atualiza sozinho?<b>+</b></summary><p>Sim. As versões oficiais para Windows possuem atualização automática quando uma nova versão é publicada.</p></details>
-        <details><summary><span>06</span>Funciona no navegador?<b>+</b></summary><p>Hoje não. A experiência atual do Mingrx é o aplicativo para Windows.</p></details>
-      </div>
-    </section>
-
-    <section class="last-call shell reveal">
-      <div class="last-kicker">[ PRONTO PARA TESTAR? ]</div>
-      <h2>BAIXE.<br><span>CHAME A GALERA.</span><br>ENTRE NA CALL.</h2>
-      <a class="cta cta-primary cta-large download-link" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">BAIXAR MINGRX <span>↘</span></a>
-    </section>
+    <section class="faq shell section" id="faq" aria-labelledby="faq-title"><div class="section-heading"><p class="eyebrow">Perguntas frequentes</p><h2 id="faq-title">Antes de instalar.</h2></div><div class="faq-list">
+      <details><summary>O Mingrx é gratuito?<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></summary><p>Sim. A versão atual do aplicativo para Windows pode ser baixada gratuitamente.</p></details>
+      <details><summary>Posso usar pelo navegador ou celular?<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></summary><p>A versão oficial atual funciona no Windows 10 e no Windows 11. O site não substitui o aplicativo.</p></details>
+      <details><summary>Como funcionam os convites?<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></summary><p>Um link do mingrx.site tenta abrir o aplicativo instalado com o código da comunidade. Se você ainda não tem o Mingrx, a página também oferece o download.</p></details>
+      <details><summary>Preciso instalar cada atualização?<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></summary><p>As versões oficiais para Windows incluem atualização automática. O aplicativo pode adiar a instalação enquanto você está em chamada ou tem uma mensagem em edição.</p></details>
+      <details><summary>Todas as mensagens têm criptografia ponta a ponta?<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></summary><p>Essa proteção se aplica às mensagens privadas entre clientes compatíveis. Mensagens de comunidades e mensagens antigas de versões anteriores não têm essa mesma garantia. Consulte a política de privacidade para os detalhes.</p></details>
+    </div></section>
+    <section class="download-section shell" aria-labelledby="download-title"><div><h2 id="download-title">Comece sua próxima conversa no Mingrx.</h2><p>Disponível para Windows 10 e 11.</p></div><a class="button button-primary download-link" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">Baixar o Mingrx<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5"/></svg></a></section>
   </main>
-
-  <footer class="footer shell">
-    <a class="brand footer-brand" href="#top"><img src="./assets/mingrx-mark.svg" alt=""><span>Mingrx</span></a>
-    <p>© <span id="year"></span> Mingrx. Comunicação para grupos de amigos.</p>
-    <nav aria-label="Links do rodapé"><a href="./support.html">Suporte</a><a href="./privacy.html">Privacidade</a><a href="./terms.html">Termos</a><a href="https://github.com/rafaelmingroni/mingrx-app" target="_blank" rel="noreferrer">GitHub</a></nav>
-  </footer>
-
-  <script src="./app.js"></script>
+  <footer class="site-footer shell"><div><a class="brand" href="./"><img src="./assets/mingrx-mark.svg" width="28" height="28" alt=""><span>Mingrx</span></a><p>Comunicação para grupos de amigos.<br><span id="year">2026</span> Mingrx.</p></div><nav aria-label="Links do rodapé"><a href="./support.html">Suporte</a><a href="./privacy.html">Política de privacidade</a><a href="./terms.html">Termos e condições</a><a href="https://github.com/rafaelmingroni/mingrx-app" target="_blank" rel="noopener noreferrer">GitHub do projeto</a></nav></footer>
 </body>
 </html>

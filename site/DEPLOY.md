@@ -50,3 +50,7 @@ Com `mingrx.site` configurado como domínio personalizado, o GitHub Pages pode r
 - Alterações de DNS podem levar até 24 horas para propagação, embora muitas ocorram antes.
 - Não remover a página atual nem alterar o fluxo de convites antes de verificar o domínio.
 - Os links de download da home consultam a release mais recente do GitHub e caem para `/releases/latest` se a API não responder.
+
+## Revisão de 6 de novembro de 2026
+
+O domínio já está configurado com HTTPS obrigatório. A home usa styles.css, captura real do aplicativo e fontes locais. As páginas auxiliares também usam legal.css. O pipeline valida arquivos, links, convites e o navegador em 320 a 1440 px antes da publicação. O contato atual continua no GitHub; nenhum endereço de e-mail foi inventado.
