@@ -44,6 +44,11 @@ async function main(){
     const members=await query(server.name,'members',['role'],50);
     const own=members.find(member=>member.name.split('/').at(-1)===owner);
     const counts={};for(const member of members){const key=role(value(member.fields?.role));counts[key]=(counts[key]||0)+1;}
+    const connections=owner?await query(`${parent}/presence/${owner}`,'connections',['updatedAt','expiresAt'],20):[];
+    console.log(JSON.stringify({community:index+1,ownerConnections:connections.map(c=>{
+      const updated=value(c.fields?.updatedAt),expires=value(c.fields?.expiresAt);
+      return {updatedAgeMs:updated instanceof Date?Date.now()-updated.getTime():null,clockOffsetMs:updated instanceof Date&&expires instanceof Date?expires.getTime()-updated.getTime()-120000:null};
+    })}));
     console.log(JSON.stringify({community:index+1,ownerDocumentExists:!!own,ownerRole:role(value(own?.fields?.role)),parentOwnerRole:role(value(server.fields?.memberRoles)?.[owner]),memberRoles:counts,channels:channels.map(channel=>{const type=value(channel.fields?.type),allowed=value(channel.fields?.allowedRoles);return {type:['voice','text'].includes(type)?type:`other-${kind(type)}`,allowedRolesType:kind(allowed),allowedRoles:Array.isArray(allowed)?allowed.map(role):undefined};})}));
     for(let channelIndex=0;channelIndex<channels.length;channelIndex++){
       const channel=channels[channelIndex];if(value(channel.fields?.type)!=='voice')continue;
