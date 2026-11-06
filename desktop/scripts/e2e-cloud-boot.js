@@ -235,8 +235,12 @@ app.whenReady().then(async () => {
     const visible=element=>element?.getClientRects().length>0&&getComputedStyle(element).display!=='none';
     if(state.voice.channelId||state.voice.serverId||visible(els.voiceControls)||visible(document.getElementById('v218ActiveCall')))throw new Error('Local call indicator stayed connected after leave');
     if(track?.readyState!=='ended')throw new Error('Leaving the call did not stop the microphone');
-    for(let i=0;i<100&&(await F.getDoc(current.slotRef)).exists();i++)await sleep(50);
-    if((await F.getDoc(current.slotRef)).exists())throw new Error('Call slot was not removed');
+    let released=false;
+    for(let i=0;i<100;i++){
+      await F.waitForPendingWrites(socket.db);const snap=await F.getDocFromServer(current.slotRef);
+      if(!snap.metadata.hasPendingWrites&&!snap.exists()){released=true;break;}await sleep(50);
+    }
+    if(!released)throw new Error('Call slot was not removed on the server');
     if((state.voicePresence.get(channel.id)||[]).some(row=>row.socketId===socket.id))throw new Error('Own presence row remained after leaving');
     const originalProfile=socket.publicUser,originalJoin=socket.joinVoice;
     let releaseProfile,admission;
@@ -330,9 +334,13 @@ app.whenReady().then(async () => {
       const socket=window.BananaCloudSocket,F=window.MingrxFirebase.firestore,current=socket.voice;
       const track=state.voice.localAudio?.getAudioTracks()[0];await leaveVoice();
       const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-      for(let i=0;i<100&&current&&(await F.getDoc(current.slotRef)).exists();i++)await sleep(50);
+      let released=!current;
+      for(let i=0;i<100&&current;i++){
+        await F.waitForPendingWrites(socket.db);const snap=await F.getDocFromServer(current.slotRef);
+        if(!snap.metadata.hasPendingWrites&&!snap.exists()){released=true;break;}await sleep(50);
+      }
       const visible=el=>el?.getClientRects().length>0&&getComputedStyle(el).display!=='none';
-      return {transport:!!socket.voice,channel:state.voice.channelId,mic:track?.readyState,indicator:visible(document.getElementById('v218ActiveCall')),slot:current&&(await F.getDoc(current.slotRef)).exists(),failures:window.__callFailures};
+      return {transport:!!socket.voice,channel:state.voice.channelId,mic:track?.readyState,indicator:visible(document.getElementById('v218ActiveCall')),slot:!released,failures:window.__callFailures};
     })()`);
     assert.deepEqual(left,{transport:false,channel:null,mic:'ended',indicator:false,slot:false,failures:[]});
   }
