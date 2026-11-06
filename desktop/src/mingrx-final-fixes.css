@@ -68,7 +68,7 @@ body.mingrx-ui .members{
 }
 body.mingrx-ui .app.dm-mode > .members,
 body.mingrx-ui .app.dm-mode .mingrx-members-toggle{display:none!important}
-@media(min-width:980px){
+@media(min-width:900px){
   body.mingrx-ui.mingrx-members-open .app:not(.dm-mode){
     grid-template-columns:var(--mx-private-sidebar,272px) minmax(0,1fr) 224px!important;
   }

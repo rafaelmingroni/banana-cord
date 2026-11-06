@@ -48,7 +48,7 @@
         const open = document.body.classList.contains('mingrx-members-open');
         toggle.setAttribute('aria-expanded', String(open));
         drawer.setAttribute('aria-hidden', String(!open));
-        if (open && window.innerWidth < 980) drawer.querySelector('.mingrx-members-close')?.focus();
+        if (open && window.innerWidth < 900) drawer.querySelector('.mingrx-members-close')?.focus();
       });
     });
   }
@@ -66,14 +66,14 @@
   syncMembersVisibility();
 
   document.addEventListener('pointerdown', event => {
-    if (window.innerWidth >= 980) return;
+    if (window.innerWidth >= 900) return;
     if (!document.body.classList.contains('mingrx-members-open')) return;
     if (drawer.contains(event.target) || toggle?.contains(event.target)) return;
     closeMembers();
   });
 
   window.addEventListener('keydown', event => {
-    if (window.innerWidth < 980 && event.key === 'Escape' && document.body.classList.contains('mingrx-members-open')) {
+    if (window.innerWidth < 900 && event.key === 'Escape' && document.body.classList.contains('mingrx-members-open')) {
       closeMembers({ restoreFocus:true });
     }
   });

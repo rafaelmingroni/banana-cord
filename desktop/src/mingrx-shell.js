@@ -277,7 +277,7 @@
 
   window.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
-    if (window.innerWidth < 980 && document.body.classList.contains('mingrx-members-open')) {
+    if (window.innerWidth < 900 && document.body.classList.contains('mingrx-members-open')) {
       setMembersVisible(false);
     }
     const community = document.getElementById('mingrxCommunityModal');
