@@ -12,6 +12,9 @@ const hardTimeout = setTimeout(() => {
   app.exit(1);
 }, 6000);
 
+// Keep the harness alive until its explicit success/failure exit code runs.
+app.on('window-all-closed', () => {});
+
 app.whenReady().then(async () => {
   fakeUpdater.quitAndInstall(true, true);
   await new Promise(resolve => setTimeout(resolve, 500));

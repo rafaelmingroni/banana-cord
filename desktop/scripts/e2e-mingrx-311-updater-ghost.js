@@ -18,6 +18,9 @@ const timeout = setTimeout(() => { console.error('Mingrx 3.1.1 updater ghost E2E
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const finish = (code, text) => { clearTimeout(timeout); (code ? console.error : console.log)(text); setTimeout(() => app.exit(code), 50); };
 
+// Keep the harness alive until its explicit success/failure exit code runs.
+app.on('window-all-closed', () => {});
+
 app.whenReady().then(async () => {
   const win = new BrowserWindow({ show:false,width:1200,height:760,webPreferences:{preload:path.join(__dirname,'..','preload.js'),nodeIntegration:false,contextIsolation:true,sandbox:true} });
   win.webContents.on('console-message', (...args) => { const d=args[1]; const message=typeof d==='object'?d.message:args[2]; if((typeof d==='object' && d.level==='error')||d===3) console.error('renderer error:',message); });

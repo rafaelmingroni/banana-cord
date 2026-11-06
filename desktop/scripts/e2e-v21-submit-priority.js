@@ -20,6 +20,9 @@ const timeout = setTimeout(() => { console.error('Banana Cord 2.1 submit priorit
 function finish(code, message) { clearTimeout(timeout); (code ? console.error : console.log)(message); setTimeout(() => app.exit(code), 40); }
 function fail(message) { finish(1, `Banana Cord 2.1 submit priority E2E failed: ${message}`); }
 
+// Keep the harness alive until its explicit success/failure exit code runs.
+app.on('window-all-closed', () => {});
+
 app.whenReady().then(async () => {
   const win = new BrowserWindow({ show:false,width:900,height:650,webPreferences:{preload:path.join(__dirname,'..','preload.js'),nodeIntegration:false,contextIsolation:true,sandbox:true} });
   win.webContents.on('console-message', (...args) => { const d=args[1]; const message=typeof d==='object'?d.message:args[2]; if((typeof d==='object' && d.level==='error')||d===3) console.error('renderer error:',message); });
