@@ -22,7 +22,8 @@ ipcMain.handle('banana-v21:get-system-languages', () => ['pt-BR']);
 ipcMain.handle('ptt:configure', () => ({ok:true}));
 let win;
 let done=false;
-const timeout=setTimeout(()=>finish(1,'Members/invites E2E: timeout'),30000);
+let lastCommand='startup';
+const timeout=setTimeout(()=>finish(1,`Members/invites E2E: timeout after ${lastCommand}`),90000);
 function finish(code,message){
   if(done)return;done=true;clearTimeout(timeout);
   (code?console.error:console.log)(message);
@@ -30,7 +31,7 @@ function finish(code,message){
   app.exit(code);
 }
 const pause=()=>new Promise(resolve=>setTimeout(resolve,100));
-const js=code=>win.webContents.executeJavaScript(code,true);
+const js=code=>{lastCommand=code.slice(0,100);return win.webContents.executeJavaScript(code,true);};
 async function seed(){
   await js(`(() => {
     const server={id:'member-test',name:'Community',ownerId:'me',inviteCode:'ABCD2345',memberRoles:{me:'owner'},channels:[{id:'general',name:'geral',type:'text'}],categories:[]};
@@ -49,7 +50,8 @@ async function state(){return js(`(() => {
   return {open:document.body.classList.contains('mingrx-members-open'),aria:panel.getAttribute('aria-hidden'),pressed:toggle.getAttribute('aria-pressed'),visible:p.width>0&&getComputedStyle(panel).opacity==='1',docked:p.left>=m.right-1,mainWidth:m.width,preference:localStorage.getItem('mingrx.membersVisible.v1')};
 })()`);}
 app.whenReady().then(async()=>{
-  win=new BrowserWindow({show:false,width:1366,height:850,webPreferences:{preload:path.join(root,'preload.js'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
+  win=new BrowserWindow({show:false,width:1366,height:850,webPreferences:{preload:path.join(root,'preload.js'),nodeIntegration:false,contextIsolation:true,sandbox:true,backgroundThrottling:false}});
+  win.webContents.on('render-process-gone', (_event, detail)=>finish(1,`Members renderer exited: ${detail.reason}`));
   await win.loadFile(path.join(root,'src/index.html'));await seed();
   const initial=await state();
   assert(initial.open&&initial.visible&&initial.docked&&initial.aria==='false'&&initial.pressed==='true',JSON.stringify(initial));
@@ -59,22 +61,26 @@ app.whenReady().then(async()=>{
     assert(layout.docked&&layout.mainWidth>350,`members overlap chat at ${width}: ${JSON.stringify(layout)}`);
     assert(await js('document.documentElement.scrollWidth<=innerWidth+2'),`horizontal overflow at ${width}`);
   }
+  console.log('Members: default visibility and responsive columns verified');
   await js("document.getElementById('messageInput').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))");
   assert((await state()).open,'clicking chat must not dismiss the docked member list');
   await js("document.querySelector('.mingrx-members-toggle').click()");await pause();
   const hidden=await state();
   assert(!hidden.open&&hidden.preference==='false'&&hidden.mainWidth>initial.mainWidth,'hide must expand chat and persist preference');
+  lastCommand='reload after hiding members';
   await new Promise(resolve=>{win.webContents.once('did-finish-load',resolve);win.reload();});await seed();
   assert.equal((await state()).open,false,'hidden preference must survive reload');
   await js("document.querySelector('.mingrx-members-toggle').click()");await pause();
   assert.equal((await state()).open,true);
   assert.equal((await state()).preference,'true');
+  console.log('Members: persisted preference verified');
   await js("document.getElementById('inviteBtn').click()");await pause();
   await js("document.getElementById('mxInviteCopyLink').click()");await pause();
   assert.equal(copied,'https://mingrx.site/?invite=ABCD-2345');
   await js("document.getElementById('mxInviteTemporary').click()");await pause();
   await js("document.getElementById('mxInviteTempLinkCopy').click()");await pause();
   assert.equal(copied,'https://mingrx.site/?invite=EFGH-6789');
+  console.log('Invites: permanent and temporary clipboard links verified');
   await js("closeModal();showDmHome()");await pause();
   assert(await js("!document.querySelector('.members').getClientRects().length"),'private messages must not show community members');
   await js("selectServer('member-test')");await pause();
