@@ -742,4 +742,3 @@ section:focus-visible { outline:2px solid var(--accent); outline-offset:8px; }
 .site-footer nav { max-width:700px; }
 .site-footer nav a, .legal-footer nav a, .utility-footer a, .legal-back, .legal-toc a { display:inline-flex; align-items:center; min-height:28px; }
 .figure-heading>a { min-height:28px; }
-.pending-email { overflow-wrap:anywhere; font-weight:600; }

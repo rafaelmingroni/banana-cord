@@ -27,7 +27,7 @@ check('download uses a verified repository asset and has a working static fallba
 check('invitation handoff is preserved',files['app.js'].includes("params.has('invite')")&&files['invite.js'].includes('mingrx://join/'));
 check('only applicable documents are promoted',pages.includes('accessibility.html')&&pages.includes('about.html')&&!/href="\.\/(?:refunds|cookies)\.html"/.test(files['index.html'])&&files['terms.html'].includes('<h2>Gratuidade</h2>'));
 check('no unnecessary data collection forms',pages.every(name=>!/<form\b|<input\b|<textarea\b/i.test(files[name])));
-check('future email is explicitly marked inactive',files['about.html'].includes('Rafael Mingroni')&&files['about.html'].includes('atendimento em ativação')&&!pages.some(name=>/href="mailto:mingrxapp@gmail\.com/.test(files[name])));
+check('confirmed support and privacy email is available',files['about.html'].includes('Rafael Mingroni')&&['about.html','privacy.html','terms.html','support.html','accessibility.html'].every(name=>files[name].includes('href="mailto:mingrxapp@gmail.com"')&&!/em ativação|sendo criado|confirmação de ativação/.test(files[name])));
 check('robots and sitemap use the actual custom domain',files['robots.txt'].includes('https://mingrx.site/sitemap.xml')&&files['sitemap.xml'].includes('<loc>https://mingrx.site/</loc>'));
 const favicon=await readFile(path.join(root,'favicon.ico'));
 check('ICO favicon has actual icon entries',favicon.readUInt16LE(2)===1&&favicon.readUInt16LE(4)>=1);
