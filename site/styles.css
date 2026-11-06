@@ -1,13 +1,15 @@
 :root {
-  color-scheme:light;
-  --bg:#f8f8f5;
-  --paper:#fff;
-  --ink:#1b1d23;
-  --muted:#60636d;
-  --line:#dedfdc;
-  --soft:#efefea;
-  --accent:#6843df;
-  --accent-hover:#5430c5;
+  color-scheme:dark;
+  --bg:#0d0f14;
+  --paper:#15181f;
+  --ink:#eef0f5;
+  --muted:#a4aab7;
+  --line:#2a2f3a;
+  --soft:#12151c;
+  --accent:#b39aff;
+  --accent-hover:#c6b4ff;
+  --button-bg:#7755e8;
+  --button-hover:#6847ce;
   --font:"Segoe UI Variable","Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,sans-serif
 }
 * {
@@ -173,20 +175,21 @@ p {
   text-align:center
 }
 .button-primary {
-  background:var(--accent);
-  border-color:var(--accent);
+  background:var(--button-bg);
+  border-color:var(--button-bg);
   color:#fff
 }
 .button-primary:hover {
-  background:var(--accent-hover);
-  border-color:var(--accent-hover)
+  background:var(--button-hover);
+  border-color:var(--button-hover)
 }
 .button-dark {
-  background:var(--ink);
-  color:#fff
+  background:var(--paper);
+  border-color:var(--line);
+  color:var(--ink)
 }
 .button-dark:hover {
-  background:#343741
+  background:#232833
 }
 .button-secondary {
   border-color:var(--line);
