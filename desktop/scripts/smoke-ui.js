@@ -43,7 +43,7 @@ if (isV2) {
 assert(!hotfix.includes("VERSION = '1.1.1'"), 'stability guard must not pin an old version');
 assert(tray.includes(isMingrx ? 'mingrx-tray.png' : 'banana-tray.png'), 'dedicated tray icon missing');
 assert(index.includes('ABCD-EFGH'), 'short invite compatibility missing');
-assert(v120.includes('https://rafaelmingroni.github.io/mingrx-app/?invite='), 'public Mingrx invite link base missing');
+assert(v120.includes('https://mingrx.site/?invite='), 'public Mingrx invite link base missing');
 assert(v120.includes("ipcRenderer.on('invite:deep-link'"), 'renderer deep-link listener missing');
 assert(v120.includes('lead && lead.textContent !== INVITE_LEAD'), 'invite lead must be idempotent inside MutationObserver');
 assert(v120.includes('enhancementQueued'), 'invite MutationObserver must coalesce DOM changes');
