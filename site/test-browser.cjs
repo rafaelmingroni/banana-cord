@@ -98,7 +98,7 @@ app.whenReady().then(async()=>{
   }
   win.setContentSize(1440,1000);await win.loadURL(origin+'/');win.webContents.setZoomFactor(2);await wait(100);
   assert(await js('document.documentElement.scrollWidth<=innerWidth+1'),'Content must reflow at 200% zoom');win.webContents.setZoomFactor(1);
-  for(const page of ['privacy.html','terms.html','support.html','cookies.html','refunds.html','accessibility.html','about.html','invite.html?invite=BAD','404.html']){
+  for(const page of ['privacy.html','terms.html','support.html','accessibility.html','about.html','invite.html?invite=BAD','404.html']){
     win.setContentSize(390,844);await win.loadURL(origin+'/'+page);await wait(50);
     assert(await js('document.documentElement.scrollWidth<=innerWidth+1'),`Overflow on ${page}`);
     assert(await js("document.querySelector('h1')?.textContent.length>0"));

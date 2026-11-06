@@ -5,9 +5,9 @@ Revisão técnica de 6 de novembro de 2026. Escopo: mingrx.site. O tema escuro e
 | Ponto | Resultado |
 | --- | --- |
 | Política de privacidade | Atualizada com responsável confirmado, canal atual, e-mail em ativação, minimização e ausência de formulários no site. |
-| Termos de serviço | Mantidos e complementados com gratuidade, reembolso, marcas e direitos autorais. |
-| Aviso de cookies | Página específica e aviso no rodapé; informa ausência de cookies opcionais nos scripts, requisições ao GitHub e registros da hospedagem. Não cria consentimento fictício. |
-| Política de reembolso | Específica para a oferta gratuita atual, sem checkout; preserva direitos eventualmente aplicáveis e orienta sobre cobranças atribuídas ao produto. |
+| Termos de serviço | Mantidos com condições de uso gratuito, marcas e direitos autorais, sem regras de uma oferta paga inexistente. |
+| Aviso de cookies | Informação simples na Política de Privacidade; não há cookies opcionais ou analytics nos scripts, portanto não foi mantido banner de consentimento ou aviso repetitivo no rodapé. |
+| Política de reembolso | Não se aplica à oferta atual: não há vendas, assinaturas ou pagamentos no site. Removida da navegação e do sitemap; a URL antiga encaminha aos termos, que informam apenas a gratuidade. |
 | Formulários na LGPD | O site não contém formulários. Não foi criado um formulário que recolha dados sem um canal de processamento adequado. |
 | Só dados necessários | Sem newsletter, cadastro no site, cartão, CPF ou documentos; requisições técnicas e consulta de versão documentadas. |
 | Rastreamento | Sem analytics/pixels; política de conteúdo restringe scripts a arquivos locais e conexões à própria origem/API de releases documentada. |
@@ -18,7 +18,7 @@ Revisão técnica de 6 de novembro de 2026. Escopo: mingrx.site. O tema escuro e
 | Avaliações falsas | Não há avaliações, depoimentos ou notas inventadas. |
 | Promessas falsas | Não declara segurança absoluta, certificação de acessibilidade, conformidade integral com a LGPD ou disponibilidade garantida. |
 | Copyright | Página de créditos descreve os arquivos reais e a captura com conta de demonstração, preservando direitos dos titulares e sem inventar licenças abertas. |
-| Dados do responsável | Rafael Mingroni, informado pelo titular. Nenhuma razão social, CNPJ ou endereço empresarial não confirmado foi publicado. |
+| Dados do responsável | Rafael Mingroni, informado pelo titular. Não se presume uma empresa registrada: nenhum dado empresarial foi inventado. |
 | LGPD | Medidas técnicas e informações complementadas; conformidade integral depende também dos procedimentos e da operação do responsável. |
 | Riscos jurídicos | Reduzidas ambiguidades de cobrança, finalidade, cookies, conteúdo e direitos; pendências operacionais reais documentadas abaixo. |
 
@@ -40,3 +40,7 @@ Revisão técnica de 6 de novembro de 2026. Escopo: mingrx.site. O tema escuro e
 - [Perguntas frequentes da ANPD](https://www.gov.br/anpd/pt-br/acesso-a-informacao/perguntas-frequentes).
 - [Código de Defesa do Consumidor](https://www2.camara.leg.br/legin/fed/lei/1990/lei-8078-11-setembro-1990-365086-normaatualizada-pl.html).
 - [WCAG 2.2](https://www.w3.org/TR/WCAG22/).
+
+## Aplicabilidade ao cenário atual
+
+O site apresenta um aplicativo gratuito e oferece links de download e convite. Comércio eletrônico, reembolso de compra, pagamento e marketing por formulários não são fluxos existentes. A ausência de cookies opcionais é explicada na privacidade, sem banner de consentimento. Identificação do responsável, informações sobre os dados realmente usados, termos, acessibilidade e direitos das imagens continuam pertinentes. As URLs antigas de cookies e reembolso apenas encaminham ao trecho correspondente dos documentos atuais.
