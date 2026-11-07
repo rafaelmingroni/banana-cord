@@ -19,10 +19,10 @@ function versionBlock(version) {
 function checkDocuments() {
   const version = require('../package.json').version;
   assert.equal(normalize(version), version);
-  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8').replace(/\r\n/g, '\n');
   assert(readme.includes(versionBlock(version)), 'README must be synchronized with the release version');
   assert(readme.includes('https://img.shields.io/github/v/release/rafaelmingroni/mingrx-app'), 'README must show the actual latest GitHub release');
-  const notes = fs.readFileSync(path.join(root, `RELEASE_NOTES-${version}.md`), 'utf8');
+  const notes = fs.readFileSync(path.join(root, `RELEASE_NOTES-${version}.md`), 'utf8').replace(/\r\n/g, '\n');
   assert(notes.startsWith(`# Mingrx ${displayVersion(version)}\n`), 'Release notes must identify the public version');
   console.log(`Release ${displayVersion(version)} (${version}): README, live release badge and release notes synchronized.`);
 }
