@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/rafaelmingroni/mingrx-app/releases/latest"><img alt="Release" src="https://img.shields.io/badge/release-3.1.0-7c5cff?style=flat-square"></a>
+  <a href="https://github.com/rafaelmingroni/mingrx-app/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/rafaelmingroni/mingrx-app?style=flat-square&color=7c5cff"></a>
   <img alt="Windows" src="https://img.shields.io/badge/Windows-x64-20232a?style=flat-square&logo=windows11&logoColor=white">
   <img alt="Electron" src="https://img.shields.io/badge/Electron-45-20232a?style=flat-square&logo=electron&logoColor=9feaf9">
   <img alt="Firebase" src="https://img.shields.io/badge/Firebase-Spark-20232a?style=flat-square&logo=firebase&logoColor=ffca28">
@@ -16,8 +16,13 @@
 
 Ele reúne comunidades, canais de texto e voz, mensagens privadas, webcam, compartilhamento de tela, presença e perfis em um único aplicativo para Windows. O projeto nasceu como Banana Cord e evoluiu para Mingrx preservando o caminho de atualização dos usuários existentes.
 
-> **Versão atual: Mingrx 3.1.0**  
+<!-- mingrx-version:begin -->
+> **Mingrx 3.2** · Versão técnica: `3.2.0`
+>
+> [Notas desta versão](RELEASE_NOTES-3.2.0.md) · [Última versão publicada](https://github.com/rafaelmingroni/mingrx-app/releases/latest)
+>
 > Projeto pessoal de **Rafael Mingroni**.
+<!-- mingrx-version:end -->
 
 ## Por que o Mingrx existe
 
@@ -33,9 +38,17 @@ O Mingrx prioriza:
 - **atualizações automáticas** sem reinstalações manuais a cada versão;
 - **backend compatível com Firebase Spark**, sem exigir billing para os recursos principais.
 
-## Mingrx 3.1
+## Novidades desta versão
 
-A 3.1 torna explícita a arquitetura **Spark-first** do projeto.
+- sessão de login protegida pelo cofre do sistema, com migração automática das sessões antigas;
+- controle de solicitações repetidas de login, cadastro e recuperação de senha;
+- validação mais restrita de perfis, imagens, comunidades, canais e permissões no Firebase;
+- testes reais de migração de sessão, recuperação de senha, chamadas e atualização automática antes de publicar;
+- conferência das regras ativas no backend e documentação da revisão de segurança.
+
+Veja a [revisão de segurança](docs/SECURITY-3.2.md) para conhecer o alcance e os limites dessas proteções.
+
+## Base Firebase gratuita
 
 ### Firebase gratuito como base oficial
 
@@ -43,7 +56,8 @@ A produção usa:
 
 - Firebase Authentication para contas e verificação de e-mail;
 - Cloud Firestore para comunidades, canais, chat, DMs e perfis;
-- Realtime Database para presença e sinalização;
+- Cloud Firestore também para presença e sinalização autorizada das chamadas;
+- Realtime Database legado fechado para leitura e escrita;
 - WebRTC para voz, webcam e compartilhamento de tela.
 
 O aplicativo **não depende de Firebase Storage**.
@@ -80,7 +94,7 @@ O protocolo antigo `bananacord://` também continua aceito por compatibilidade, 
 
 - cadastro por e-mail e senha;
 - verificação de e-mail;
-- login persistente;
+- sessão persistente protegida pelo sistema operacional quando disponível;
 - recuperação de senha;
 - nome, avatar e status;
 - presença online.
@@ -148,8 +162,8 @@ O protocolo antigo `bananacord://` também continua aceito por compatibilidade, 
 | --- | --- |
 | **Electron** | aplicativo desktop, interface, captura, áudio, integração com Windows e auto-update |
 | **Firebase Authentication** | contas e verificação de identidade |
-| **Cloud Firestore** | comunidades, membros, canais, mensagens, DMs e fotos compactadas de comunidade |
-| **Realtime Database** | presença e sinalização em tempo real |
+| **Cloud Firestore** | comunidades, membros, canais, mensagens, DMs, perfis, presença e sinalização autorizada |
+| **Realtime Database** | legado desativado, com leitura e escrita negadas |
 | **WebRTC** | voz, webcam e compartilhamento de tela entre participantes |
 | **GitHub Actions** | regressões, testes, build e pipeline de release |
 | **electron-updater** | atualização automática do aplicativo |
@@ -158,7 +172,7 @@ O protocolo antigo `bananacord://` também continua aceito por compatibilidade, 
 
 O projeto usa autenticação Firebase com e-mail verificado e regras específicas para Firestore e Realtime Database. A mídia das chamadas utiliza WebRTC, evitando transformar o Firebase em servidor de áudio ou vídeo.
 
-A Mingrx 3.1 não inicializa Firebase Storage e não oferece upload de imagens em chat/DM. Isso mantém a arquitetura de produção compatível com o plano Spark adotado pelo projeto.
+O Mingrx não inicializa Firebase Storage e não oferece upload de imagens em chat/DM. Isso mantém a arquitetura de produção compatível com o plano Spark adotado pelo projeto.
 
 Antes de uma versão oficial ser publicada, o CI executa regressões de interface, Cloud, Firebase Rules, convites, social e fluxos reais do renderer Electron.
 
@@ -194,11 +208,13 @@ Quem estiver numa versão compatível do Banana Cord ou Mingrx recebe a atualiza
 
 ## Convites
 
-Novos links usam:
+Novos links públicos usam o domínio oficial:
 
 ```text
-mingrx://join/CODIGO
+https://mingrx.site/invite.html?invite=CODIGO
 ```
+
+A página oferece a abertura do aplicativo pelo protocolo `mingrx://join/CODIGO` e o download para quem ainda não instalou.
 
 Por compatibilidade, links antigos continuam podendo usar:
 
@@ -223,19 +239,27 @@ firebase/
 ├─ database.rules.json
 └─ firebase.json
 
-docs/
-├─ assets/              # identidade visual usada na documentação
-└─ index.html           # landing pública de convites
+site/                   # site oficial, convites, suporte e documentos de privacidade
+docs/                   # documentação, identidade visual e relatórios de validação
 
 .github/workflows/      # CI, validações e release para Windows
 ```
+
+## Numeração e documentação de versões
+
+A sequência pública é **3.2, 3.2.1 até 3.2.9, depois 3.3**. Para o instalador e o atualizador, a primeira versão de cada série usa SemVer completo, como `3.2.0`.
+
+Use `npm run release:next` em `desktop/` para avançar a versão e sincronizar o README e o lockfile. Atualize também as novidades e as notas da versão. O CI bloqueia a publicação se o README, as notas e o pacote estiverem divergentes. O selo no topo consulta a última release publicada no GitHub.
+
+Site oficial: [mingrx.site](https://mingrx.site). Suporte e privacidade: [mingrxapp@gmail.com](mailto:mingrxapp@gmail.com).
 
 ## Qualidade antes de publicar
 
 A branch de lançamento precisa passar por uma suíte que inclui:
 
 - validação JavaScript;
-- auditoria de dependências críticas;
+- auditoria de dependências de produção, integridade do lockfile e padrões de segredos;
+- consistência do README e das notas com a versão do pacote;
 - regressão da identidade Mingrx;
 - regressão de layout em múltiplas resoluções;
 - testes de chat e social;
@@ -249,7 +273,7 @@ A branch de lançamento precisa passar por uma suíte que inclui:
 
 - foco atual em Windows x64;
 - o plano oficial do backend é Firebase Spark;
-- upload de imagem em chat/DM não está disponível na 3.1;
+- upload de imagem em chat/DM não está disponível;
 - chamadas foram desenhadas prioritariamente para grupos pequenos;
 - redes com NAT ou firewall muito restritivo podem exigir infraestrutura TURN dedicada;
 - qualidade e latência de voz e tela dependem da conexão entre os participantes;
@@ -266,7 +290,7 @@ A evolução continua focada em quatro frentes:
 
 ## Histórico
 
-O projeto começou como **Banana Cord**, inicialmente com sessões dependentes de um host. A V2 trouxe contas, comunidades e persistência Cloud. A V3 transformou essa base em **Mingrx**. A 3.1 consolida a arquitetura Spark-first para manter o produto funcional sem exigir billing do Firebase.
+O projeto começou como **Banana Cord**, inicialmente com sessões dependentes de um host. A V2 trouxe contas, comunidades e persistência Cloud. A V3 transformou essa base em **Mingrx**. A 3.1 consolidou a base Spark-first. A série 3.2 reforça sessão, validação dos dados e verificações da publicação.
 
 ---
 

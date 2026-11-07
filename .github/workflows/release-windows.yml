@@ -2,7 +2,7 @@ name: Mingrx Windows Release
 on:
   push:
     branches: [main]
-    paths: ['desktop/**', 'firebase/**', 'RELEASE_NOTES-*.md', '.github/workflows/release-windows.yml']
+    paths: ['desktop/**', 'firebase/**', 'diagnostics/firebase-security.cjs', 'RELEASE_NOTES-*.md', '.github/workflows/release-windows.yml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -88,6 +88,7 @@ jobs:
           $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
           $tag = "v$version"
           $notes = "RELEASE_NOTES-$version.md"
+          $displayVersion = node -p "require('./desktop/scripts/release-version').displayVersion(require('./desktop/package.json').version)"
           if (-not (Test-Path $notes)) { throw "Release notes missing: $notes" }
           $existing = gh release view $tag --json isDraft,targetCommitish 2>$null
           if ($LASTEXITCODE -eq 0) {
@@ -96,7 +97,7 @@ jobs:
             gh release edit $tag --target $env:GITHUB_SHA --notes-file $notes
             if ($LASTEXITCODE -ne 0) { throw 'Failed to update draft provenance' }
           } else {
-            gh release create $tag --draft --target $env:GITHUB_SHA --title "Mingrx $version" --notes-file $notes
+            gh release create $tag --draft --target $env:GITHUB_SHA --title "Mingrx $displayVersion" --notes-file $notes
             if ($LASTEXITCODE -ne 0) { throw 'Failed to stage release' }
           }
           gh release upload $tag "desktop/dist/Mingrx-Setup-$version-x64.exe" "desktop/dist/Mingrx-Setup-$version-x64.exe.blockmap" desktop/dist/latest.yml --clobber

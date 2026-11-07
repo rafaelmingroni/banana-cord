@@ -1,6 +1,6 @@
 const fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=require('assert/strict');
 const pkg=require('../package.json');
-assert(/^3\.1\.\d+$/.test(pkg.version));
+assert.equal(require('./release-version').normalize(pkg.version),pkg.version);
 assert.equal(pkg.build.appId,'com.bananacord.app');assert.equal(pkg.build.productName,'Mingrx');
 assert.equal(pkg.build.publish[0].repo,'mingrx-app');
 const name=`Mingrx-Setup-${pkg.version}-x64.exe`,dir=path.resolve(__dirname,'../dist');

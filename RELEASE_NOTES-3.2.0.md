@@ -1,4 +1,4 @@
-# Mingrx 3.1.11
+# Mingrx 3.2
 
 - Protege a sessão de login com criptografia do sistema operacional, mantendo a migração automática de sessões antigas do navegador. Se o armazenamento seguro não estiver disponível, a sessão fica somente na memória, sem arquivo em texto puro.
 - Impede solicitações simultâneas de autenticação e aplica espera progressiva após falhas de login, além de intervalos para cadastro, recuperação de senha e reenvio da verificação. As proteções do Firebase Authentication continuam sendo aplicadas no servidor.

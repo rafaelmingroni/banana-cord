@@ -1,4 +1,4 @@
-# Revisão de segurança do Mingrx 3.1.11
+# Revisão de segurança do Mingrx 3.2 (3.2.0)
 
 Data: 7 de novembro de 2026. Escopo: aplicativo Windows, regras Firebase, publicação e site estático mingrx.site.
 
