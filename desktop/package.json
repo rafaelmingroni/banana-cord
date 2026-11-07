@@ -36,7 +36,7 @@
     "electron-updater": "6.8.11",
     "firebase": "12.19.0",
     "nostr-tools": "2.25.2",
-    "ws": "8.22.0"
+    "ws": "8.22.1"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "5.0.2",
