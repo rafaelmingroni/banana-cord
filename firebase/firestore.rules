@@ -176,7 +176,7 @@ service cloud.firestore {
         && data.userId == request.auth.uid && data.sessionId is string && data.sessionId.size() <= 100
         && data.user is map && data.user.keys().hasOnly(['id','name','avatar','status'])
         && data.user.id == request.auth.uid && data.user.name is string && data.user.name.size() <= 32
-        && data.user.avatar is string && data.user.avatar.size() <= 800000
+        && validImage(data.user.avatar, 800000)
         && data.user.status in ['online','offline','away','busy']
         && data.mediaState is map && data.mediaState.keys().hasOnly(['muted','camera','screen'])
         && data.mediaState.muted is bool && data.mediaState.camera is bool && data.mediaState.screen is bool

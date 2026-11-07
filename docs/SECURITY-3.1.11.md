@@ -35,7 +35,7 @@ Esta revisão documenta as proteções implementadas e seus limites. Não consti
 ## Validação e operação
 
 - `npm run smoke:security`: armazenamento de sessão, isolamento por partição, origem IPC, persistência após recriar o módulo, remoção no logout, corrupção, fallback em memória, limites e configuração pública.
-- `npm run smoke:rules`: regras anteriores de autorização/E2EE e 61 novos casos de autorização/esquema.
+- `npm run smoke:rules`: regras anteriores de autorização/E2EE e 63 novos casos de autorização/esquema.
 - `npm run smoke:cloud-boot`: SDK Firebase real em emuladores, migração de localStorage e IndexedDB, restauração da sessão, recuperação de senha real no emulador, duas contas em chamadas públicas/restritas, relógios divergentes e logout/reentrada.
 - A suíte Windows também mantém os testes de criptografia, interface e atualizador acessível antes do login.
 - `diagnostics/firebase-security.cjs`: confere as regras ativas e lê a proteção contra enumeração de e-mails. Com `--apply`, ativa somente essa proteção se estiver desabilitada. Se a identidade não tiver permissão para ler/alterar a configuração Auth, o relatório registra a pendência sem inventar um resultado positivo.

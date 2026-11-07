@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { initializeTestEnvironment, assertSucceeds, assertFails } = require('@firebase/rules-unit-testing');
-const { doc, collection, getDoc, getDocs, setDoc, updateDoc, writeBatch, serverTimestamp, query, limit } = require('firebase/firestore');
+const { doc, collection, getDoc, getDocs, setDoc, updateDoc, writeBatch, serverTimestamp, Timestamp, query, limit } = require('firebase/firestore');
 
 (async () => {
   assert(process.env.FIRESTORE_EMULATOR_HOST, 'Security tests require the local emulator');
@@ -41,8 +41,16 @@ const { doc, collection, getDoc, getDocs, setDoc, updateDoc, writeBatch, serverT
     create.set(community(alice), { name: 'Security', ownerId: 'alice', icon: '', categories: [], createdAt: serverTimestamp() });
     create.set(member(alice, 'alice'), { role: 'owner', joinedAt: serverTimestamp() });
     create.set(channel(alice), { name: 'general', type: 'text', allowedRoles: [], position: 0 });
+    create.set(doc(alice, 'servers', 'security', 'channels', 'voice'), { name: 'voice', type: 'voice', allowedRoles: [] });
     create.set(doc(alice, 'invites', 'SECURE12'), { code: 'SECURE12', serverId: 'security', createdBy: 'alice', permanent: true, createdAt: serverTimestamp() });
     await yes(create.commit());
+    for (const avatar of ['https://example.invalid/tracker.png', 'data:image/svg+xml;base64,PHN2Zz4=']) {
+      await no(setDoc(doc(alice, 'servers', 'security', 'channels', 'voice', 'voiceSessions', '0'), {
+        userId: 'alice', sessionId: 'synthetic-session', user: { id: 'alice', name: 'Alice', avatar, status: 'online' },
+        mediaState: { muted: false, camera: false, screen: false }, speaking: false,
+        joinedAt: Date.now(), updatedAt: serverTimestamp(), expiresAt: Timestamp.fromMillis(Date.now() + 90000)
+      }));
+    }
     await yes(setDoc(member(bob, 'bob'), { role: 'member', joinedVia: 'SECURE12', joinedAt: serverTimestamp() }));
     await no(updateDoc(member(bob, 'bob'), { role: 'owner' }));
     await no(setDoc(member(stranger, 'stranger'), { role: 'admin', joinedVia: 'SECURE12' }));
