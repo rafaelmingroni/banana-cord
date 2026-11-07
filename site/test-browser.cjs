@@ -28,7 +28,7 @@ function contrast(foreground,background){
   const luminance=color=>{const channels=color.match(/[\d.]+/g).slice(0,3).map(Number).map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*channels[0]+.7152*channels[1]+.0722*channels[2]};
   const a=luminance(foreground),b=luminance(background);return(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
 }
-const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'application/javascript; charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.ico':'image/x-icon','.ttf':'font/ttf'};
+const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'application/javascript; charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.ico':'image/x-icon','.ttf':'font/ttf','.woff2':'font/woff2'};
 async function capture(name){
   if(!process.env.MINGRX_SITE_PREVIEWS)return;
   await js('history.replaceState(null,"","/");document.activeElement?.blur();scrollTo(0,0);void 0;');
@@ -66,6 +66,8 @@ app.whenReady().then(async()=>{
   win.webContents.on('will-navigate',(event,url)=>{if(url.startsWith('mingrx:'))event.preventDefault()});
   for(const [width,height]of [[1440,1000],[1024,900],[768,900],[390,844],[320,720]]){
     win.setContentSize(width,height);await win.loadURL(origin+'/');
+    await js('document.fonts.ready');
+    assert(await js("document.fonts.check('750 32px Satoshi')&&[...document.fonts].some(font=>font.family==='Satoshi'&&font.status==='loaded')"),'The locally hosted Satoshi font must load');
     for(let i=0;i<100;i++){if(await js("document.querySelector('.release-note').textContent.includes('Mingrx 3.2.')"))break;await wait(50);}
     const layout=await js(`(()=>({width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+1,images:[...document.images].filter(img=>{const r=img.getBoundingClientRect();return r.width>0&&r.top<innerHeight&&r.bottom>0}).every(img=>img.complete&&img.naturalWidth>0),heading:document.querySelector('h1').textContent,version:document.querySelector('.release-note').textContent,animations:document.getAnimations().length,radii:[...document.querySelectorAll('.button,.menu-button')].map(el=>parseFloat(getComputedStyle(el).borderTopLeftRadius)),download:document.querySelector('.download-link').href}))()`);
     assert.equal(layout.width,width);assert(!layout.overflow,`Horizontal overflow at ${width}`);assert(layout.images,`Missing image at ${width}`);assert.equal(layout.animations,0);assert(layout.radii.every(radius=>radius<=8));assert.match(layout.version,/Mingrx 3\.2\./);assert.match(layout.download,/releases\/download\/v3\.2\.0\/Mingrx-Setup-3\.2\.0-x64\.exe$/);

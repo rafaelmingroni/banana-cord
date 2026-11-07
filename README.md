@@ -178,7 +178,7 @@ Antes de uma versão oficial ser publicada, o CI executa regressões de interfac
 
 ## Site oficial
 
-O [mingrx.site](https://mingrx.site/) apresenta o aplicativo com capturas reais da versão 3.2, usando contas de demonstração. A página permite alternar entre conversa e chamada, oferece um link para continuar no PC a partir do celular e organiza o suporte por tarefa. Convites sem formato válido orientam a pedir um novo link.
+O [mingrx.site](https://mingrx.site/) apresenta o aplicativo com capturas reais da versão 3.2, usando contas de demonstração, com tema escuro e fonte Satoshi hospedada no próprio site. A página permite alternar entre conversa e chamada, oferece um link para continuar no PC a partir do celular e organiza o suporte por tarefa. Convites sem formato válido orientam a pedir um novo link.
 
 ## Instalação
 

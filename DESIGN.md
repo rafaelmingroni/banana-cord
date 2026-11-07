@@ -18,30 +18,30 @@ colors:
   violet-field: "#21192f"
 typography:
   display:
-    fontFamily: "Manrope, Arial, sans-serif"
+    fontFamily: "Satoshi, Arial, sans-serif"
     fontSize: "clamp(44px, 6.2vw, 88px)"
     fontWeight: 750
     lineHeight: 1.08
     letterSpacing: "-0.04em"
   headline:
-    fontFamily: "Manrope, Arial, sans-serif"
+    fontFamily: "Satoshi, Arial, sans-serif"
     fontSize: "clamp(34px, 4vw, 54px)"
     fontWeight: 750
     lineHeight: 1.08
     letterSpacing: "-0.04em"
   title:
-    fontFamily: "Manrope, Arial, sans-serif"
+    fontFamily: "Satoshi, Arial, sans-serif"
     fontSize: "20px"
     fontWeight: 720
     lineHeight: 1.3
     letterSpacing: "-0.02em"
   body:
-    fontFamily: "Manrope, Arial, sans-serif"
+    fontFamily: "Satoshi, Arial, sans-serif"
     fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.6
   label:
-    fontFamily: "Manrope, Arial, sans-serif"
+    fontFamily: "Satoshi, Arial, sans-serif"
     fontSize: "14px"
     fontWeight: 750
     lineHeight: 1.5
@@ -100,7 +100,7 @@ Este documento governa somente o site público, incluindo início, convites, sup
 
 **Key Characteristics:**
 - Fundo escuro com limites finos e campos tonais.
-- Manrope de peso substancial e controles de cantos curtos.
+- Satoshi de peso substancial e controles de cantos curtos.
 - Demonstrações reais identificadas e interações deliberadas.
 
 ## Colors
@@ -119,7 +119,7 @@ Canvas e surface distinguem página e contêiner. Ink identifica títulos e aç�
 
 ## Typography
 
-Manrope variável é auto-hospedada em `site/assets/fonts/manrope-variable.ttf`, com licença OFL preservada ao lado. O arquivo cobre pesos 200–800; Arial e sans-serif são os fallbacks.
+Satoshi variável é auto-hospedada em `site/assets/fonts/satoshi-variable.woff2`, com licença ITF Free Font License preservada ao lado. O arquivo oficial, sem modificações, é obtido no build e verificado por SHA-256; não é redistribuído no repositório. O arquivo cobre pesos 300–900; Arial e sans-serif são os fallbacks.
 
 Display serve à abertura; headline às passagens principais; title aos passos; body ao texto corrente; label ao botão padrão. A navegação usa texto de 13px com peso 650, e notas/captions usam 12–13px. Textos legais usam 15px com entrelinha 1.95, reduzindo a 14px no telefone; a coluna de artigo limita-se a 74ch.
 

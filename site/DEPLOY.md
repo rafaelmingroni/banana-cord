@@ -58,7 +58,7 @@ O domínio já está configurado com HTTPS obrigatório. A home usa styles.css, 
 ## Reformulação de 7 de novembro de 2026
 
 - Capturas reais do Mingrx 3.2, com contas de demonstração e dados sintéticos, incluindo conversa e chamada com WebRTC conectado. A origem e os recortes estão registrados em assets/mingrx-captures.provenance.json e nos metadados XMP dos WebP.
-- Fonte Manrope hospedada localmente com sua licença OFL. Não há dependência de Google Fonts no navegador.
+- Fonte Satoshi variável WOFF2 hospedada no site, sob a ITF Free Font License. O build executa `node site/prepare-fonts.mjs`: obtém o arquivo oficial e verifica seu SHA-256 antes dos testes/publicação. O binário não é redistribuído no repositório. Para testar localmente, execute esse comando primeiro (requer curl e acesso ao Fontshare). O navegador só busca a fonte no domínio do próprio site.
 - Cenas selecionáveis por teclado, recortes próprios para celular, cópia de link com alternativa quando a permissão é negada e informação de versão pública sem o patch técnico zero.
 - Convites preservam os códigos de 8 e 12 caracteres e o protocolo. Links malformados orientam a pedir um novo convite; validade e autorização continuam verificadas pelo aplicativo.
 - O suporte começa pelos assuntos. O contato confirmado é mingrxapp@gmail.com; chamados no GitHub são públicos.

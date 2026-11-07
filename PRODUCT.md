@@ -35,6 +35,7 @@ The current app is distributed through GitHub Releases with automatic updates. A
 
 ## Brand Commitments
 
+- Use Satoshi for the website typography, explicitly requested by Rafael.
 - Preserve the Mingrx name and existing recognizable logo.
 - Preserve a dark presentation. The user rejected a white website and now finds the current composition too simple and conservative.
 - Avoid purple gradients, pill buttons, fabricated reviews/counts/metrics, fake AI portraits, excessive animation, cursor effects and vague promises.

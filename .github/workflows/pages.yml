@@ -32,6 +32,8 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: desktop/package-lock.json
+      - name: Prepare the licensed self-hosted font
+        run: node site/prepare-fonts.mjs
       - name: Validate Mingrx site
         run: node site/validate.mjs && node site/test-invites.mjs
       - name: Install the pinned browser runtime

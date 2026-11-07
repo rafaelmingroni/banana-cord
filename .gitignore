@@ -13,3 +13,6 @@ desktop/assets/mingrx.ico
 desktop/assets/mingrx.png
 desktop/backend-security-report.json
 .impeccable/review/
+
+# Satoshi is acquired from Fontshare at build time for our own site.
+site/assets/fonts/satoshi-variable.woff2

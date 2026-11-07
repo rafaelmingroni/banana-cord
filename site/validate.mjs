@@ -37,7 +37,7 @@ for(const capture of provenance.captures){
   const bytes=await readFile(path.join(root,'assets',name));
   check(`${name}: provenance matches shipping bytes`,createHash('sha256').update(bytes).digest('hex')===capture.sha256);
 }
-check('display font is self-hosted with its license',(await stat(path.join(root,'assets/fonts/manrope-variable.ttf'))).size>10000&&(await stat(path.join(root,'assets/fonts/OFL-Manrope.txt'))).size>1000);
+check('display font is self-hosted with its license',(await stat(path.join(root,'assets/fonts/satoshi-variable.woff2'))).size>10000&&(await stat(path.join(root,'assets/fonts/FFL-Satoshi.txt'))).size>1000);
 const favicon=await readFile(path.join(root,'favicon.ico'));
 check('ICO favicon has actual icon entries',favicon.readUInt16LE(2)===1&&favicon.readUInt16LE(4)>=1);
 for(const name of pages){

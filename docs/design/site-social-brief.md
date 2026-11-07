@@ -8,7 +8,7 @@ Rafael approved the full-site direction with “Bora” after selecting the comp
 
 **THESIS:** put real social use of Mingrx at the center: a large selectable product scene, followed by distinct conversation and calling passages. Replace the conservative split hero and equal icon-feature columns.
 
-**OWN-WORLD:** near-black canvas, warm-white typography, solid light-violet action color, deep-violet calling field. Self-hosted Manrope has substantial headings and relaxed reading text. Crisp six-pixel controls, fine structural boundaries, no gradients, pills, halos, stock portraits or decorative animation.
+**OWN-WORLD:** near-black canvas, warm-white typography, solid light-violet action color, deep-violet calling field. Self-hosted Satoshi has substantial headings and relaxed reading text. Crisp six-pixel controls, fine structural boundaries, no gradients, pills, halos, stock portraits or decorative animation.
 
 **STORY:** recognize a free Windows communication app, see authentic conversation/call examples, download or keep a link for the PC, and find invitations/help without losing context. Demo content is explicitly identified.
 

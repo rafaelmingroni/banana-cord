@@ -1,5 +1,5 @@
-@font-face{font-family:Manrope;src:url('./assets/fonts/manrope-variable.ttf') format('truetype');font-style:normal;font-weight:200 800;font-display:swap}
-:root{color-scheme:dark;--bg:#0c0d12;--paper:#161720;--soft:#11121a;--ink:#f6f3ff;--muted:#b3b0c1;--line:#30303e;--accent:#c3acff;--button-bg:#c3acff;--button-hover:#d4c3ff;--button-ink:#20152f;--violet-field:#21192f;--font:Manrope,Arial,sans-serif}
+@font-face{font-family:Satoshi;src:url('./assets/fonts/satoshi-variable.woff2') format('woff2');font-style:normal;font-weight:300 900;font-display:swap}
+:root{color-scheme:dark;--bg:#0c0d12;--paper:#161720;--soft:#11121a;--ink:#f6f3ff;--muted:#b3b0c1;--line:#30303e;--accent:#c3acff;--button-bg:#c3acff;--button-hover:#d4c3ff;--button-ink:#20152f;--violet-field:#21192f;--font:Satoshi,Arial,sans-serif}
 *{box-sizing:border-box}
 html{scroll-padding-top:100px;scrollbar-color:#555062 var(--bg)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
