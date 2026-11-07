@@ -53,4 +53,13 @@ Com `mingrx.site` configurado como domínio personalizado, o GitHub Pages pode r
 
 ## Revisão de 6 de novembro de 2026
 
-O domínio já está configurado com HTTPS obrigatório. A home usa styles.css, captura real do aplicativo e fontes locais. As páginas auxiliares também usam legal.css. O pipeline valida arquivos, links, convites e o navegador em 320 a 1440 px antes da publicação. O contato atual continua no GitHub; nenhum endereço de e-mail foi inventado.
+O domínio já está configurado com HTTPS obrigatório. A home usa styles.css, capturas reais do aplicativo e fontes locais. As páginas auxiliares também usam legal.css. O pipeline valida arquivos, links, convites e o navegador em 320 a 1440 px antes da publicação.
+
+## Reformulação de 7 de novembro de 2026
+
+- Capturas reais do Mingrx 3.2, com contas de demonstração e dados sintéticos, incluindo conversa e chamada com WebRTC conectado. A origem e os recortes estão registrados em assets/mingrx-captures.provenance.json e nos metadados XMP dos WebP.
+- Fonte Manrope hospedada localmente com sua licença OFL. Não há dependência de Google Fonts no navegador.
+- Cenas selecionáveis por teclado, recortes próprios para celular, cópia de link com alternativa quando a permissão é negada e informação de versão pública sem o patch técnico zero.
+- Convites preservam os códigos de 8 e 12 caracteres e o protocolo. Links malformados orientam a pedir um novo convite; validade e autorização continuam verificadas pelo aplicativo.
+- O suporte começa pelos assuntos. O contato confirmado é mingrxapp@gmail.com; chamados no GitHub são públicos.
+- Não há mudança de domínio, DNS, backend ou versão do aplicativo nesta publicação do site.

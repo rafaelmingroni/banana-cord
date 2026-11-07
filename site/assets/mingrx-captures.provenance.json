@@ -1,0 +1,93 @@
+{
+  "product": "Mingrx",
+  "publicVersion": "3.2",
+  "technicalVersion": "3.2.0",
+  "capturedAt": "2026-11-07T04:59:13.137Z",
+  "sourceCommit": "a655eca36f001db08f8a0791ee09b40395fff10d",
+  "source": "Unmodified production desktop/src/index.html, renderer modules, isolated production preload and Firebase SDK; production entry order is bundled by temporary adaptation of desktop/scripts/e2e-cloud-boot.js.",
+  "environment": "Linux Electron 45.1.0, Firebase Auth and Firestore loopback emulators, demo-mingrx-site project. No production requests. All HTTP(S)/WS(S) destinations except localhost/127.0.0.1 blocked by isolated session.",
+  "content": "Entirely synthetic fictional demonstration: Lia · demo, Caio · demo, Estúdio • demonstração. Default initial avatars; no generated portraits or UI. Community channel content uses actual SDK message writes/listeners. No private encrypted messages are depicted.",
+  "voice": "Chromium test microphone streams used with actual WebRTC signaling/audio transport. Connection state and inbound audio packets verified before capture. No physical participants are represented.",
+  "captureCommand": "FIREBASE_EMULATORS_PATH=/tmp/mingrx-emulators XDG_CONFIG_HOME=/tmp/mingrx-firebase-config XDG_CACHE_HOME=/tmp/mingrx-site-cache ./node_modules/.bin/firebase emulators:exec --project demo-mingrx-site --config ../firebase/firebase.json --only auth,firestore './node_modules/.bin/electron --no-sandbox --headless --ozone-platform=headless --ozone-override-screen-size=1440,960 scripts/.site-capture.tmp.js'",
+  "temporaryReproductionHarness": "/tmp/mingrx-site-capture-reproduction.js (copy into desktop/scripts before execution, then remove)",
+  "transformation": "Full Electron webContents.capturePage originals are 1440×960 PNGs converted with sharp WebP quality 93, effort 6. Mobile detail versions use only the exact rectangular crop recorded per file, from the same originals. All four WebPs embed XMP source, version, demonstration disclosure, capture date and scene information. No retouching, compositing, UI replacement, color or geometry edits beyond the recorded mobile crops.",
+  "limitations": "Screen sharing capture omitted: this managed headless Linux environment has no normal desktop source. Linux secure storage does not provide Windows E2EE key storage; these screenshots demonstrate community chat and voice, not private encrypted messaging. App language was selected through existing BananaI18n.setLocale(pt-BR). Electron nativeTheme was set to dark before app load, so the real system theme resolves to the shipped dark theme.",
+  "captures": [
+    {
+      "file": "site/assets/mingrx-conversation.webp",
+      "original": "/tmp/mingrx-conversation.png",
+      "dimensions": {
+        "width": 1440,
+        "height": 960
+      },
+      "sourceSha256": "9ba871390001a612ea72b543c783dbd70baf7ebd55f107844ab27d125438eb92",
+      "sha256": "872549d3a06dc98a6a6af40e85823fef92f65f010ddfc38b7d46a304e4529552",
+      "bytes": 59002,
+      "scene": "Populated actual community text channel, 10 synthetic messages.",
+      "embeddedMetadata": "XMP source, product version, demonstration disclosure, capture date and scene description"
+    },
+    {
+      "file": "site/assets/mingrx-call.webp",
+      "original": "/tmp/mingrx-call.png",
+      "dimensions": {
+        "width": 1440,
+        "height": 960
+      },
+      "sourceSha256": "a9b823ddc11aa6aba01cbe4c71b7d4841f7553df8e32a620ec806b1799092189",
+      "sha256": "a14d42df046bb4be3685f17f1a7612800bddac7abc5e4e15b45b22ada70a2a97",
+      "bytes": 32030,
+      "scene": "Two actual emulator accounts admitted to community voice; a real WebRTC audio peer reached connected and received audio packets.",
+      "embeddedMetadata": "XMP source, product version, demonstration disclosure, capture date and scene description"
+    },
+    {
+      "file": "site/assets/mingrx-conversation-detail.webp",
+      "original": "/tmp/mingrx-conversation.png",
+      "dimensions": {
+        "width": 430,
+        "height": 164
+      },
+      "crop": {
+        "left": 310,
+        "top": 388,
+        "width": 430,
+        "height": 164
+      },
+      "sha256": "907f140c018d3426ed5e3fcf5e83430d2507f6ae3f5ca5611fba68855ed20acf",
+      "bytes": 11738,
+      "scene": "Unretouched crop of three coherent actual demo messages: comparing versions, moving to voice, and reviewing colors and script together. Names and initial avatars retained.",
+      "sourceSha256": "9ba871390001a612ea72b543c783dbd70baf7ebd55f107844ab27d125438eb92",
+      "embeddedMetadata": "XMP source, product version, demonstration disclosure, capture date and scene description"
+    },
+    {
+      "file": "site/assets/mingrx-call-detail.webp",
+      "original": "/tmp/mingrx-call.png",
+      "dimensions": {
+        "width": 900,
+        "height": 350
+      },
+      "crop": {
+        "left": 300,
+        "top": 125,
+        "width": 900,
+        "height": 350
+      },
+      "sha256": "84b9de892730d6f599aa69d82b5a0e2d47f93958f0f6c398ea8dba2ec949548c",
+      "bytes": 12914,
+      "scene": "Unretouched wide crop of both actual community voice participants, channel title, participant count, call controls and connected peer state. The displayed 0 ms is local emulator latency, not a product performance claim.",
+      "sourceSha256": "a9b823ddc11aa6aba01cbe4c71b7d4841f7553df8e32a620ec806b1799092189",
+      "embeddedMetadata": "XMP source, product version, demonstration disclosure, capture date and scene description"
+    }
+  ],
+  "voiceValidation": {
+    "admitted": true,
+    "remotePeers": 1,
+    "connectionState": "connected",
+    "liveRemoteAudioTracks": 1,
+    "receivedAudioPacketsAtValidation": 18
+  },
+  "networkValidation": {
+    "blockedRequests": [],
+    "attemptedNonEmulatorRequests": 0
+  },
+  "mobileCropUpdatedAt": "2026-11-07T05:08:29.852Z"
+}

@@ -1,7 +1,8 @@
 (() => {
   'use strict';
   const params = new URLSearchParams(location.search);
-  if (params.has('invite')) {
+  const isHome = !location.pathname || /\/(?:index\.html)?$/.test(location.pathname);
+  if (isHome && params.has('invite')) {
     location.replace(`./invite.html?invite=${encodeURIComponent(params.get('invite') || '')}`);
     return;
   }
@@ -30,6 +31,46 @@
     window.matchMedia('(min-width: 851px)').addEventListener?.('change', closeMenu);
   }
 
+  // One visible scene, keyboard-operable tabs, and no autoplay.
+  const sceneTabs = [...document.querySelectorAll('[data-scene]')];
+  const activateScene = (name, focus = false) => {
+    const selected = sceneTabs.find(tab => tab.dataset.scene === name);
+    if (!selected) return;
+    sceneTabs.forEach(tab => {
+      const active = tab === selected;
+      tab.setAttribute('aria-selected', String(active));
+      tab.tabIndex = active ? 0 : -1;
+      const panel = document.getElementById(tab.getAttribute('aria-controls'));
+      if (panel) panel.hidden = !active;
+    });
+    if (focus) selected.focus();
+  };
+  sceneTabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => activateScene(tab.dataset.scene));
+    tab.addEventListener('keydown', event => {
+      const destinations = {ArrowRight:(index+1)%sceneTabs.length, ArrowLeft:(index-1+sceneTabs.length)%sceneTabs.length, Home:0, End:sceneTabs.length-1};
+      if (!(event.key in destinations)) return;
+      event.preventDefault();
+      activateScene(sceneTabs[destinations[event.key]].dataset.scene, true);
+    });
+  });
+  document.querySelectorAll('[data-show-scene]').forEach(link => link.addEventListener('click', () => activateScene(link.dataset.showScene)));
+  document.querySelectorAll('.legal-toc').forEach(toc => { if (window.matchMedia?.('(min-width: 851px)').matches) toc.open = true; });
+  document.querySelectorAll('[data-copy-site]').forEach(button => button.addEventListener('click', async () => {
+    const group = button.closest('.pc-link');
+    const status = group?.querySelector('.copy-status');
+    const fallback = group?.querySelector('.copy-fallback');
+    button.disabled = true;
+    try {
+      await navigator.clipboard.writeText('https://mingrx.site/');
+      if (status) status.textContent = 'Link copiado. Abra no seu computador.';
+      if (fallback) fallback.hidden = true;
+    } catch {
+      if (status) status.textContent = 'Não foi possível copiar automaticamente. Use o endereço abaixo.';
+      if (fallback) fallback.hidden = false;
+    } finally { button.disabled = false; }
+  }));
+
   const year = document.getElementById('year');
   if (year) year.textContent = String(new Date().getFullYear());
 
@@ -52,7 +93,8 @@
       const version = String(release.tag_name || '').replace(/^v/i, '');
       if (/^\d+\.\d+\.\d+$/.test(version)) {
         document.querySelectorAll('.release-note').forEach(note => {
-          note.textContent = `Versão ${version} para Windows 10 e 11. Download gratuito na versão atual.`;
+          const publicVersion = version.replace(/\.0$/, '');
+          note.textContent = `Mingrx ${publicVersion}. Gratuito para Windows 10 e 11.`;
         });
       }
     }).catch(() => {})

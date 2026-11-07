@@ -176,6 +176,10 @@ O Mingrx não inicializa Firebase Storage e não oferece upload de imagens em ch
 
 Antes de uma versão oficial ser publicada, o CI executa regressões de interface, Cloud, Firebase Rules, convites, social e fluxos reais do renderer Electron.
 
+## Site oficial
+
+O [mingrx.site](https://mingrx.site/) apresenta o aplicativo com capturas reais da versão 3.2, usando contas de demonstração. A página permite alternar entre conversa e chamada, oferece um link para continuar no PC a partir do celular e organiza o suporte por tarefa. Convites sem formato válido orientam a pedir um novo link.
+
 ## Instalação
 
 A versão oficial para Windows é disponibilizada em **GitHub Releases**:

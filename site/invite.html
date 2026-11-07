@@ -12,8 +12,8 @@
 <link rel="icon" href="./favicon.ico" sizes="any">
 <link rel="icon" href="./assets/mingrx-mark.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
-<link rel="stylesheet" href="./styles.css?v=20261106-scope">
-<link rel="stylesheet" href="./legal.css?v=20261106-scope">
+<link rel="stylesheet" href="./styles.css?v=20261107-social">
+<link rel="stylesheet" href="./legal.css?v=20261107-social">
 </head>
 <body class="utility-page">
 <main id="conteudo" tabindex="-1" class="utility-wrap">
@@ -22,18 +22,19 @@
 <span>Mingrx</span>
 </a>
 <section class="utility-card">
-<p class="eyebrow">Convite para comunidade</p>
-<h1>O grupo se encontra no aplicativo.</h1>
+<h1 id="inviteTitle">Entre na comunidade.</h1>
 <p>Abra o Mingrx para entrar na comunidade. Se ainda não tiver o aplicativo, baixe a versão oficial para Windows.</p>
 <div class="invite-code">
 <span>Código do convite</span>
 <strong id="code">Aguardando código</strong>
 </div>
 <p id="status" class="status" role="status">Preparando seu convite.</p>
+<p id="inviteRecovery" class="invite-recovery" hidden>Peça um novo convite a quem enviou este link. Instalar o aplicativo não corrige um código inválido.</p>
 <div class="utility-actions">
 <a id="openApp" class="button button-primary" href="#">Abrir Mingrx</a>
 <a id="download" class="button button-secondary" href="https://github.com/rafaelmingroni/mingrx-app/releases/latest">Baixar para Windows</a>
 </div>
+<div id="inviteCopy" class="invite-copy" hidden><button id="copyInvite" type="button" class="text-link">Copiar convite para abrir no PC<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/></svg></button><p id="copyInviteStatus" class="copy-status" role="status"></p><p id="copyInviteFallback" class="copy-fallback" hidden></p></div>
 <p class="utility-hint">A validade do convite e o acesso à comunidade são verificados no aplicativo.</p>
 </section>
 <nav class="utility-footer" aria-label="Links de ajuda">
@@ -44,7 +45,7 @@
 <a href="./about.html">Responsável e créditos</a>
 </nav>
 </main>
-<script src="./invite.js?v=20261106-scope" defer>
+<script src="./invite.js?v=20261107-social" defer>
 </script>
 </body>
 </html>
