@@ -72,7 +72,7 @@ jobs:
         working-directory: desktop
         run: node scripts/verify-release-artifacts.js
       - name: Upload reviewable build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Mingrx-Windows-${{ github.sha }}
           path: |
@@ -118,7 +118,7 @@ jobs:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: node ../diagnostics/firebase-security.cjs --apply --verify-rules
       - name: Preserve the backend verification report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Mingrx-Security-${{ github.sha }}
           path: desktop/backend-security-report.json
