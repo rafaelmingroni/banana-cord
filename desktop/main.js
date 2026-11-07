@@ -5,6 +5,7 @@ const https = require('https');
 const { spawn } = require('child_process');
 const { startBananaServer } = require('./server/server');
 const { autoUpdater } = require('electron-updater');
+require('./auth-vault').install();
 
 let mainWindow;
 let localServerHandle = null;

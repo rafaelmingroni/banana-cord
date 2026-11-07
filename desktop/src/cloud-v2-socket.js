@@ -102,6 +102,7 @@
       const code = String(error?.code || '');
       if (code.includes('permission-denied')) return 'O Banana Cloud bloqueou essa ação por permissão. Verifique seu cargo ou as regras do Firebase.';
       if (code.includes('unavailable') || code.includes('network')) return 'Banana Cloud indisponível no momento. Confira sua internet.';
+      if (code) return 'Não foi possível concluir essa ação no Mingrx Cloud. Tente novamente.';
       return error?.message || 'Não foi possível concluir essa ação no Banana Cloud.';
     }
 

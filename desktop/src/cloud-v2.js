@@ -52,7 +52,7 @@
 
   const { initializeApp } = require('firebase/app');
   const {
-    getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged,
+    onAuthStateChanged,
     createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
     sendEmailVerification, sendPasswordResetEmail, updateProfile
   } = require('firebase/auth');
@@ -65,9 +65,8 @@
   const { getDatabase, ref, set, onValue, onDisconnect, serverTimestamp: rtdbTimestamp } = require('firebase/database');
 
   const firebaseApp = initializeApp(config);
-  const auth = getAuth(firebaseApp);
+  const auth = require('./secure-auth-persistence')(firebaseApp);
   auth.languageCode = 'pt-BR';
-  setPersistence(auth, browserLocalPersistence).catch(console.warn);
 
   let db;
   try {
@@ -80,6 +79,7 @@
     db = getFirestore(firebaseApp);
   }
   const realtime = null; // 3.1.5: control and presence use authorized Firestore paths.
+  const authRequests = require('./auth-request-guard');
 
   const $ = id => document.getElementById(id);
   const show = id => $(id)?.classList.remove('hidden');
@@ -112,7 +112,8 @@
       'auth/too-many-requests': 'Muitas tentativas. Aguarde um pouco e tente novamente.',
       'auth/network-request-failed': 'Sem conexão com a internet.'
     };
-    return map[code] || err?.message || 'Não foi possível concluir essa ação.';
+    if (['mingrx/auth-busy', 'mingrx/auth-throttled'].includes(code)) return err.message;
+    return map[code] || 'Não foi possível concluir essa ação. Tente novamente ou entre em contato com o suporte.';
   };
 
   function selectTab(tab) {
@@ -131,7 +132,7 @@
     let createdUser = null;
     try {
       window.BananaCloudRegistrationInProgress = true;
-      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const credential = await authRequests.run('register', () => createUserWithEmailAndPassword(auth, email, password));
       createdUser = credential.user;
       showVerificationState(createdUser.email || email);
       await updateProfile(createdUser, { displayName: name });
@@ -149,26 +150,29 @@
       }
     } finally {
       window.BananaCloudRegistrationInProgress = false;
+      $('cloudRegisterPassword').value = '';
     }
   });
 
   $('cloudLoginForm')?.addEventListener('submit', async e => {
     e.preventDefault(); setError('');
     try {
-      await signInWithEmailAndPassword(auth, $('cloudLoginEmail').value.trim(), $('cloudLoginPassword').value);
+      await authRequests.run('login', () => signInWithEmailAndPassword(auth, $('cloudLoginEmail').value.trim(), $('cloudLoginPassword').value));
+      $('cloudLoginPassword').value = '';
     } catch (err) { setError(friendlyError(err)); }
   });
 
   $('cloudForgot')?.addEventListener('click', async () => {
     const email = $('cloudLoginEmail').value.trim();
     if (!email) return setError('Digite seu e-mail primeiro.');
-    try { await sendPasswordResetEmail(auth, email); setError('E-mail de redefinição enviado.'); }
-    catch (err) { setError(friendlyError(err)); }
+    const confirmation = 'Se houver uma conta para esse e-mail, você receberá instruções para redefinir a senha. Confira também o spam.';
+    try { await authRequests.run('reset', () => sendPasswordResetEmail(auth, email)); setError(confirmation); }
+    catch (err) { setError(err?.code === 'auth/user-not-found' ? confirmation : friendlyError(err)); }
   });
   $('cloudResend')?.addEventListener('click', async () => {
     try {
       setVerifyError('');
-      if (auth.currentUser) await sendEmailVerification(auth.currentUser);
+      if (auth.currentUser) await authRequests.run('verification', () => sendEmailVerification(auth.currentUser));
     } catch (err) { setVerifyError(friendlyError(err)); }
   });
   $('cloudVerified')?.addEventListener('click', async () => {
@@ -196,7 +200,7 @@
 
   async function ensureProfile(user) {
     await setDoc(doc(db, 'users', user.uid), {
-      displayName: user.displayName || user.email?.split('@')[0] || 'Usuário',
+      displayName: String(user.displayName || user.email?.split('@')[0] || 'Usuário').slice(0, 32),
       email: user.email || '', emailVerified: !!user.emailVerified,
       lastSeenAt: serverTimestamp(), updatedAt: serverTimestamp()
     }, { merge: true });

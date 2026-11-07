@@ -7,3 +7,8 @@ desktop/server/data.json
 *.log
 .DS_Store
 Thumbs.db
+desktop/src/cloud-browser/
+desktop/assets/mingrx-tray.png
+desktop/assets/mingrx.ico
+desktop/assets/mingrx.png
+desktop/backend-security-report.json

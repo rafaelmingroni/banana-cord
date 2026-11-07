@@ -40,7 +40,7 @@ assert(cloud.includes('showVerificationState') && authFix.includes('showVerifica
 assert(cloud.includes('cloudVerifyError') && authFix.includes('cloudVerifyError'), 'verification errors must remain visible after account creation');
 assert(cloud.includes("gate.classList.remove('hidden')"), 'auth gate must remain visible until verified shell is ready');
 assert(!cloud.includes("await setDoc(doc(db, 'users', credential.user.uid)"), 'registration must not write Firestore profile before e-mail verification');
-assert(cloud.includes('browserLocalPersistence'), 'persistent auth session missing');
+assert(cloud.includes("require('./secure-auth-persistence')"), 'protected auth session persistence missing');
 assert(cloud.includes('memoryLocalCache'), 'Decrypted account state must not persist in a shared cache');
 assert(cloud.includes('onDisconnect'), 'presence disconnect handling missing');
 assert(socket.includes('BananaCloudSocket') && socket.includes("case 'server:create'") && socket.includes("case 'voice:join'"), 'full cloud protocol transport missing');

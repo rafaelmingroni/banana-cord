@@ -9,9 +9,9 @@ if (!raw) {
 
 let parsed;
 try {
-  parsed = JSON.parse(raw);
+  parsed = require('../firebase-public-config')(JSON.parse(raw));
 } catch (err) {
-  console.error('BANANA_FIREBASE_CONFIG_JSON must be valid JSON.');
+  console.error('BANANA_FIREBASE_CONFIG_JSON must contain valid public Firebase web configuration only.');
   process.exit(1);
 }
 

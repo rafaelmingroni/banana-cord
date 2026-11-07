@@ -24,10 +24,64 @@ service cloud.firestore {
     }
     function validText(value) { return value is string && value.size() > 0 && value.size() <= 2000; }
     function validDisplayName(value) { return value is string && value.size() > 0 && value.size() <= 32; }
+    function validImage(value, maxSize) {
+      return value is string && value.size() <= maxSize
+        && (value == '' || value.matches('^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$'));
+    }
+    function privateProfileFields() {
+      return ['displayName', 'email', 'emailVerified', 'avatar', 'customStatus', 'searchName', 'lastSeenAt', 'updatedAt', 'createdAt'];
+    }
+    function validPrivateProfile(data) {
+      return (!('displayName' in data) || validDisplayName(data.displayName))
+        && (!('email' in data) || (data.email is string && data.email == request.auth.token.email))
+        && (!('emailVerified' in data) || data.emailVerified == true)
+        && (!('avatar' in data) || validImage(data.avatar, 800000))
+        && (!('customStatus' in data) || (data.customStatus is string && data.customStatus.size() <= 80))
+        && (!('searchName' in data) || (data.searchName is string && data.searchName.size() <= 32))
+        && (!('lastSeenAt' in data) || data.lastSeenAt is timestamp)
+        && (!('updatedAt' in data) || data.updatedAt is timestamp)
+        && (!('createdAt' in data) || data.createdAt is timestamp);
+    }
+    function validServerFields(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 40
+        && (!('icon' in data) || validImage(data.icon, 900000))
+        && (!('inviteCode' in data) || (data.inviteCode is string && data.inviteCode.matches('^[A-Z0-9]{8,16}$')))
+        && (!('categories' in data) || (data.categories is list && data.categories.size() <= 100))
+        && (!('deleting' in data) || data.deleting is bool);
+    }
+    function validMember(data) {
+      return data.keys().hasOnly(['role','joinedAt','joinedVia','displayName','avatar','customStatus'])
+        && data.role in ['owner','admin','moderator','member']
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 32))
+        && (!('avatar' in data) || validImage(data.avatar, 800000))
+        && (!('customStatus' in data) || (data.customStatus is string && data.customStatus.size() <= 80))
+        && (!('joinedVia' in data) || (data.joinedVia is string && data.joinedVia.size() <= 16))
+        && (!('joinedAt' in data) || data.joinedAt is timestamp);
+    }
+    function validChannel(data) {
+      return data.keys().hasOnly(['name','type','position','categoryId','allowedRoles','createdAt','updatedAt'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 32
+        && data.type in ['text','voice']
+        && (!('position' in data) || (data.position is int && data.position >= 0 && data.position <= 10000))
+        && (!('categoryId' in data) || data.categoryId == null || (data.categoryId is string && data.categoryId.size() <= 256))
+        && (!('allowedRoles' in data) || (data.allowedRoles is list && data.allowedRoles.size() <= 4
+          && data.allowedRoles.hasOnly(['owner','admin','moderator','member'])));
+    }
+    function validRelationship(data) {
+      return data.keys().hasOnly(['participants','status','requestedBy','blockedBy','updatedAt'])
+        && data.participants is list && data.participants.size() == 2
+        && data.participants[0] is string && data.participants[1] is string
+        && data.participants[0].size() <= 128 && data.participants[1].size() <= 128
+        && data.participants[0] < data.participants[1]
+        && data.status in ['pending','friends','blocked']
+        && (!('requestedBy' in data) || data.requestedBy == null || data.requestedBy in data.participants)
+        && (!('blockedBy' in data) || data.blockedBy == null || data.blockedBy in data.participants)
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
     function validProfile(data) {
       return data.keys().hasOnly(['displayName', 'avatar', 'customStatus', 'updatedAt', 'searchName'])
         && (!('displayName' in data) || validDisplayName(data.displayName))
-        && (!('avatar' in data) || (data.avatar is string && data.avatar.size() <= 800000))
+        && (!('avatar' in data) || validImage(data.avatar, 800000))
         && (!('customStatus' in data) || (data.customStatus is string && data.customStatus.size() <= 80))
         && (!('searchName' in data) || (data.searchName is string && data.searchName.size() <= 32));
     }
@@ -154,7 +208,12 @@ service cloud.firestore {
       allow delete: if verified() && request.auth.uid == uid;
     }
     match /users/{uid} {
-      allow read, create, update: if verified() && request.auth.uid == uid;
+      allow read: if verified() && request.auth.uid == uid;
+      allow create: if verified() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(privateProfileFields()) && validPrivateProfile(request.resource.data);
+      allow update: if verified() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(privateProfileFields())
+        && validPrivateProfile(request.resource.data);
       allow delete: if false;
       match /limits/{limitId} {
         allow get: if verified() && request.auth.uid == uid;
@@ -171,13 +230,20 @@ service cloud.firestore {
         allow delete: if false;
       }
       match /serverRefs/{serverId} {
-        allow read, create, update, delete: if verified() && request.auth.uid == uid;
+        allow read, delete: if verified() && request.auth.uid == uid;
+        allow create, update: if verified() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['serverId','name','role','joinedAt'])
+          && request.resource.data.serverId == serverId
+          && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 80))
+          && (!('role' in request.resource.data) || request.resource.data.role in ['owner','admin','moderator','member'])
+          && (!('joinedAt' in request.resource.data) || request.resource.data.joinedAt is timestamp);
         allow delete: if owner(serverId);
       }
     }
 
     match /publicProfiles/{uid} {
-      allow read: if verified();
+      allow get: if verified();
+      allow list: if verified() && request.query.limit <= 50;
       allow create, update: if verified() && request.auth.uid == uid && validProfile(request.resource.data);
       allow delete: if false;
     }
@@ -216,14 +282,16 @@ service cloud.firestore {
       allow list: if false;
       allow create: if verified()
         && request.resource.data.ownerId == request.auth.uid
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 40;
+        && request.resource.data.keys().hasOnly(['name','icon','ownerId','inviteCode','categories','createdAt','updatedAt','deleting'])
+        && validServerFields(request.resource.data);
       allow update: if admin(serverId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','icon','inviteCode','categories','updatedAt','deleting'])
+        && validServerFields(request.resource.data)
         && request.resource.data.ownerId == resource.data.ownerId
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleting']) || owner(serverId));
       allow update: if moderator(serverId)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['categories', 'updatedAt'])
+        && validServerFields(request.resource.data)
         && request.resource.data.ownerId == resource.data.ownerId;
       allow delete: if owner(serverId);
 
@@ -234,12 +302,13 @@ service cloud.firestore {
       }
       match /members/{uid} {
         allow read: if member(serverId) || (verified() && uid == request.auth.uid);
-        allow create: if ownerAfter(serverId)
+        allow create: if validMember(request.resource.data) && (ownerAfter(serverId)
           || (verified() && uid == request.auth.uid
               && request.resource.data.role == 'member'
-              && validInvite(serverId, request.resource.data.joinedVia));
-        allow update: if owner(serverId);
+              && validInvite(serverId, request.resource.data.joinedVia)));
+        allow update: if owner(serverId) && validMember(request.resource.data);
         allow update: if verified() && uid == request.auth.uid
+          && validMember(request.resource.data)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'avatar', 'customStatus']);
         allow delete: if (owner(serverId) || (verified() && uid == request.auth.uid))
           && (get(/databases/$(database)/documents/servers/$(serverId)).data.ownerId != uid
@@ -249,11 +318,10 @@ service cloud.firestore {
       match /channels/{channelId} {
         allow read: if member(serverId);
         allow create: if (ownerAfter(serverId) || moderator(serverId))
-          && request.resource.data.name is string
-          && request.resource.data.name.size() > 0
-          && request.resource.data.name.size() <= 32
-          && request.resource.data.type in ['text', 'voice'];
-        allow update, delete: if moderator(serverId);
+          && validChannel(request.resource.data);
+        allow update: if moderator(serverId) && validChannel(request.resource.data)
+          && request.resource.data.type == resource.data.type;
+        allow delete: if moderator(serverId);
 
         match /voiceSessions/{slotId} {
           allow read: if channelAccess(serverId, channelId) && get(/databases/$(database)/documents/servers/$(serverId)/channels/$(channelId)).data.type == 'voice';
@@ -300,14 +368,27 @@ service cloud.firestore {
     }
 
     match /invites/{code} {
+      function validInviteFields(data) {
+        return data.keys().hasOnly(['serverId','code','createdBy','permanent','createdAt','expiresAt'])
+          && data.serverId is string && data.serverId.size() <= 256
+          && data.code == code && code.matches('^[A-Z0-9]{8,16}$')
+          && (!('createdBy' in data) || (data.createdBy is string && data.createdBy.size() <= 128))
+          && (!('permanent' in data) || data.permanent is bool)
+          && (!('createdAt' in data) || data.createdAt is timestamp)
+          && (!('expiresAt' in data) || data.expiresAt is timestamp);
+      }
       allow get: if verified();
       allow list: if verified() && request.query.limit <= 100 && admin(resource.data.serverId);
       allow create: if verified()
+        && validInviteFields(request.resource.data)
+        && (!('createdBy' in request.resource.data) || request.resource.data.createdBy == request.auth.uid)
         && (ownerAfter(request.resource.data.serverId) || admin(request.resource.data.serverId))
         && request.resource.data.code == code
         && code.size() >= 8
         && code.size() <= 16;
       allow update: if admin(resource.data.serverId)
+        && validInviteFields(request.resource.data)
+        && request.resource.data.get('createdBy', null) == resource.data.get('createdBy', null)
         && request.resource.data.serverId == resource.data.serverId
         && request.resource.data.code == resource.data.code;
       allow delete: if admin(resource.data.serverId) || owner(resource.data.serverId);
@@ -316,6 +397,7 @@ service cloud.firestore {
     match /relationships/{relationshipId} {
       allow read: if verified() && request.auth.uid in resource.data.participants;
       allow create: if verified()
+        && validRelationship(request.resource.data)
         && request.resource.data.participants is list
         && request.resource.data.participants.size() == 2
         && request.resource.data.participants[0] != request.resource.data.participants[1]
@@ -326,6 +408,7 @@ service cloud.firestore {
           || (request.resource.data.status == 'blocked' && request.resource.data.blockedBy == request.auth.uid)
         );
       allow update: if verified()
+        && validRelationship(request.resource.data)
         && request.auth.uid in resource.data.participants
         && request.resource.data.participants == resource.data.participants
         && resource.data.status == 'pending'
@@ -333,6 +416,7 @@ service cloud.firestore {
         && request.resource.data.status == 'friends'
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'blockedBy', 'updatedAt']);
       allow update: if verified()
+        && validRelationship(request.resource.data)
         && request.auth.uid in resource.data.participants
         && request.resource.data.participants == resource.data.participants
         && (resource.data.status != 'blocked' || resource.data.blockedBy == request.auth.uid)

@@ -53,13 +53,14 @@ const platformHandlers = {
 };
 for (const [name, handler] of Object.entries(platformHandlers)) ipcMain.handle(name, handler);
 require('../e2ee-main');
+require('../auth-vault').install();
 
 function replaceOnce(source, marker, replacement) {
   assert.equal(source.split(marker).length, 2, `Expected one test endpoint hook: ${marker}`);
   return source.replace(marker, replacement);
 }
 
-async function testBundle() {
+async function testBundle(legacyPersistence = '') {
   // Read the same entry module order as the production builder rather than
   // maintaining a separate list of startup modules in this regression test.
   const builder = fs.readFileSync(path.join(root, 'scripts/build-cloud-browser.js'), 'utf8');
@@ -77,8 +78,11 @@ async function testBundle() {
       }));
       build.onLoad({ filter: /[\\/]src[\\/]cloud-v2\.js$/ }, args => {
         let source = fs.readFileSync(args.path, 'utf8');
-        source = replaceOnce(source, 'const auth = getAuth(firebaseApp);',
-          `const auth = getAuth(firebaseApp); require('firebase/auth').connectAuthEmulator(auth, ${JSON.stringify(authUrl.origin)}, {disableWarnings:true});`);
+        const initialization = legacyPersistence
+          ? `const auth = require('firebase/auth').initializeAuth(firebaseApp,{persistence:require('firebase/auth').${legacyPersistence}});`
+          : "const auth = require('./secure-auth-persistence')(firebaseApp);";
+        source = replaceOnce(source, "const auth = require('./secure-auth-persistence')(firebaseApp);",
+          `${initialization} require('firebase/auth').connectAuthEmulator(auth, ${JSON.stringify(authUrl.origin)}, {disableWarnings:true});`);
         source = replaceOnce(source, 'const realtime = null;',
           `require('firebase/firestore').connectFirestoreEmulator(db, ${JSON.stringify(firestoreUrl.hostname)}, ${Number(firestoreUrl.port)}); const realtime = null;`);
         return { contents: source, loader: 'js' };
@@ -140,8 +144,10 @@ async function waitForShell(label, target = win) {
 
 async function openClient(bundle, suffix) {
   const isolatedSession = session.fromPartition(`persist:cloud-boot-${process.pid}-${suffix}`);
+  const requests = { passwordReset: 0 };
   isolatedSession.webRequest.onBeforeRequest((details, callback) => {
     const url = new URL(details.url);
+    if (details.method === 'POST' && url.pathname.endsWith('/accounts:sendOobCode')) requests.passwordReset++;
     if (['http:', 'https:', 'ws:', 'wss:'].includes(url.protocol) && !['localhost', '127.0.0.1'].includes(url.hostname)) {
       blockedRequests.push(url.origin);
       callback({ cancel: true });
@@ -163,6 +169,7 @@ async function openClient(bundle, suffix) {
     webPreferences: { session: isolatedSession, preload: path.join(root, 'preload.js'),
       nodeIntegration: false, contextIsolation: true, sandbox: true }
   });
+  client.__authRequests = requests;
   client.webContents.on('console-message', (...args) => {
     const details = args[1];
     const message = typeof details === 'object' ? details.message : args[2];
@@ -174,7 +181,29 @@ async function openClient(bundle, suffix) {
   // Production diagnosis found the affected client's leases 117 seconds
   // behind Firebase. A valid login must still admit a real voice session.
   await client.webContents.executeJavaScript(`window.__realDateNow=Date.now;Date.now=()=>window.__realDateNow()+${suffix==='peer'?300000:-117000};void 0;`);
+  client.__reloadWithBundle = async next => {
+    bundle = next;
+    await new Promise(resolve => { client.webContents.once('did-finish-load', resolve); client.reload(); });
+    await client.webContents.executeJavaScript(`window.__realDateNow=Date.now;Date.now=()=>window.__realDateNow()+${suffix==='peer'?300000:-117000};void 0;`);
+  };
   return client;
+}
+
+async function plaintextSessions(client) {
+  return client.webContents.executeJavaScript(`(async()=>{
+    const local=Object.keys(localStorage).filter(key=>key.startsWith('firebase:authUser:')).length;
+    const indexed=await new Promise((resolve,reject)=>{
+      const request=indexedDB.open('firebaseLocalStorageDb',1);
+      request.onerror=()=>reject(new Error('Could not inspect synthetic session storage'));
+      request.onsuccess=()=>{const db=request.result;
+        if(!db.objectStoreNames.contains('firebaseLocalStorage')){db.close();resolve(0);return;}
+        const read=db.transaction('firebaseLocalStorage','readonly').objectStore('firebaseLocalStorage').getAll();
+        read.onsuccess=()=>{const count=read.result.filter(row=>String(row.fbase_key||'').startsWith('firebase:authUser:')).length;db.close();resolve(count)};
+        read.onerror=()=>{db.close();reject(new Error('Could not inspect synthetic session records'))};
+      };
+    });
+    return {local,indexed};
+  })()`);
 }
 
 app.whenReady().then(async () => {
@@ -183,7 +212,7 @@ app.whenReady().then(async () => {
   const account = await authRequest('signUp', { email, password, returnSecureToken: true });
   await authRequest('update', { localId: account.localId, emailVerified: true, displayName: 'Cloud Boot' }, true);
   const bundle = await testBundle();
-  win = await openClient(bundle, 'owner');
+  win = await openClient(await testBundle('browserLocalPersistence'), 'owner');
   const isolatedSession = win.webContents.session;
   await win.webContents.executeJavaScript(`(() => {
     localStorage.setItem('banana.status', 'online');
@@ -193,6 +222,10 @@ app.whenReady().then(async () => {
   })()`);
   const fresh = await waitForShell('Fresh verified login');
   assert.equal(fresh.uid, account.localId);
+  assert.equal((await plaintextSessions(win)).local, 1, 'Legacy localStorage migration fixture is missing');
+  await win.__reloadWithBundle(bundle);
+  assert.equal((await waitForShell('Migrated localStorage session')).uid, account.localId);
+  assert.deepEqual(await plaintextSessions(win), { local: 0, indexed: 0 }, 'Migration retained an unencrypted session');
   // Check the startup presence write against the real deployed rule source.
   const presence = await win.webContents.executeJavaScript(`(async () => {
     const F=window.MingrxFirebase.firestore, socket=window.BananaCloudSocket;
@@ -263,13 +296,17 @@ app.whenReady().then(async () => {
   const peerEmail = `peer-${process.pid}-${Date.now()}@example.test`;
   const peerAccount = await authRequest('signUp', { email: peerEmail, password, returnSecureToken: true });
   await authRequest('update', { localId: peerAccount.localId, emailVerified: true, displayName: 'Call Peer' }, true);
-  peerWindow = await openClient(bundle, 'peer');
+  peerWindow = await openClient(await testBundle('indexedDBLocalPersistence'), 'peer');
   await peerWindow.webContents.executeJavaScript(`(() => {
     document.getElementById('cloudLoginEmail').value = ${JSON.stringify(peerEmail)};
     document.getElementById('cloudLoginPassword').value = ${JSON.stringify(password)};
     document.getElementById('cloudLoginForm').requestSubmit();
   })()`);
   await waitForShell('Second verified account', peerWindow);
+  assert.equal((await plaintextSessions(peerWindow)).indexed, 1, 'Legacy IndexedDB migration fixture is missing');
+  await peerWindow.__reloadWithBundle(bundle);
+  assert.equal((await waitForShell('Migrated IndexedDB session', peerWindow)).uid, peerAccount.localId);
+  assert.deepEqual(await plaintextSessions(peerWindow), { local: 0, indexed: 0 });
   const room = await win.webContents.executeJavaScript(`(async()=>{
     let stage='profile';try{
     const socket=window.BananaCloudSocket,F=window.MingrxFirebase.firestore;
@@ -280,11 +317,17 @@ app.whenReady().then(async () => {
     stage='create existing-schema server';await socket.createServer('Existing schema call regression');
     const server=state.servers.find(s=>s.name==='Existing schema call regression');
     stage='create restricted channel';await socket.createChannel({serverId:server.id,name:'Admin voice',type:'voice',allowedRoles:['admin']});
-    await F.updateDoc(F.doc(socket.db,'servers',server.id),{createdAt:F.Timestamp.fromMillis(1700000000000)});
     const loaded=await socket.loadServer(server.id);
     return {id:server.id,invite:loaded.inviteCode,publicChannel:'voice-general',adminChannel:loaded.channels.find(c=>c.name==='Admin voice').id};
     }catch(error){throw new Error(stage+': '+error.code+' '+error.message)}
   })()`);
+  // Seed historical metadata through the emulator administrator, never by
+  // granting a client permission to rewrite a community's creation date.
+  const historical = await fetch(`${firestoreUrl.origin}/v1/projects/${projectId}/databases/(default)/documents/servers/${room.id}?updateMask.fieldPaths=createdAt`, {
+    method: 'PATCH', headers: { Authorization: 'Bearer owner', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: { createdAt: { timestampValue: new Date(1700000000000).toISOString() } } })
+  });
+  assert(historical.ok, 'Historical emulator metadata setup failed');
   console.log('Two-account fixture created');
   await peerWindow.webContents.executeJavaScript(`window.BananaCloudSocket.joinServer(${JSON.stringify(room.invite)}).catch(error=>{throw new Error('Peer invite join: '+error.code+' '+error.message)})`);
   console.log('Peer joined existing-schema community');
@@ -364,6 +407,13 @@ app.whenReady().then(async () => {
   });
   const persisted = await waitForShell('Restored persisted session');
   assert.equal(persisted.uid, account.localId);
+  assert.deepEqual(await plaintextSessions(win), { local: 0, indexed: 0 });
+  const authDirectory = path.join(testData, 'auth');
+  for (const file of fs.existsSync(authDirectory) ? fs.readdirSync(authDirectory) : []) {
+    const stored = fs.readFileSync(path.join(authDirectory, file));
+    for (const secret of [email, password, 'refreshToken']) assert(!stored.includes(Buffer.from(secret)), 'Session vault leaked plaintext');
+  }
+  if (process.platform === 'win32') assert(fs.existsSync(authDirectory) && fs.readdirSync(authDirectory).length > 0, 'Windows session was not stored in the OS-encrypted vault');
   await win.webContents.executeJavaScript('window.BananaCloud.signOut()');
   const signedOut = await win.webContents.executeJavaScript(`(() => ({
     uid: window.BananaCloud.auth.currentUser?.uid || '',
@@ -371,6 +421,19 @@ app.whenReady().then(async () => {
     appHidden: document.getElementById('app')?.classList.contains('hidden') === true
   }))()`);
   assert.deepEqual(signedOut, { uid: '', visible: true, appHidden: true }, 'Logout did not restore the auth gate');
+  await win.webContents.executeJavaScript(`document.getElementById('cloudLoginEmail').value=${JSON.stringify(email)};document.getElementById('cloudForgot').click();`);
+  for (let retry = 0; retry < 100; retry++) {
+    if (await win.webContents.executeJavaScript("document.getElementById('cloudAuthError').textContent.includes('Se houver uma conta')")) break;
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  assert(await win.webContents.executeJavaScript("document.getElementById('cloudAuthError').textContent.includes('Se houver uma conta')"), 'Password reset did not return the privacy-preserving confirmation');
+  assert.equal(win.__authRequests.passwordReset, 1);
+  const resetResponse = await fetch(`${authUrl.origin}/emulator/v1/projects/${projectId}/oobCodes`);
+  const resetCodes = (await resetResponse.json()).oobCodes || [];
+  assert(resetCodes.some(row => row.email === email && row.requestType === 'PASSWORD_RESET'), 'Firebase did not generate a real synthetic password-reset action');
+  await win.webContents.executeJavaScript("document.getElementById('cloudForgot').click()");
+  await new Promise(resolve => setTimeout(resolve, 100));
+  assert.equal(win.__authRequests.passwordReset, 1, 'Repeated reset request bypassed the cooldown');
   await win.webContents.executeJavaScript(`(() => {
     document.getElementById('cloudLoginEmail').value = ${JSON.stringify(email)};
     document.getElementById('cloudLoginPassword').value = ${JSON.stringify(password)};
@@ -380,5 +443,5 @@ app.whenReady().then(async () => {
   assert.equal(reconnected.uid, account.localId);
   assert.deepEqual(fatalErrors, [], 'Production Cloud boot logged runtime errors');
   assert.deepEqual(blockedRequests, [], 'Test attempted to contact a non-emulator backend');
-  finish(0, 'Mingrx real Firebase auth + Cloud boot + persisted session + logout/reconnect Electron E2E: OK');
+  finish(0, 'Mingrx real Firebase auth, localStorage/IndexedDB session migration, encrypted-session restore, password-reset action/cooldown, Cloud boot and logout/reconnect Electron E2E: OK');
 }).catch(error => finish(1, error.stack || String(error)));

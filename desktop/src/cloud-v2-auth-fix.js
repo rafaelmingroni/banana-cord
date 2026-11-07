@@ -60,7 +60,7 @@
       setVerifyError('');
       window.BananaCloudRegistrationInProgress = true;
       const { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } = require('firebase/auth');
-      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const credential = await require('./auth-request-guard').run('register', () => createUserWithEmailAndPassword(auth, email, password));
       createdUser = credential.user;
 
       // Auth state changes immediately after account creation. Force the gate into
@@ -80,7 +80,7 @@
         'auth/too-many-requests': 'Muitas tentativas. Aguarde um pouco e tente novamente.',
         'auth/network-request-failed': 'Sem conexão com a internet.'
       };
-      const message = map[code] || err?.message || 'Não foi possível criar a conta.';
+      const message = map[code] || (['mingrx/auth-busy', 'mingrx/auth-throttled'].includes(code) ? err.message : 'Não foi possível criar a conta. Tente novamente ou entre em contato com o suporte.');
 
       if (createdUser || auth.currentUser) {
         const user = createdUser || auth.currentUser;
@@ -91,6 +91,7 @@
       }
     } finally {
       window.BananaCloudRegistrationInProgress = false;
+      document.getElementById('cloudRegisterPassword').value = '';
     }
   }, true);
 })();
